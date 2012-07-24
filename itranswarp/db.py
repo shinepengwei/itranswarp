@@ -7,7 +7,48 @@ __author__ = 'Michael Liao'
 Database operation module. This module is independent with web module.
 '''
 
-import os, time, datetime, functools, threading, logging, collections
+import os, sys, time, datetime, functools, threading, logging, collections
+
+class _Dict(dict):
+    '''
+    Simple dict but support access as x.y style.
+
+    >>> d1 = _Dict()
+    >>> d1['x'] = 100
+    >>> d1.x
+    100
+    >>> d1.y = 200
+    >>> d1['y']
+    200
+    >>> d2 = _Dict(a=1, b=2, c='3')
+    >>> d2.c
+    '3'
+    >>> d2['empty']
+    Traceback (most recent call last):
+        ...
+    KeyError: 'empty'
+    >>> d2.empty
+    Traceback (most recent call last):
+        ...
+    KeyError: 'empty'
+    >>> d3 = _Dict(('a', 'b', 'c'), (1, 2, 3))
+    >>> d3.a
+    1
+    >>> d3.b
+    2
+    >>> d3.c
+    3
+    '''
+    def __init__(self, names=(), values=(), **kw):
+        super(_Dict, self).__init__(**kw)
+        for k, v in zip(names, values):
+            self[k] = v
+
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,47 +63,6 @@ class NoResultError(DBError):
 
 def _log(s):
     logging.info(s)
-
-class Dict(dict):
-    '''
-    Simple dict but support access as x.y style.
-
-    >>> d1 = Dict()
-    >>> d1['x'] = 100
-    >>> d1.x
-    100
-    >>> d1.y = 200
-    >>> d1['y']
-    200
-    >>> d2 = Dict(a=1, b=2, c='3')
-    >>> d2.c
-    '3'
-    >>> d2['empty']
-    Traceback (most recent call last):
-        ...
-    KeyError: 'empty'
-    >>> d2.empty
-    Traceback (most recent call last):
-        ...
-    KeyError: 'empty'
-    >>> d3 = Dict(('a', 'b', 'c'), (1, 2, 3))
-    >>> d3.a
-    1
-    >>> d3.b
-    2
-    >>> d3.c
-    3
-    '''
-    def __init__(self, names=(), values=(), **kw):
-        super(Dict, self).__init__(**kw)
-        for k, v in zip(names, values):
-            self[k] = v
-
-    def __getattr__(self, key):
-        return self[key]
-
-    def __setattr__(self, key, value):
-        self[key] = value
 
 def _db_connect():
     '''
@@ -204,7 +204,7 @@ def with_transaction(func):
 
     >>> @with_transaction
     ... def update_profile(id, name, rollback):
-    ...     u = Dict(id=id, name=name, email='%s@test.org' % name, passwd=name, last_modified=time.time())
+    ...     u = dict(id=id, name=name, email='%s@test.org' % name, passwd=name, last_modified=time.time())
     ...     insert('user', **u)
     ...     update('update user set passwd=? where id=?', name.upper(), id)
     ...     if rollback:
@@ -245,8 +245,8 @@ def _select(sql, unique, *args):
                 raise NoResultError('Empty result')
             if cursor.fetchone():
                 raise MultiResultsError('Expect unique result')
-            return Dict(names, values)
-        return [Dict(names, x) for x in cursor.fetchall()]
+            return _Dict(names, values)
+        return [_Dict(names, x) for x in cursor.fetchall()]
     finally:
         if cursor:
             cursor.close()
@@ -256,8 +256,8 @@ def select_one(sql, *args):
     '''
     Execute insert SQL.
 
-    >>> u1 = Dict(id=100, name='Alice', email='alice@test.org', passwd='ABC-12345', last_modified=time.time())
-    >>> u2 = Dict(id=101, name='Sarah', email='sarah@test.org', passwd='ABC-12345', last_modified=time.time())
+    >>> u1 = dict(id=100, name='Alice', email='alice@test.org', passwd='ABC-12345', last_modified=time.time())
+    >>> u2 = dict(id=101, name='Sarah', email='sarah@test.org', passwd='ABC-12345', last_modified=time.time())
     >>> insert('user', **u1)
     >>> insert('user', **u2)
     >>> u = select_one('select * from user where id=?', 100)
@@ -279,8 +279,8 @@ def select(sql, *args):
     '''
     Execute insert SQL.
 
-    >>> u1 = Dict(id=200, name='Wall.E', email='wall.e@test.org', passwd='back-to-earth', last_modified=time.time())
-    >>> u2 = Dict(id=201, name='Eva', email='eva@test.org', passwd='back-to-earth', last_modified=time.time())
+    >>> u1 = dict(id=200, name='Wall.E', email='wall.e@test.org', passwd='back-to-earth', last_modified=time.time())
+    >>> u2 = dict(id=201, name='Eva', email='eva@test.org', passwd='back-to-earth', last_modified=time.time())
     >>> insert('user', **u1)
     >>> insert('user', **u2)
     >>> L = select('select * from user where id=?', 900900900)
@@ -319,7 +319,7 @@ def insert(table, **kw):
     '''
     Execute insert SQL.
 
-    >>> u1 = Dict(id=2000, name='Bob', email='bob@test.org', passwd='bobobob', last_modified=time.time())
+    >>> u1 = dict(id=2000, name='Bob', email='bob@test.org', passwd='bobobob', last_modified=time.time())
     >>> insert('user', **u1)
     >>> u2 = select_one('select * from user where id=?', 2000)
     >>> u2.name
@@ -338,7 +338,7 @@ def update(sql, *args):
     '''
     Execute update SQL.
 
-    >>> u1 = Dict(id=1000, name='Michael', email='michael@test.org', passwd='123456', last_modified=time.time())
+    >>> u1 = dict(id=1000, name='Michael', email='michael@test.org', passwd='123456', last_modified=time.time())
     >>> insert('user', **u1)
     >>> u2 = select_one('select * from user where id=?', 1000)
     >>> u2.email
@@ -379,6 +379,7 @@ def init(dbn, db, user='', passwd='', host=None, driver=None, **kw):
         raise DBError('Unsupported db: %s' % dbn)
 
 if __name__=='__main__':
+    sys.path.append('.')
     dbpath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'doc_test.sqlite3.db')
     _log(dbpath)
     if os.path.isfile(dbpath):

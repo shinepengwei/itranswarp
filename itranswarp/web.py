@@ -3,19 +3,325 @@
 
 __author__ = 'Michael Liao'
 
-from gevent.pywsgi import WSGIServer
+from gevent.wsgi import WSGIServer
 
-import os, re, cgi, sys, datetime, base64, functools, threading, logging, urllib, collections
+import types, os, re, cgi, sys, inspect, datetime, base64, functools, threading, logging, urllib, collections
 
 # thread local object for storing request and response.
 ctx = threading.local()
-
-sys.path.append('.')
 
 try:
     import json
 except ImportError:
     import simplejson as json
+
+class Dict(dict):
+    '''
+    Simple dict but support access as x.y style.
+
+    >>> d1 = Dict()
+    >>> d1['x'] = 100
+    >>> d1.x
+    100
+    >>> d1.y = 200
+    >>> d1['y']
+    200
+    >>> d2 = Dict(a=1, b=2, c='3')
+    >>> d2.c
+    '3'
+    >>> d2['empty']
+    Traceback (most recent call last):
+        ...
+    KeyError: 'empty'
+    >>> d2.empty
+    Traceback (most recent call last):
+        ...
+    KeyError: 'empty'
+    '''
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+def _json_loads(s):
+    '''
+    Loads json.
+
+    >>> r = _json_loads(r'{"test": "ok", "users": [{"name": "Michael"}, {"name": "Tracy"}]}')
+    >>> r.test
+    u'ok'
+    >>> r.users[0].name
+    u'Michael'
+    >>> r.users[1].name
+    u'Tracy'
+    '''
+    return json.loads(s, object_pairs_hook=Dict)
+
+def _json_dumps(obj):
+    '''
+    Dumps any object as json string.
+
+    >>> class Person(object):
+    ...     def __init__(self, name):
+    ...         self.name = name
+    >>> _json_dumps([Person('Bob'), None])
+    '[{"name": "Bob"}, null]'
+    '''
+    def _dump_obj(obj):
+        if isinstance(obj, dict):
+            return obj
+        d = dict()
+        for k in dir(obj):
+            if not k.startswith('_'):
+                d[k] = getattr(obj, k)
+        return d
+    return json.dumps(obj, default=_dump_obj)
+
+# all known response statues:
+_RESPONSE_STATUSES = {
+    # Informational
+    100: 'Continue',
+    101: 'Switching Protocols',
+    102: 'Processing',
+
+    # Successful
+    200: 'OK',
+    201: 'Created',
+    202: 'Accepted',
+    203: 'Non-Authoritative Information',
+    204: 'No Content',
+    205: 'Reset Content',
+    206: 'Partial Content',
+    207: 'Multi Status',
+    226: 'IM Used',
+
+    # Redirection
+    300: 'Multiple Choices',
+    301: 'Moved Permanently',
+    302: 'Found',
+    303: 'See Other',
+    304: 'Not Modified',
+    305: 'Use Proxy',
+    307: 'Temporary Redirect',
+
+    # Client Error
+    400: 'Bad Request',
+    401: 'Unauthorized',
+    402: 'Payment Required',
+    403: 'Forbidden',
+    404: 'Not Found',
+    405: 'Method Not Allowed',
+    406: 'Not Acceptable',
+    407: 'Proxy Authentication Required',
+    408: 'Request Timeout',
+    409: 'Conflict',
+    410: 'Gone',
+    411: 'Length Required',
+    412: 'Precondition Failed',
+    413: 'Request Entity Too Large',
+    414: 'Request URI Too Long',
+    415: 'Unsupported Media Type',
+    416: 'Requested Range Not Satisfiable',
+    417: 'Expectation Failed',
+    418: "I'm a teapot",
+    422: 'Unprocessable Entity',
+    423: 'Locked',
+    424: 'Failed Dependency',
+    426: 'Upgrade Required',
+
+    # Server Error
+    500: 'Internal Server Error',
+    501: 'Not Implemented',
+    502: 'Bad Gateway',
+    503: 'Service Unavailable',
+    504: 'Gateway Timeout',
+    505: 'HTTP Version Not Supported',
+    507: 'Insufficient Storage',
+    510: 'Not Extended',
+}
+
+_RE_RESPONSE_STATUS = re.compile(r'^\d\d\d(\ [\w\ ]+)?$')
+
+_RESPONSE_HEADERS = (
+    'Accept-Ranges',
+    'Age',
+    'Allow',
+    'Cache-Control',
+    'Connection',
+    'Content-Encoding',
+    'Content-Language',
+    'Content-Length',
+    'Content-Location',
+    'Content-MD5',
+    'Content-Disposition',
+    'Content-Range',
+    'Content-Type',
+    'Date',
+    'ETag',
+    'Expires',
+    'Last-Modified',
+    'Link',
+    'Location',
+    'P3P',
+    'Pragma',
+    'Proxy-Authenticate',
+    'Refresh',
+    'Retry-After',
+    'Server',
+    'Set-Cookie',
+    'Strict-Transport-Security',
+    'Trailer',
+    'Transfer-Encoding',
+    'Vary',
+    'Via',
+    'Warning',
+    'WWW-Authenticate',
+    'X-Frame-Options',
+    'X-XSS-Protection',
+    'X-Content-Type-Options',
+    'X-Forwarded-Proto',
+    'X-Powered-By',
+    'X-UA-Compatible',
+)
+
+_RESPONSE_HEADER_DICT = {}
+
+for hdr in _RESPONSE_HEADERS:
+    _RESPONSE_HEADER_DICT[hdr.upper()] = hdr
+
+_HEADER_X_POWERED_BY = ('X-Powered-By', 'iTranswarp/1.0')
+
+class HttpError(StandardError):
+
+    def __init__(self, code):
+        '''
+        Init an HttpError with response code.
+
+        >>> e = HttpError(404)
+        >>> e.status
+        '404 Not Found'
+        '''
+        super(HttpError, self).__init__()
+        self.status = '%d %s' % (code, _RESPONSE_STATUSES[code])
+
+    def header(self, name, value):
+        if not hasattr(self, '_headers'):
+            self._headers = []
+        self._headers.append((name, value))
+
+    @property
+    def headers(self):
+        if hasattr(self, '_headers'):
+            return self._headers
+        return ()
+
+    def __str__(self):
+        return self.status
+
+def badrequest():
+    '''
+    Send a bad request response.
+
+    >>> raise badrequest()
+    Traceback (most recent call last):
+      ...
+    HttpError: 400 Bad Request
+    '''
+    return HttpError(400)
+
+def unauthorized():
+    '''
+    Send an unauthorized response.
+
+    >>> raise unauthorized()
+    Traceback (most recent call last):
+      ...
+    HttpError: 401 Unauthorized
+    '''
+    return HttpError(401)
+
+def forbidden():
+    '''
+    Send a forbidden response.
+
+    >>> raise forbidden()
+    Traceback (most recent call last):
+      ...
+    HttpError: 403 Forbidden
+    '''
+    return HttpError(403)
+
+def notfound():
+    '''
+    Send a not found response.
+
+    >>> raise notfound()
+    Traceback (most recent call last):
+      ...
+    HttpError: 404 Not Found
+    '''
+    return HttpError(404)
+
+def conflict():
+    '''
+    Send a conflict response.
+
+    >>> raise conflict()
+    Traceback (most recent call last):
+      ...
+    HttpError: 409 Conflict
+    '''
+    return HttpError(409)
+
+def internalerror():
+    '''
+    Send an internal error response.
+
+    >>> raise internalerror()
+    Traceback (most recent call last):
+      ...
+    HttpError: 500 Internal Server Error
+    '''
+    return HttpError(500)
+
+def _redirect(code, location):
+    e = HttpError(code)
+    e.header('Location', location)
+    return e
+
+def redirect(location):
+    '''
+    Do permanent redirect.
+
+    >>> raise redirect('http://www.itranswarp.com/')
+    Traceback (most recent call last):
+      ...
+    HttpError: 301 Moved Permanently
+    '''
+    return _redirect(301, location)
+
+def found(location):
+    '''
+    Do temporary redirect.
+
+    >>> raise found('http://www.itranswarp.com/')
+    Traceback (most recent call last):
+      ...
+    HttpError: 302 Found
+    '''
+    return _redirect(302, location)
+
+def seeother(location):
+    '''
+    Do temporary redirect.
+
+    >>> raise seeother('http://www.itranswarp.com/')
+    Traceback (most recent call last):
+      ...
+    HttpError: 303 See Other
+    '''
+    return _redirect(303, location)
 
 def _unicode(s, encoding='utf-8'):
     return s.decode('utf-8')
@@ -54,12 +360,54 @@ def _unquote_plus(s, encoding='utf-8'):
 def _log(s):
     logging.info(s)
 
-def jsonrpc(func):
-    @functools.wraps(func)
-    def _wrapper(*args, **kw):
-        return func(*args, **kw)
-    _wrapper.__web_jsonrpc__ = True
-    return _wrapper
+_JSON_CONVERTERS = {
+    'int': int,
+    'float': float,
+    'str': str,
+    'unicode': lambda s: s.decode('utf-8'),
+    'object': _json_loads
+}
+
+def _convert_json(type_args, str_args):
+    if len(type_args)!=len(str_args):
+        raise badrequest()
+    if len(str_args)==0:
+        return str_args
+    return [_JSON_CONVERTERS[t](s) for t, s in zip(type_args, str_args)]
+
+def jsonrpc(*type_args):
+    '''
+    A json rpc wrapper that convert all args and return value into json objects.
+
+    >>> @jsonrpc('int', 'unicode', 'object')
+    ... def show(id, name, job):
+    ...     return (id, name, [job.title, job.salary])
+    >>> ctx.response = Response()
+    >>> show('123', 'Michael', '{"title":"Archetect", "salary": 875000}')
+    '[123, "Michael", ["Archetect", 875000]]'
+    >>> ctx.response.header('CONTENT-TYPE')
+    'application/json; charset=utf-8'
+    '''
+    def _decorator(func):
+        @functools.wraps(func)
+        def _wrapper(**kw):
+            _log('call jsonrpc.wrapper: %s' % str(kw))
+            vargs = []
+            for arg in _wrapper.__args__:
+                vargs.append(kw.pop(arg))
+            _log('call jsonrpc.wrapper args: %s' % str(vargs))
+            r = func(*_convert_json(type_args, vargs))
+            jr = _json_dumps(r)
+            ctx.response.set_header('CONTENT-TYPE', 'application/json; charset=utf-8')
+            return jr
+        fargs, fvarargs, fkw, fdefaults = inspect.getargspec(func)
+        if fvarargs:
+            raise TypeError('function decorated with @jsonrpc cannot have varargs.')
+        if fkw:
+            raise TypeError('function decorated with @jsonrpc cannot have keyword args.')
+        _wrapper.__args__ = fargs
+        return _wrapper
+    return _decorator
 
 def _route_decorator_maker(path, allow_get, allow_post):
     '''
@@ -72,6 +420,7 @@ def _route_decorator_maker(path, allow_get, allow_post):
     def _decorator(func):
         @functools.wraps(func)
         def _wrapper(*args, **kw):
+            _log('call route.wrapper: %s, %s' % (str(args), str(kw)))
             return func(*args, **kw)
         _wrapper.__web_route__ = path
         _wrapper.__web_get__ = allow_get
@@ -89,6 +438,7 @@ def _route_decorator(func, allow_get, allow_post):
     '''
     @functools.wraps(func)
     def _wrapper(*args, **kw):
+        _log('call route.wrapper: %s, %s' % (str(args), str(kw)))
         return func(*args, **kw)
     _wrapper.__web_route__ = '/%s/%s' % (func.__module__.replace('.', '/'), func.__name__)
     _wrapper.__web_get__ = allow_get
@@ -122,12 +472,6 @@ def post(func_or_path=None):
     else:
         return _route_decorator_maker(func_or_path, False, True)
 
-class HttpError(StandardError):
-    pass
-
-class BadRouteError(HttpError):
-    pass
-
 _re_route = re.compile(r'\<(\w*\:?\w*)\>')
 _convert = {'int' : int, \
             'long' : long, \
@@ -139,8 +483,8 @@ _convert = {'int' : int, \
 
 class Route(object):
 
-    def execute(self, **kw):
-        return self.func(**kw)
+    def execute(self, *args, **kw):
+        return self.func(*args, **kw)
 
     def _parse_var(self, var):
         if not var:
@@ -217,15 +561,25 @@ _MIME_MAP = {
     '.ico': 'image/x-icon',
 }
 
-def static_file_handler(path):
-    # security check:
-    if not path.startswith('/'):
-        raise StandardError('403')
-    fpath = os.path.join(ctx.document_root, path[1:])
+def _static_file_generator(fpath):
+    BLOCK_SIZE = 8192
+    with open(fpath, 'r') as f:
+        block = f.read(BLOCK_SIZE)
+        while block:
+            yield block
+            block = f.read(BLOCK_SIZE)
+
+def static_file_handler(*args, **kw):
+    pathinfo = ctx.request.path_info
+    if not pathinfo.startswith('/'):
+        raise HttpError('403')
+    fpath = os.path.join(ctx.document_root, pathinfo[1:])
+    _log('static file: %s' % fpath)
     fext = os.path.splitext(fpath)[1]
     ctx.response.content_type = _MIME_MAP.get(fext.lower(), 'application/octet-stream')
-    with open(fpath, 'r') as f:
-        ctx.response.write(f.read())
+    if not os.path.isfile(fpath):
+        raise HttpError(404)
+    return _static_file_generator(fpath)
 
 def favicon_handler():
     return static_file_handler('/favicon.ico')
@@ -466,9 +820,9 @@ class Request(object):
 
         >>> r = Request({'PATH_INFO': '/test/a%20b.html'})
         >>> r.path_info
-        u'/test/a b.html'
+        '/test/a b.html'
         '''
-        return _unquote_plus(self._environ.get('PATH_INFO', ''))
+        return urllib.unquote(self._environ.get('PATH_INFO', ''))
 
     @property
     def host(self):
@@ -556,118 +910,6 @@ class Request(object):
         '''
         return self.cookies.get(name, default)
 
-# all known response statues:
-_RESPONSE_STATUSES = {
-    # Informational
-    100: 'Continue',
-    101: 'Switching Protocols',
-    102: 'Processing',
-
-    # Successful
-    200: 'OK',
-    201: 'Created',
-    202: 'Accepted',
-    203: 'Non-Authoritative Information',
-    204: 'No Content',
-    205: 'Reset Content',
-    206: 'Partial Content',
-    207: 'Multi Status',
-    226: 'IM Used',
-
-    # Redirection
-    300: 'Multiple Choices',
-    301: 'Moved Permanently',
-    302: 'Found',
-    303: 'See Other',
-    304: 'Not Modified',
-    305: 'Use Proxy',
-    307: 'Temporary Redirect',
-
-    # Client Error
-    400: 'Bad Request',
-    401: 'Unauthorized',
-    402: 'Payment Required',
-    403: 'Forbidden',
-    404: 'Not Found',
-    405: 'Method Not Allowed',
-    406: 'Not Acceptable',
-    407: 'Proxy Authentication Required',
-    408: 'Request Timeout',
-    409: 'Conflict',
-    410: 'Gone',
-    411: 'Length Required',
-    412: 'Precondition Failed',
-    413: 'Request Entity Too Large',
-    414: 'Request URI Too Long',
-    415: 'Unsupported Media Type',
-    416: 'Requested Range Not Satisfiable',
-    417: 'Expectation Failed',
-    418: "I'm a teapot",
-    422: 'Unprocessable Entity',
-    423: 'Locked',
-    424: 'Failed Dependency',
-    426: 'Upgrade Required',
-
-    # Server Error
-    500: 'Internal Server Error',
-    501: 'Not Implemented',
-    502: 'Bad Gateway',
-    503: 'Service Unavailable',
-    504: 'Gateway Timeout',
-    505: 'HTTP Version Not Supported',
-    507: 'Insufficient Storage',
-    510: 'Not Extended',
-}
-
-_RE_RESPONSE_STATUS = re.compile(r'^\d\d\d(\ [\w\ ]+)?$')
-
-_RESPONSE_HEADERS = (
-    'Accept-Ranges',
-    'Age',
-    'Allow',
-    'Cache-Control',
-    'Connection',
-    'Content-Encoding',
-    'Content-Language',
-    'Content-Length',
-    'Content-Location',
-    'Content-MD5',
-    'Content-Disposition',
-    'Content-Range',
-    'Content-Type',
-    'Date',
-    'ETag',
-    'Expires',
-    'Last-Modified',
-    'Link',
-    'Location',
-    'P3P',
-    'Pragma',
-    'Proxy-Authenticate',
-    'Refresh',
-    'Retry-After',
-    'Server',
-    'Set-Cookie',
-    'Strict-Transport-Security',
-    'Trailer',
-    'Transfer-Encoding',
-    'Vary',
-    'Via',
-    'Warning',
-    'WWW-Authenticate',
-    'X-Frame-Options',
-    'X-XSS-Protection',
-    'X-Content-Type-Options',
-    'X-Forwarded-Proto',
-    'X-Powered-By',
-    'X-UA-Compatible',
-)
-
-_RESPONSE_HEADER_DICT = {}
-
-for hdr in _RESPONSE_HEADERS:
-    _RESPONSE_HEADER_DICT[hdr.upper()] = hdr
-
 _TIMEDELTA_ZERO = datetime.timedelta(0)
 
 class UTC(datetime.tzinfo):
@@ -714,13 +956,20 @@ class Response(object):
     @property
     def headers(self):
         '''
-        Return response headers as [(key1, value1), (key2, value2)...].
+        Return response headers as [(key1, value1), (key2, value2)...] including cookies.
 
         >>> r = Response()
         >>> r.headers
         [('Content-Type', 'text/html; charset=utf-8')]
+        >>> r.set_cookie('s1', 'ok', 3600)
+        >>> r.headers
+        [('Content-Type', 'text/html; charset=utf-8'), ('Set-Cookie', 's1=ok; Max-Age=3600; Path=/')]
         '''
-        return [(_RESPONSE_HEADER_DICT.get(k, k), v) for k, v in self._headers.iteritems()]
+        L = [(_RESPONSE_HEADER_DICT.get(k, k), v) for k, v in self._headers.iteritems()]
+        if self._cookies:
+            for v in self._cookies.itervalues():
+                L.append(('Set-Cookie', v))
+        return L
 
     def header(self, name):
         '''
@@ -947,9 +1196,21 @@ class Response(object):
 
 class Template(object):
 
-    def __init__(self, template_name=None, **kw):
+    def __init__(self, template_name=None, model=None, **kw):
+        '''
+        Init a template object with template name, model as dict, and additional kw that will append to model.
+
+        >>> t = Template('hello.html', {'title': 'Hello', 'copyright':'@2010'}, copyright='@2012')
+        >>> t.model['title']
+        'Hello'
+        >>> t.model['copyright']
+        '@2012'
+        '''
         self.template_name = template_name
-        self.model = kw
+        self.model = dict()
+        if model:
+            self.model.update(model)
+        self.model.update(kw)
 
 def _init_mako(templ_dir, **kw):
     '''
@@ -1010,18 +1271,39 @@ def _install_template_engine(name, templ_dir, **kw):
 
 class WSGIApplication(object):
 
-    def __init__(self, modules, document_root=None, encoding='utf-8', template_engine=None):
-        static_routes = {}
-        re_routes = []
+    def _getmtime(self, fpath):
+        if fpath.endswith('.pyc'):
+            fpath = fpath[:-1]
+        return os.path.getmtime(fpath)
+
+    def _autoreload(self):
+        shouldreload = False
+        for mod in self.modules:
+            if self._getmtime(mod.__file__) > mod.mtime:
+                _log('[DEBUG] auto reload module: %s' % mod.__name__)
+                reload(mod)
+                shouldreload = True
+        if shouldreload:
+            self.static_routes, self.re_routes = self._parse_routes(self.modules, self.debug)
+
+    def _parse_modules(self, modules, debug):
+        L = []
         for mod in modules:
             last = mod.rfind('.')
             name = mod if last==(-1) else mod[:last]
             spam = __import__(mod, globals(), locals(), [name])
-            for p in dir(spam):
-                f = getattr(spam, p)
+            if debug:
+                spam.mtime = self._getmtime(spam.__file__)
+            L.append(spam)
+        return L
+
+    def _parse_routes(self, mods, debug):
+        static_routes = {}
+        re_routes = []
+        for mod in mods:
+            for p in dir(mod):
+                f = getattr(mod, p)
                 if callable(f):
-                    print '=== %s ===' % f.__name__
-                    print getattr(f, '__web_jsonrpc__', None)
                     route = getattr(f, '__web_route__', None)
                     if route:
                         r = Route(route, f)
@@ -1035,14 +1317,18 @@ class WSGIApplication(object):
         re_routes.append(Route('/static/<path:path>', static_file_handler))
         # append '^/favicon.ico$' to serv fav icon:
         re_routes.append(Route('/favicon.ico', favicon_handler))
+        return static_routes, re_routes
 
-        self.static_routes = static_routes
-        self.re_routes = re_routes
+    def __init__(self, modules, document_root=None, encoding='utf-8', template_engine=None, **kw):
+        self.debug = kw.pop('DEBUG', False)
+        self.modules = self._parse_modules(modules, self.debug)
+        self.static_routes, self.re_routes = self._parse_routes(self.modules, self.debug)
 
         if document_root is None:
             # suppose document_root is ../web.py:
             document_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.document_root = document_root
+        _log('load document_root: %s' % self.document_root)
 
         if isinstance(template_engine, basestring):
             self.template_render = _install_template_engine(template_engine)
@@ -1050,6 +1336,8 @@ class WSGIApplication(object):
             self.template_render = template_engine
 
     def __call__(self, environ, start_response):
+        if self.debug:
+            self._autoreload()
         path_info = environ['PATH_INFO']
         kw = None
         r = self.static_routes.get(path_info, None)
@@ -1071,14 +1359,20 @@ class WSGIApplication(object):
         ctx.document_root = self.document_root
         ctx.request = Request(environ)
         ctx.response = Response()
-        ret = r.execute() if kw is None else r.execute(**kw)
-        # TODO:
+        _log('ctx.document_root: %s' % ctx.document_root)
+        try:
+            ret = r.execute() if kw is None else r.execute(**kw)
+        except HttpError as e:
+            start_response(e.status, e.headers)
+            return ('<html><body><h1>%s</h1></body></html>' % e.status)
+        start_response(ctx.response.status, ctx.response.headers)
+        if isinstance(ret, types.GeneratorType):
+            return ret
         # if ret instance of Template...
         if isinstance(ret, str):
             ctx.response.write(ret)
         elif isinstance(ret, unicode):
             ctx.response.write(ret.encode('utf-8'))
-        start_response(ctx.response.status, ctx.response.headers)
         return ctx.response.body
  
     def run(self):
@@ -1086,6 +1380,7 @@ class WSGIApplication(object):
         server.serve_forever()
 
 if __name__=='__main__':
+    sys.path.append('.')
     import doctest
     doctest.testmod()
  
