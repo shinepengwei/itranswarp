@@ -3,17 +3,12 @@
 
 __author__ = 'Michael Liao'
 
-from gevent.wsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 
-import types, os, re, cgi, sys, inspect, datetime, base64, functools, threading, logging, urllib, collections
+import types, os, re, cgi, sys, base64, json, time, hashlib, inspect, datetime, functools, threading, logging, urllib, collections
 
 # thread local object for storing request and response.
 ctx = threading.local()
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 class Dict(dict):
     '''
@@ -44,7 +39,74 @@ class Dict(dict):
     def __setattr__(self, key, value):
         self[key] = value
 
-def _json_loads(s):
+def encode_client_session_cookie(uid, passwd, expires, salt):
+    '''
+    Generate a secure client session cookie by constructing:
+    base64(uid, expires, md5(uid, expires, passwd, salt)).
+    Args:
+      uid: user id.
+      expires: unix-timestamp as float.
+      passwd: user's password.
+      salt: a secure string.
+    Returns:
+      base64 encoded cookie value as str.
+
+    Using partial functions to make it easier for use:
+    encode_client_session = functools.partial(encode_client_session_cookie, salt='My salt')
+    encode_client_session('uid-12345', 'passw0rd', 1230000000)
+    
+    >>> encode_client_session_cookie(12345, 'passw0rd', 1343224532, 'X-SALT')
+    'MTIzNDUsMTM0MzIyNDUzMixkOWEzOTU1ODU4NGQyYTdkZTc3NDEzZjQ2YTM3ZGY1Yw@@'
+    >>> encode_client_session_cookie(12345, 'passw0rd', 4496824532, 'X-SALT')
+    'MTIzNDUsNDQ5NjgyNDUzMixhMjk4ZjhhZmI0MWZkZjNlNThhNWIzNTJiMzJjMzQ3NA@@'
+    '''
+    sid = str(uid)
+    exp = str(int(expires))
+    secure = ','.join([sid, exp, str(passwd), str(salt)])
+    cvalue = ','.join([sid, exp, hashlib.md5(secure).hexdigest()])
+    return base64.urlsafe_b64encode(cvalue).replace('=', '@')
+
+def decode_client_session_cookie(s, get_passwd_by_uid, salt):
+    '''
+    Decode a secure client session cookie and return uid, or None if invalid cookie. 
+    Args:
+      s: base64 encoded cookie value.
+      get_passwd_by_uid: function that return password by uid.
+      salt: a secure string.
+    Returns:
+      user id as str, or None if cookie is invalid.
+
+    Using partial functions to make it easier for use:
+
+    decode_client_session = functools.partial(decode_client_session_cookie, get_passwd_by_uid=get_user_pass, salt='My salt')
+    uid = decode_client_session('cookie-encoded-as-base64')
+
+    >>> def passwd(uid):
+    ...     return u'passw0rd'
+    >>> def badpasswd(uid):
+    ...     return u'iForgot'
+    >>> s_bad = 'dGhpcyBpcyBhIGJhZCBjb29raWU@'
+    >>> s_expired = 'MTIzNDUsMTM0MzIyNDUzMixkOWEzOTU1ODU4NGQyYTdkZTc3NDEzZjQ2YTM3ZGY1Yw@@'
+    >>> s_valid = 'MTIzNDUsNDQ5NjgyNDUzMixhMjk4ZjhhZmI0MWZkZjNlNThhNWIzNTJiMzJjMzQ3NA@@'
+    >>> decode_client_session_cookie(s_bad, passwd, 'X-SALT')
+    >>> decode_client_session_cookie(s_expired, passwd, 'X-SALT')
+    >>> decode_client_session_cookie(s_valid, badpasswd, 'X-SALT')
+    >>> decode_client_session_cookie(s_valid, passwd, 'BAD-SALT')
+    >>> decode_client_session_cookie(s_valid, passwd, 'X-SALT')
+    '12345'
+    '''
+    if isinstance(s, unicode):
+        s = s.encode('utf-8')
+    ss = base64.urlsafe_b64decode(s.replace('@', '=')).split(',')
+    if len(ss)!=3:
+        return None
+    uid, exp, md5 = ss
+    if float(exp) < time.time():
+        return None
+    expected = ','.join([uid, exp, str(get_passwd_by_uid(uid)), str(salt)])
+    return uid if hashlib.md5(expected).hexdigest()==md5 else None
+
+def _json_loads(s, expected=None):
     '''
     Loads json.
 
@@ -55,8 +117,16 @@ def _json_loads(s):
     u'Michael'
     >>> r.users[1].name
     u'Tracy'
+    >>> r = _json_loads(r'{"test": "ok"}', expected=(list, tuple))
+    Traceback (most recent call last):
+      ...
+    TypeError: Object loaded from json is not expected type: (<type 'list'>, <type 'tuple'>)
     '''
-    return json.loads(s, object_pairs_hook=Dict)
+    r = json.loads(s, object_pairs_hook=Dict)
+    if expected:
+        if not isinstance(r, expected):
+            raise TypeError('Object loaded from json is not expected type: %s' % str(expected))
+    return r
 
 def _json_dumps(obj):
     '''
@@ -193,14 +263,16 @@ for hdr in _RESPONSE_HEADERS:
 _HEADER_X_POWERED_BY = ('X-Powered-By', 'iTranswarp/1.0')
 
 class HttpError(StandardError):
+    '''
+    HttpError that defines http error code.
 
+    >>> e = HttpError(404)
+    >>> e.status
+    '404 Not Found'
+    '''
     def __init__(self, code):
         '''
         Init an HttpError with response code.
-
-        >>> e = HttpError(404)
-        >>> e.status
-        '404 Not Found'
         '''
         super(HttpError, self).__init__()
         self.status = '%d %s' % (code, _RESPONSE_STATUSES[code])
@@ -218,6 +290,9 @@ class HttpError(StandardError):
 
     def __str__(self):
         return self.status
+
+class JsonRpcError(StandardError):
+    pass
 
 def badrequest():
     '''
@@ -360,52 +435,125 @@ def _unquote_plus(s, encoding='utf-8'):
 def _log(s):
     logging.info(s)
 
-_JSON_CONVERTERS = {
-    'int': int,
-    'float': float,
-    'str': str,
-    'unicode': lambda s: s.decode('utf-8'),
-    'object': _json_loads
-}
+def _json2str(s):
+    if s.startswith(r'"') and s.endswith(r'"'):
+        return _json_loads(s, expected=unicode).decode('utf-8')
+    return s
 
-def _convert_json(type_args, str_args):
-    if len(type_args)!=len(str_args):
-        raise badrequest()
-    if len(str_args)==0:
-        return str_args
-    return [_JSON_CONVERTERS[t](s) for t, s in zip(type_args, str_args)]
+def _json2unicode(s):
+    if s.startswith(r'"') and s.endswith(r'"'):
+        return _json_loads(s, expected=unicode)
+    return s.decode('utf-8')
+
+def _json2bool(s):
+    if s=='true':
+        return True
+    if s=='false':
+        return False
+    raise ValueError('Cannot decode JSON to bool.')
+
+_JSON_CONVERTERS = {
+    'bool': _json2bool,
+    'int': int,
+    'long': int,
+    'float': float,
+    'str': _json2str,
+    'unicode': _json2unicode,
+    'object': functools.partial(_json_loads, expected=(dict, list, tuple, types.NoneType)),
+    'dict': functools.partial(_json_loads, expected=(dict, types.NoneType)),
+    'list': functools.partial(_json_loads, expected=(list, tuple, types.NoneType)),
+}
 
 def jsonrpc(*type_args):
     '''
-    A json rpc wrapper that convert all args and return value into json objects.
+    A json rpc wrapper that convert all args and return value into json objects. 
+    The function decorated by @jsonrpc can only be called by keyword args.
 
-    >>> @jsonrpc('int', 'unicode', 'object')
+    >>> @jsonrpc(int, unicode, dict)
     ... def show(id, name, job):
     ...     return (id, name, [job.title, job.salary])
+    >>> from StringIO import StringIO
+    >>> ctx.request = Request({'REQUEST_METHOD':'POST', 'wsgi.input':StringIO('id=123&name=%22Michael%22&job=%7B%22title%22%3A%22Architect%22%2C+%22salary%22%3A+875000%7D')})
     >>> ctx.response = Response()
-    >>> show('123', 'Michael', '{"title":"Archetect", "salary": 875000}')
-    '[123, "Michael", ["Archetect", 875000]]'
+    >>> show()
+    '[123, "Michael", ["Architect", 875000]]'
     >>> ctx.response.header('CONTENT-TYPE')
     'application/json; charset=utf-8'
+    >>> ctx.request = Request({'REQUEST_METHOD':'POST', 'wsgi.input':StringIO('id=123&name=Michael&job=true')})
+    >>> show() # expected dict args but pass list args!
+    Traceback (most recent call last):
+      ...
+    TypeError: Object loaded from json is not expected type: (<type 'dict'>, <type 'NoneType'>)
+    >>> @jsonrpc(int) # args are not match the decorating function!
+    ... def bad(id, name):
+    ...     pass
+    >>> bad()
+    Traceback (most recent call last):
+      ...
+    JsonRpcError: @jsonrpc args and function args are not match.
+    >>> @jsonrpc(xrange) # not supported json types: xrange!
+    ... def badrange(range):
+    ...     pass
+    Traceback (most recent call last):
+      ...
+    JsonRpcError: Not supported type: xrange
     '''
+    _f_toname = lambda s: s.__name__ if isinstance(s, type) else str(s)
+    t_args = [_f_toname(ta) for ta in type_args]
+    for t in t_args:
+        if not t in _JSON_CONVERTERS:
+            raise JsonRpcError('Not supported type: %s' % t)
+
     def _decorator(func):
+        def _defaults_dict(f_args, f_defaults):
+            if f_defaults:
+                num = len(f_args) - len(f_defaults)
+                r = {}
+                for k, v in zip(f_args[num:], f_defaults):
+                    r[k] = v
+                return r
+            return {}
+
+        def _convert_json(type_arg, str_arg):
+            return _JSON_CONVERTERS[type_arg](str_arg)
+
         @functools.wraps(func)
-        def _wrapper(**kw):
-            _log('call jsonrpc.wrapper: %s' % str(kw))
+        def _wrapper(**anykw):
+            if len(_wrapper.__args__)!=len(t_args):
+                raise JsonRpcError('@jsonrpc args and function args are not match.')
+            kw = ctx.request.input()
             vargs = []
-            for arg in _wrapper.__args__:
-                vargs.append(kw.pop(arg))
+            count = _wrapper.__required_args__
+            for arg, targ in zip(_wrapper.__args__, t_args):
+                if count > 0:
+                    if arg in kw:
+                        vargs.append(_convert_json(targ, kw[arg]))
+                    else:
+                        raise JsonRpcError('Not enough args.')
+                else:
+                    if arg in kw:
+                        vargs.append(_convert_json(targ, kw[arg]))
+                    else:
+                        vargs.append(_wrapper.__defaults_dict__[arg])
+                count = count - 1
+
             _log('call jsonrpc.wrapper args: %s' % str(vargs))
-            r = func(*_convert_json(type_args, vargs))
+            r = func(*vargs)
             jr = _json_dumps(r)
             ctx.response.set_header('CONTENT-TYPE', 'application/json; charset=utf-8')
             return jr
         fargs, fvarargs, fkw, fdefaults = inspect.getargspec(func)
         if fvarargs:
-            raise TypeError('function decorated with @jsonrpc cannot have varargs.')
+            raise JsonRpcError('function decorated with @jsonrpc cannot have varargs.')
         if fkw:
-            raise TypeError('function decorated with @jsonrpc cannot have keyword args.')
+            raise JsonRpcError('function decorated with @jsonrpc cannot have keyword args.')
         _wrapper.__args__ = fargs
+        if fdefaults:
+            _wrapper.__required_args__ = len(fargs) - len(fdefaults)
+            _wrapper.__defaults_dict__ = _defaults_dict(fargs, fdefaults)
+        else:
+            _wrapper.__required_args__ = len(fargs)
+            _wrapper.__defaults_dict__ = {}
         return _wrapper
     return _decorator
 
@@ -1196,7 +1344,7 @@ class Response(object):
 
 class Template(object):
 
-    def __init__(self, template_name=None, model=None, **kw):
+    def __init__(self, template_name, model=None, **kw):
         '''
         Init a template object with template name, model as dict, and additional kw that will append to model.
 
@@ -1264,10 +1412,18 @@ def _install_template_engine(name, templ_dir, **kw):
     if name=='mako':
         return _init_mako(templ_dir, **kw)
     if name=='jinja2':
-        return _init_jinjia2(templ_dir, **kw)
+        return _init_jinja2(templ_dir, **kw)
     if name=='cheetah':
         return _init_cheetah(templ_dir, **kw)
     raise StandardError('no such template engine: %s' % name)
+
+def _default_error_handler(e, start_response):
+    logging.exception('Exception:')
+    if isinstance(e, HttpError):
+        start_response(e.status, e.headers)
+        return ('<html><body><h1>%s</h1></body></html>' % e.status)
+    start_response('500 Internal Server Error', ())
+    return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
 
 class WSGIApplication(object):
 
@@ -1284,7 +1440,7 @@ class WSGIApplication(object):
                 reload(mod)
                 shouldreload = True
         if shouldreload:
-            self.static_routes, self.re_routes = self._parse_routes(self.modules, self.debug)
+            self.static_routes, self.re_routes = self._parse_routes(self.modules, self._debug)
 
     def _parse_modules(self, modules, debug):
         L = []
@@ -1320,9 +1476,25 @@ class WSGIApplication(object):
         return static_routes, re_routes
 
     def __init__(self, modules, document_root=None, encoding='utf-8', template_engine=None, **kw):
-        self.debug = kw.pop('DEBUG', False)
-        self.modules = self._parse_modules(modules, self.debug)
-        self.static_routes, self.re_routes = self._parse_routes(self.modules, self.debug)
+        '''
+        Init a WSGIApplication.
+
+        Args:
+          modules: a list of modules that contains routes.
+          document_root: document root path, default to None.
+          template_engine: name of template engine, or function that can install a template engine.
+                           The built-in supported template engines are 'mako', 'jinja2' and 'cheetah'.
+          kw: keywords args:
+              DEBUG = True|False, default to False. Modules will automatically reloaded if changed in debug mode.
+              LISTEN = '0.0.0.0', default to listen all local IPs.
+              PORT = 8080, default to 8080.
+        '''
+        self._debug = kw.pop('DEBUG', False)
+        self._listen = kw.pop('LISTEN', '0.0.0.0')
+        self._port = kw.pop('PORT', 8080)
+        self.modules = self._parse_modules(modules, self._debug)
+        self.static_routes, self.re_routes = self._parse_routes(self.modules, self._debug)
+        self.error_handler = _default_error_handler
 
         if document_root is None:
             # suppose document_root is ../web.py:
@@ -1331,12 +1503,12 @@ class WSGIApplication(object):
         _log('load document_root: %s' % self.document_root)
 
         if isinstance(template_engine, basestring):
-            self.template_render = _install_template_engine(template_engine)
+            self.template_render = _install_template_engine(template_engine, self.document_root)
         elif callable(template_engine):
             self.template_render = template_engine
 
     def __call__(self, environ, start_response):
-        if self.debug:
+        if self._debug:
             self._autoreload()
         path_info = environ['PATH_INFO']
         kw = None
@@ -1353,7 +1525,7 @@ class WSGIApplication(object):
                     break
         if not r:
             _log('no route matched: %s' % path_info)
-            raise HttpError('404')
+            return self.error_handler(HttpError(404), start_response)
 
         global ctx
         ctx.document_root = self.document_root
@@ -1362,21 +1534,25 @@ class WSGIApplication(object):
         _log('ctx.document_root: %s' % ctx.document_root)
         try:
             ret = r.execute() if kw is None else r.execute(**kw)
-        except HttpError as e:
-            start_response(e.status, e.headers)
-            return ('<html><body><h1>%s</h1></body></html>' % e.status)
-        start_response(ctx.response.status, ctx.response.headers)
+        except Exception as e:
+            return self.error_handler(e, start_response)
         if isinstance(ret, types.GeneratorType):
+            start_response(ctx.response.status, ctx.response.headers)
             return ret
         # if ret instance of Template...
         if isinstance(ret, str):
             ctx.response.write(ret)
         elif isinstance(ret, unicode):
             ctx.response.write(ret.encode('utf-8'))
+        elif isinstance(ret, Template):
+            ctx.response.write(self.template_render(ret.template_name, **ret.model))
+        else:
+            ctx.response.write(str(ret))
+        start_response(ctx.response.status, ctx.response.headers)
         return ctx.response.body
  
     def run(self):
-        server = WSGIServer(('0.0.0.0', 8080), self)
+        server = WSGIServer((self._listen, self._port), self)
         server.serve_forever()
 
 if __name__=='__main__':
