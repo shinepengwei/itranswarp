@@ -464,6 +464,28 @@ _JSON_CONVERTERS = {
     'list': functools.partial(_json_loads, expected=(list, tuple, types.NoneType)),
 }
 
+def jsonresult(func):
+    '''
+    Autoconvert result to json str.
+
+    >>> @jsonresult
+    ... def hello(name):
+    ...     return dict(name=name)
+    >>> ctx.response = Response()
+    >>> hello('Bob')
+    '{"name": "Bob"}'
+    >>> ctx.response.header('CONTENT-TYPE')
+    'application/json; charset=utf-8'
+    >>> hello(None)
+    '{"name": null}'
+    '''
+    @functools.wraps(func)
+    def _wrapper(*args, **kw):
+        r = func(*args, **kw)
+        ctx.response.content_type = 'application/json; charset=utf-8'
+        return _json_dumps(r)
+    return _wrapper
+
 def jsonrpc(*type_args):
     '''
     A json rpc wrapper that convert all args and return value into json objects. 
@@ -805,6 +827,24 @@ class Request(object):
         self._cache[key] = r
         return r
 
+    def _get_raw_input(self):
+        def _do_get_raw_input():
+            def _convert_item(item):
+                if isinstance(item, list):
+                    return [_unicode(i.value) for i in item]
+                if item.file:
+                    # convert to file:
+                    return MultipartFile(item)
+                # single value:
+                return _unicode(item.value)
+            fs = cgi.FieldStorage(fp=self._environ['wsgi.input'], environ=self._environ, keep_blank_values=True)
+            form = {}
+            for key in fs:
+                item = fs[key]
+                form[key] = _convert_item(item)
+            return form
+        return self._fromcache('CACHED_INPUT', _do_get_raw_input)
+
     def input(self, **kw):
         '''
         Get input from request.
@@ -827,25 +867,12 @@ class Request(object):
         >>> i.x
         2008
         '''
-        def _get_input():
-            def _convert_item(item):
-                if isinstance(item, list):
-                    return [_unicode(i.value) for i in item]
-                if item.file:
-                    # convert to file:
-                    return MultipartFile(item)
-                # single value:
-                return _unicode(item.value)
-            fs = cgi.FieldStorage(fp=self._environ['wsgi.input'], environ=self._environ, keep_blank_values=True)
-            form = {}
-            for key in fs:
-                item = fs[key]
-                form[key] = _convert_item(item)
+        copy = _InputDict(**self._get_raw_input())
+        if kw:
             for k, v in kw.iteritems():
-                if not k in form:
-                    form[k] = v
-            return _InputDict(**form)
-        return self._fromcache('CACHED_INPUT', _get_input)
+                if not k in copy:
+                    copy[k] = v
+        return copy
 
     def __getitem__(self, key):
         '''
@@ -863,7 +890,10 @@ class Request(object):
             ...
         KeyError: 'empty'
         '''
-        return self.input()[key]
+        r = self._get_raw_input()[key]
+        if isinstance(r, list):
+            return r[0]
+        return r
 
     def get(self, key, default=None):
         '''
@@ -877,7 +907,10 @@ class Request(object):
         >>> r.get('empty', 'DEFAULT')
         'DEFAULT'
         '''
-        return self.input().get(key, default)
+        r = self._get_raw_input().get(key, default)
+        if isinstance(r, list):
+            return r[0]
+        return r
 
     def gets(self, key):
         '''
@@ -894,7 +927,10 @@ class Request(object):
             ...
         KeyError: 'empty'
         '''
-        return self.input().gets(key)
+        r = self._get_raw_input()[key]
+        if isinstance(r, list):
+            return r[:]
+        return [r]
 
     def __iter__(self):
         '''
@@ -904,7 +940,7 @@ class Request(object):
         >>> [key for key in r]
         ['a', 'c', 'b', 'e']
         '''
-        return self.input().__iter__()
+        return self._get_raw_input().__iter__()
 
     @property
     def remote_addr(self):
@@ -1372,8 +1408,8 @@ def _init_mako(templ_dir, **kw):
     '''
     from mako.lookup import TemplateLookup
     lookup = TemplateLookup(directories=[templ_dir], output_encoding='utf-8', **kw)
-    def _render(name, **model):
-        return lookup.get_template(name).render(**model)
+    def _render(_mako_temp_name_, **model):
+        return lookup.get_template(_mako_temp_name_).render(**model)
     return _render
 
 def _init_jinja2(templ_dir, **kw):
@@ -1388,8 +1424,23 @@ def _init_jinja2(templ_dir, **kw):
     '''
     from jinja2 import Environment, FileSystemLoader
     env = Environment(loader=FileSystemLoader(templ_dir, **kw))
-    def _render(name, **model):
-        return env.get_template(name).render(**model).encode('utf-8')
+    def datetime_filter(value, format='%y-%m-%d %H:%M'):
+        if isinstance(value, (float, int, long)):
+            value = datetime.datetime.fromtimestamp(value)
+        return value.strftime(format)
+    def date_filter(value, format='%y-%m-%d'):
+        if isinstance(value, (float, int, long)):
+            value = datetime.datetime.fromtimestamp(value)
+        return value.strftime(format)
+    def time_filter(value, format='%H:%M'):
+        if isinstance(value, (float, int, long)):
+            value = datetime.datetime.fromtimestamp(value)
+        return value.strftime(format)
+    env.filters['dt'] = datetime_filter
+    env.filters['d'] = date_filter
+    env.filters['t'] = time_filter
+    def _render(_jinja2_temp_name_, **model):
+        return env.get_template(_jinja2_temp_name_).render(**model).encode('utf-8')
     return _render
 
 def _init_cheetah(templ_dir, **kw):
@@ -1403,8 +1454,8 @@ def _init_cheetah(templ_dir, **kw):
     '<p>Hello, Michael.</p><p>Hello, Tracy.</p>'
     '''
     from Cheetah.Template import Template
-    def _render(name, **model):
-        return str(Template(file=os.path.join(templ_dir, name), searchList=[model]))
+    def _render(_cheetah_temp_name_, **model):
+        return str(Template(file=os.path.join(templ_dir, _cheetah_temp_name_), searchList=[model]))
     return _render
 
 def _install_template_engine(name, templ_dir, **kw):

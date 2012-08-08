@@ -9,6 +9,41 @@ Database operation module. This module is independent with web module.
 
 import os, sys, time, datetime, functools, threading, logging, collections
 
+logging.basicConfig(level=logging.INFO)
+
+class _IdGenerator():
+    def __init__(self, server_id=0):
+        self.server_id = server_id
+        self.time_reduction = 1262275200000
+        self.last_time = self._get_current_time()
+        self.auto_increase = 0
+
+    def _get_current_time(self):
+        return long((time.time() * 1000 - self.time_reduction)) >> 8
+
+    def next_id(self):
+        current = self._get_current_time()
+        if current < self.last_time:
+            current = self.last_time
+            self.auto_increase = 0
+        elif current > self.last_time:
+            self.auto_increase = 0
+        elif (current == self.last_time) and ((self.auto_increase & 0x1fffff) == 0x100000):
+            current += 1
+            self.auto_increase = 0
+        self.last_time = current
+        next = (current << 28) | (0xfffff00L & (self.auto_increase << 8)) | self.server_id
+        self.auto_increase += 1
+        return next
+
+_id_generator = None
+
+def next_int():
+    return _id_generator.next_id()
+
+def next_str():
+    return str(_id_generator.next_id())
+
 class _Dict(dict):
     '''
     Simple dict but support access as x.y style.
@@ -49,8 +84,6 @@ class _Dict(dict):
 
     def __setattr__(self, key, value):
         self[key] = value
-
-logging.basicConfig(level=logging.INFO)
 
 class DBError(Exception):
     pass
@@ -254,7 +287,9 @@ def _select(sql, unique, *args):
 @with_connection
 def select_one(sql, *args):
     '''
-    Execute insert SQL.
+    Execute select SQL and expected one and only one result. 
+    If no result found, NoResultError raises. 
+    If multiple results found, MultiResultsError raises.
 
     >>> u1 = dict(id=100, name='Alice', email='alice@test.org', passwd='ABC-12345', last_modified=time.time())
     >>> u2 = dict(id=101, name='Sarah', email='sarah@test.org', passwd='ABC-12345', last_modified=time.time())
@@ -277,7 +312,7 @@ def select_one(sql, *args):
 @with_connection
 def select(sql, *args):
     '''
-    Execute insert SQL.
+    Execute select SQL and return list or empty list if no result.
 
     >>> u1 = dict(id=200, name='Wall.E', email='wall.e@test.org', passwd='back-to-earth', last_modified=time.time())
     >>> u2 = dict(id=201, name='Eva', email='eva@test.org', passwd='back-to-earth', last_modified=time.time())
@@ -354,6 +389,41 @@ def update(sql, *args):
     '''
     return _update(sql, args)
 
+def update_kw(table, where, *args, **kw):
+    '''
+    Execute update SQL by table, where, args and kw.
+
+    >>> u1 = dict(id=900900, name='Maya', email='maya@test.org', passwd='MAYA', last_modified=time.time())
+    >>> insert('user', **u1)
+    >>> u2 = select_one('select * from user where id=?', 900900)
+    >>> u2.email
+    u'maya@test.org'
+    >>> u2.passwd
+    u'MAYA'
+    >>> update_kw('user', 'id=?', 900900, name='Kate', email='kate@example.org')
+    >>> u3 = select_one('select * from user where id=?', 900900)
+    >>> u3.name
+    u'Kate'
+    >>> u3.email
+    u'kate@example.org'
+    >>> u3.passwd
+    u'MAYA'
+    '''
+    if len(kw)==0:
+        raise ValueError('No kw args.')
+    sqls = ['update', table, 'set']
+    params = []
+    updates = []
+    for k, v in kw.iteritems():
+        updates.append('%s=?' % k)
+        params.append(v)
+    sqls.append(', '.join(updates))
+    sqls.append('where')
+    sqls.append(where)
+    sql = ' '.join(sqls)
+    params.extend(args)
+    return update(sql, *params)
+
 def init(dbn, db, user='', passwd='', host=None, driver=None, **kw):
     '''
     Initialize database by:
@@ -365,11 +435,11 @@ def init(dbn, db, user='', passwd='', host=None, driver=None, **kw):
       driver: db driver, default to None.
       **kw: other parameters, e.g. use_unicode=True
     '''
-    global _db_connect, _db_convert
+    global _db_connect, _db_convert, _id_generator
     if dbn=='mysql':
         _log('init mysql...')
         import MySQLdb
-        _db_connect = lambda: MySQLdb.connect(host, user, passwd, db, use_unicode=True)
+        _db_connect = lambda: MySQLdb.connect(host, user, passwd, db, use_unicode=True, charset='utf8')
         _db_convert = '%s'
     elif dbn=='sqlite3':
         _log('init sqlite3...')
@@ -377,6 +447,7 @@ def init(dbn, db, user='', passwd='', host=None, driver=None, **kw):
         _db_connect = lambda: sqlite3.connect(db)
     else:
         raise DBError('Unsupported db: %s' % dbn)
+    _id_generator = _IdGenerator(kw.pop('sharding', 0))
 
 if __name__=='__main__':
     sys.path.append('.')
