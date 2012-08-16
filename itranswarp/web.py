@@ -895,6 +895,8 @@ class Request(object):
         >>> r = Request({'REQUEST_METHOD':'POST', 'CONTENT_LENGTH':str(len(payload)), 'CONTENT_TYPE':'multipart/form-data; boundary=%s' % b, 'wsgi.input':StringIO(payload)})
         >>> r.get('name')
         u'Scofield'
+        >>> r.gets('name')
+        [u'Scofield', u'Lincoln']
         '''
         r = self._get_raw_input()[key]
         if isinstance(r, list):
