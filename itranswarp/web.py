@@ -828,20 +828,20 @@ class Request(object):
         return r
 
     def _get_raw_input(self):
+        ' return raw input as dict with key=field name, value=list or MultipartFile. '
         def _do_get_raw_input():
             def _convert_item(item):
                 if isinstance(item, list):
                     return [_unicode(i.value) for i in item]
-                if item.file:
+                if item.filename:
                     # convert to file:
                     return MultipartFile(item)
                 # single value:
                 return _unicode(item.value)
             fs = cgi.FieldStorage(fp=self._environ['wsgi.input'], environ=self._environ, keep_blank_values=True)
-            form = {}
+            form = dict()
             for key in fs:
-                item = fs[key]
-                form[key] = _convert_item(item)
+                form[key] = _convert_item(fs[key])
             return form
         return self._fromcache('CACHED_INPUT', _do_get_raw_input)
 
@@ -889,6 +889,12 @@ class Request(object):
         Traceback (most recent call last):
             ...
         KeyError: 'empty'
+        >>> b = '----WebKitFormBoundaryQQ3J8kPsjFpTmqNz'
+        >>> pl = ['--%s' % b, 'Content-Disposition: form-data; name=\\"name\\"\\n', 'Scofield', '--%s' % b, 'Content-Disposition: form-data; name=\\"name\\"\\n', 'Lincoln', '--%s' % b, 'Content-Disposition: form-data; name=\\"file\\"; filename=\\"test.txt\\"', 'Content-Type: text/plain\\n', 'just a test', '--%s' % b, 'Content-Disposition: form-data; name=\\"id\\"\\n', '4008009001', '--%s--' % b, '']
+        >>> payload = '\\n'.join(pl)
+        >>> r = Request({'REQUEST_METHOD':'POST', 'CONTENT_LENGTH':str(len(payload)), 'CONTENT_TYPE':'multipart/form-data; boundary=%s' % b, 'wsgi.input':StringIO(payload)})
+        >>> r.get('name')
+        u'Scofield'
         '''
         r = self._get_raw_input()[key]
         if isinstance(r, list):
