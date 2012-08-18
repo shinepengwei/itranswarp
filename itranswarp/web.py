@@ -747,6 +747,7 @@ def static_file_handler(*args, **kw):
     _log('static file: %s' % fpath)
     fext = os.path.splitext(fpath)[1]
     ctx.response.content_type = _MIME_MAP.get(fext.lower(), 'application/octet-stream')
+    ctx.response.content_length = os.path.getsize(fpath)
     if not os.path.isfile(fpath):
         raise HttpError(404)
     return _static_file_generator(fpath)
@@ -897,6 +898,11 @@ class Request(object):
         u'Scofield'
         >>> r.gets('name')
         [u'Scofield', u'Lincoln']
+        >>> f = r.get('file')
+        >>> f.filename
+        u'test.txt'
+        >>> f.file.read()
+        'just a test'
         '''
         r = self._get_raw_input()[key]
         if isinstance(r, list):
@@ -960,6 +966,17 @@ class Request(object):
         '192.168.0.100'
         '''
         return self._environ.get('REMOTE_ADDR', '0.0.0.0')
+
+    @property
+    def document_root(self):
+        '''
+        Get raw document_root as str. Return '' if no document_root.
+
+        >>> r = Request({'DOCUMENT_ROOT': '/srv/path/to/doc'})
+        >>> r.document_root
+        '/srv/path/to/doc'
+        '''
+        return self._environ.get('DOCUMENT_ROOT', '')
 
     @property
     def query_string(self):
@@ -1233,6 +1250,34 @@ class Response(object):
         '''
         self.set_header('CONTENT-TYPE', value)
 
+    @property
+    def content_length(self):
+        '''
+        Get content length. Return None if not set.
+
+        >>> r = Response()
+        >>> r.content_length
+        >>> r.content_length = 100
+        >>> r.content_length
+        '100'
+        '''
+        return self.header('CONTENT-LENGTH')
+
+    @content_length.setter
+    def content_length(self, value):
+        '''
+        Set content length, the value can be int or str.
+
+        >>> r = Response()
+        >>> r.content_length = '1024'
+        >>> r.content_length
+        '1024'
+        >>> r.content_length = 1024 * 8
+        >>> r.content_length
+        '8192'
+        '''
+        self.set_header('CONTENT-LENGTH', str(value))
+
     def set_cookie(self, name, value, max_age=None, expires=None, path='/', domain=None, secure=False, http_only=False):
         '''
         Set a cookie.
@@ -1386,6 +1431,203 @@ class Response(object):
     def reset(self):
         self._output[:] = []
 
+class Page(object):
+    '''
+    Page object that can be used for calculate pagination.
+    '''
+
+    def __init__(self, page_index, page_size, total):
+        '''
+        Init Page object with:
+            page_index: starts from 1.
+            page_size: page size, at least 1.
+            total: total items, non-negative value.
+        '''
+        if page_index < 1:
+            raise ValueError('page_index must be greater than 0')
+        if page_size < 1:
+            raise ValueError('page_size must be greater than 0')
+        if total < 0:
+            raise ValueError('total must be non-negative')
+        self._total = total
+        self._index = page_index
+        self._size = page_size
+        if total > 0:
+            page_count = total // page_size + (0 if (total % page_size)==0 else 1)
+            if page_index > page_count:
+                raise ValueError('page_index is out of range [1..%s]' % page_count)
+            offset = page_size * (page_index - 1)
+            limit = page_size if page_index < page_count else total - (page_index - 1) * page_size
+            self._offset = offset
+            self._limit = limit
+            self._pages = page_count
+        else:
+            self._offset = 0
+            self._limit = 0
+            self._pages = 0
+
+    @property
+    def offset(self):
+        '''
+        The offset of first item of current page.
+
+        >>> Page(1, 10, 99).offset
+        0
+        >>> Page(2, 10, 99).offset
+        10
+        >>> Page(3, 15, 99).offset
+        30
+        >>> Page(1, 10, 0).offset
+        0
+        '''
+        return self._offset
+
+    @property
+    def limit(self):
+        '''
+        The number of items of current page.
+
+        >>> Page(1, 10, 99).limit
+        10
+        >>> Page(2, 10, 99).limit
+        10
+        >>> Page(10, 10, 91).limit
+        1
+        >>> Page(10, 10, 99).limit
+        9
+        >>> Page(10, 10, 100).limit
+        10
+        >>> Page(1, 10, 0).limit
+        0
+        '''
+        return self._limit
+
+    @property
+    def index(self):
+        '''
+        The current page index.
+
+        >>> Page(1, 10, 99).index
+        1
+        >>> Page(2, 10, 99).index
+        2
+        >>> Page(10, 10, 99).index
+        10
+        >>> Page(11, 10, 99).index
+        Traceback (most recent call last):
+            ...
+        ValueError: page_index is out of range [1..10]
+        '''
+        return self._index
+
+    @property
+    def size(self):
+        '''
+        The page size.
+
+        >>> Page(1, 5, 100).size
+        5
+        >>> Page(1, 10, 100).size
+        10
+        >>> Page(1, 0, 100).size
+        Traceback (most recent call last):
+            ...
+        ValueError: page_size must be greater than 0
+        '''
+        return self._size
+
+    @property
+    def pages(self):
+        '''
+        Get how many pages.
+
+        >>> Page(1, 10, 0).pages
+        0
+        >>> Page(1, 10, 1).pages
+        1
+        >>> Page(1, 10, 9).pages
+        1
+        >>> Page(1, 10, 10).pages
+        1
+        >>> Page(1, 10, 11).pages
+        2
+        >>> Page(1, 10, 19).pages
+        2
+        >>> Page(1, 10, 20).pages
+        2
+        >>> Page(1, 10, 21).pages
+        3
+        >>> Page(1, 10, 100).pages
+        10
+        >>> Page(1, 10, 101).pages
+        11
+        '''
+        return self._pages
+
+    @property
+    def empty(self):
+        '''
+        Test if should show "no items to display".
+
+        >>> Page(1, 10, 0).empty
+        True
+        >>> Page(1, 10, 1).empty
+        False
+        '''
+        return self._pages==0
+
+    @property
+    def total(self):
+        '''
+        Get total items.
+
+        >>> Page(1, 10, 0).total
+        0
+        >>> Page(1, 10, 99).total
+        99
+        '''
+        return self._total
+
+    def nearby(self, number=5):
+        '''
+        Get nearby page indexes as list. For example, current page index is 10, 
+        the nearby() returns [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].
+
+        >>> Page(1, 10, 1000).nearby()
+        [1, 2, 3, 4, 5, 6]
+        >>> Page(2, 10, 1000).nearby()
+        [1, 2, 3, 4, 5, 6, 7]
+        >>> Page(6, 10, 1000).nearby()
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        >>> Page(7, 10, 1000).nearby()
+        [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        >>> Page(95, 10, 1000).nearby()
+        [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100]
+        >>> Page(96, 10, 1000).nearby()
+        [91, 92, 93, 94, 95, 96, 97, 98, 99, 100]
+        >>> Page(99, 10, 1000).nearby()
+        [94, 95, 96, 97, 98, 99, 100]
+        >>> Page(100, 10, 1000).nearby()
+        [95, 96, 97, 98, 99, 100]
+        >>> Page(6, 10, 1000).nearby(3)
+        [3, 4, 5, 6, 7, 8, 9]
+        >>> Page(6, 10, 1000).nearby(1)
+        [5, 6, 7]
+        >>> Page(1, 10, 0).nearby()
+        []
+        '''
+        if number < 1:
+            raise ValueError('number must be greater than 0.')
+        if self._pages==0:
+            return []
+        lower = self._index - number
+        higher = self._index + number
+        if lower < 1:
+            lower = 1
+        if higher > self._pages:
+            higher = self._pages
+        return range(lower, higher + 1)
+
 class Template(object):
 
     def __init__(self, template_name, model=None, **kw):
@@ -1444,9 +1686,14 @@ def _init_jinja2(templ_dir, **kw):
         if isinstance(value, (float, int, long)):
             value = datetime.datetime.fromtimestamp(value)
         return value.strftime(format)
+    def jsstr_filter(value):
+        if isinstance(value, str):
+            value = value.decode('utf-8')
+        return value.replace('\"', '\\\"').replace('\'', '\\\'').replace('\n', '\\n').replace('\r', '\\r')
     env.filters['dt'] = datetime_filter
     env.filters['d'] = date_filter
     env.filters['t'] = time_filter
+    env.filters['jsstr'] = jsstr_filter
     def _render(_jinja2_temp_name_, **model):
         return env.get_template(_jinja2_temp_name_).render(**model).encode('utf-8')
     return _render
@@ -1477,10 +1724,11 @@ def _install_template_engine(name, templ_dir, **kw):
     raise StandardError('no such template engine: %s' % name)
 
 def _default_error_handler(e, start_response):
-    logging.exception('Exception:')
     if isinstance(e, HttpError):
+        logging.info('HttpError: %s' % e.status)
         start_response(e.status, e.headers)
         return ('<html><body><h1>%s</h1></body></html>' % e.status)
+    logging.exception('Exception:')
     start_response('500 Internal Server Error', ())
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
 
