@@ -1,0 +1,101 @@
+<script type="text/JavaScript">
+    function saveOrders() {
+        $('#btn-order').hide();
+        $('#loading').show();
+        $('#form-order').submit();
+    }
+
+    function moveUp(trid) {
+        var me = $('#tr-' + trid);
+        var x = me.prev();
+        if (x.length > 0) {
+            me.after(x);
+            $('#btn-order').show();
+        }
+    }
+
+    function moveDown(trid) {
+        var me = $('#tr-' + trid);
+        var x = me.next();
+        if (x.length > 0) {
+            me.before(x);
+            $('#btn-order').show();
+        }
+    }
+
+    function delete_x(id) {
+        var name = $('#tr-' + id + ' td.name').text()
+        $('#span-delete-x-name').text(name);
+        $('#a-delete-x').attr('href', 'do_delete_category?id='+id);
+        $('#delete-modal').modal('show');
+    }
+</script>
+
+<div id="delete-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Deletion Confirm</h3>
+    </div>
+    <div class="modal-body">
+        <p>Are you sure you want to permanently delete the category "<strong><span id="span-delete-x-name"></span></strong>"?</p>
+        <p>This operation is unrecoverable!</p>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">Delete</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">Close</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <h3>All Categories</h3>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <a href="?action=add" class="btn btn-primary pull-right">Add New Category</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <form id="form-order" name="form-order" action="order_categories">
+            <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Operations</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-categories">
+{% for c in categories %}
+                <tr id="tr-{{ c.id }}">
+                    <td class="name">{{ c.name|e }}</td>
+                    <td>{{ c.description|e }}</td>
+                    <td>{{ c.creation_time|dt }}</td>
+                    <td>
+                        <a href="javascript:moveUp('{{ c.id }}')">Move Up</a> |
+                        <a href="javascript:moveDown('{{ c.id }}')">Move Down</a> |
+                        <a href="?action=edit&id={{ c.id }}">Edit</a>
+{% if not c.locked %}
+                        | <a href="javascript:delete_x('{{ c.id }}')">Delete</a>
+{% endif %}
+                        <input type="hidden" name="order" value="{{ c.id }}" />
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+        </form>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">Save Orders</button>
+        <span id="loading" class="loading pull-right hide">Saving orders...</span>
+    </div>
+</div>

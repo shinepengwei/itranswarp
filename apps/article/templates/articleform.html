@@ -1,0 +1,111 @@
+<div class="row">
+    <div class="span10">
+        <h3>{{ form_title }}</h3>
+    </div>
+</div>
+
+<div class="row sep"></div>
+
+<div id="div-error" class="row hide">
+    <div class="span10">
+        <div class="alert alert-error">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <span id="span-error"></span>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null || err=='') {
+            $('#div-error').hide();
+            return false;
+        }
+        $('#span-error').text(err);
+        $('#div-error').show();
+        $('#div-' + field_name).addClass('error');
+        if ($('#div-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('#div-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('#submit').attr('disabled', 'disabled');
+            $('#loading').show();
+        }
+        else {
+            $('#submit').removeAttr('disabled');
+            $('#loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        show_loading(true);
+        $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+            if (result.error) {
+                show_loading(false);
+                show_error(result.error, result.error_field);
+            }
+            else {
+                show_error(null);
+                location.assign(result.redirect);
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('Server error!', '');
+        });
+        return false;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <form id="form-x" action="{{ action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div id="div-name" class="control-group">
+                    <label class="control-label">Title:</label>
+                    <div class="controls">
+                        <input id="name" name="name" type="text" value="{{ name|e }}" class="input-xlarge" />
+                    </div>
+                </div>
+{% if not static %}
+                <div id="div-category_id" class="control-group">
+                    <label class="control-label">Category:</label>
+                    <div class="controls">
+                        <select id="category_id" name="category_id" class="input-xlarge">
+    {% for c in categories %}
+                            <option value="{{ c.id }}">{{ c.name|e }}</option>
+    {% endfor %}
+                        </select>
+                    </div>
+                </div>
+<script type="text/javascript">
+$('#category_id').val('{{ category_id }}');
+</script>
+{% endif %}
+                <div id="div-tags" class="control-group">
+                    <label class="control-label">Tags:</label>
+                    <div class="controls">
+                        <input id="tags" name="tags" type="text" value="{{ tags|e }}" class="input-xlarge" />
+                        <span class="help-inline">Tags seperated by ,</span>
+                    </div>
+                </div>
+                <div id="div-content" class="control-group">
+                    <textarea id="redactor-editor" name="content" class="redactor span8" style="height: 420px;">
+                    {{ content|e }}
+                    </textarea>
+                </div>
+                <div class="form-actions">
+                    <input type="hidden" name="id" value="{{ id }}" />
+                    <button type="submit" id="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn" onclick="location.assign('{{ 'pages' if static else 'articles' }}')">Cancel</button>
+                    <span id="loading" class="loading hide">Processing, please wait...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

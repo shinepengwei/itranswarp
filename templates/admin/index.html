@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>iTranswarp</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <link rel="stylesheet" href="/static/css/redactor.css" />
+    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/redactor.min.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            var li = $('#menuitem-{{ __mod__ }}-{{ __handler__ }}');
+            li.addClass('active');
+            document.title = li.text() + ' - ' + document.title;
+            $('.redactor').redactor({
+                autoresize: false,
+                imageUpload: '/admin/manage/do_add_media'
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-inner">
+            <div class="container">
+                <a class="brand" href="/">我的站点</a>
+                <div class="nav-collapse">
+                    <ul class="nav">
+                        <li class="active"><a href="#">首页</a></li>
+                        <li><a href="#">文章</a></li>
+                        <li><a href="#">相册</a></li>
+                        <li class="divider-vertical"></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多 <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">管理</a></li>
+                                <li><a href="#">管理</a></li>
+                                <li class="divider"></li>
+                                <li class="nav-header">管理员</li>
+                                <li><a href="#">管理</a></li>
+                                <li><a href="#">管理</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <form class="navbar-search pull-left" action="/" method="post">
+                        <input type="text" name="q" placeholder="请输入关键字" class="search-query span2" />
+                    </form>
+                    <ul class="nav pull-right">
+                        <li><a href="#">登录</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">短消息 <span class="badge badge-warning">3</span> <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/">My Profile</a></li>
+                                <li><a href="/">My Connect</a></li>
+                                <li class="divider"></li>
+                                <li><a href="/">Sign Out</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">USERNAME <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/">My Profile</a></li>
+                                <li><a href="/">My Connect</a></li>
+                                <li class="divider"></li>
+                                <li><a href="/">Sign Out</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Help <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/">About iTranswarp</a></li>
+                                <li class="divider"></li>
+                                <li><a href="/">iTranswarp.org</a></li>
+                                <li><a href="/">Documentation</a></li>
+                                <li><a href="/">Support Forums</a></li>
+                                <li><a href="/">Feedback</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div><!-- /navbar -->
+
+    <div class="container">
+        <div class="row">
+            <div class="span2">
+                <div class="well" style="padding: 8px 0px;">
+                    <ul class="nav nav-list">
+{% for m in __menus__ %}
+                        <li class="nav-header">{{ m.title }}</li>
+    {% for i in m.items %}
+                        <li id="menuitem-{{ m.mod }}-{{ i.handler }}"><a href="/admin/{{ m.mod }}/{{ i.handler }}">{{ i.title }}</a></li>
+    {% endfor %}
+{% endfor %}
+                        <li class="divider"></li>
+                        <li><a href="#">帮助信息</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="span10">
+                <!-- BEGIN include -->
+{% include __include__ %}
+                <!-- END include -->
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span12">
+                <hr />
+            </div>
+        </div>
+
+        <div class="row" style="padding-top: 16px; padding-bottom: 16px;">
+            <div class="span4">
+                <p><a href="https://github.com/michaelliao/itranswarp" target="_blank">iTranswarp</a> by <a href="http://twitter.com/liaoxuefeng" target="_blank">@liaoxuefeng</a>.</p>
+            </div>
+            <div class="span4">
+                <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License v2.0</a>.</p>
+            </div>
+            <div class="span4">
+                <p>CSS from <a href="http://twitter.github.com/bootstrap/" target="_blank">Bootstrap</a>.</p>
+                <p>JavaScript from <a href="http://www.jquery.com/" target="_blank">JQuery</a>.</p>
+                <p>WYSIWYG from <a href="http://redactorjs.com/" target="_blank">Redactor</a>.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

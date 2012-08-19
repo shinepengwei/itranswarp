@@ -1,0 +1,96 @@
+<script type="text/JavaScript">
+    function delete_x(id) {
+        var name = $('#tr-' + id + ' td.name').text();
+        $('#span-delete-x-name').text(name);
+        $('#a-delete-x').attr('href', 'do_delete_article?id='+id);
+        $('#delete-modal').modal('show');
+    }
+    var CATEGORIES = {
+// {% for c in categories %}
+        '{{ c.id }}': '{{ c.name|jsstr }}',
+// {% endfor %}
+    };
+</script>
+
+<div id="delete-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Deletion Confirm</h3>
+    </div>
+    <div class="modal-body">
+        <p>Are you sure you want to permanently delete the article "<strong><span id="span-delete-x-name"></span></strong>"?</p>
+        <p>This operation is unrecoverable!</p>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">Delete</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">Close</a>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <h3>All Articles</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <form name="x-filter-form" action="articles" class="well form-inline">
+            <label>Category:</label>
+            <select id="category-filter" name="category">
+                <option value="">All</option>
+{% for c in categories %}
+                <option value="{{ c.id }}">{{ c.name|e }}</option>
+{% endfor %}
+            </select>
+<script type="text/javascript">
+$('#category-filter').val('{{ category }}');
+</script>
+            <button type="submit" class="btn">Filter</button>
+            <a href="add_article" class="btn btn-primary pull-right">Add New</a>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Tags</th>
+                    <th>Creation Date</th>
+                    <th>Operations</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for a in articles %}
+                <tr id="tr-{{ a.id }}">
+                    <td class="name"><a href="/article/{{ a.id }}" target="_blank">{{ a.name|e }}</a></td>
+                    <td><script type="text/javascript"> document.write(CATEGORIES['{{ a.category_id }}']); </script></td>
+                    <td>{{ a.tags|e }}</td>
+                    <td>{{ a.creation_time|dt }}</td>
+                    <td>
+                        <a href="?action=edit&id={{ a.id }}">Edit</a> | <a href="javascript:delete_x('{{ a.id }}')">Delete</a>
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <div class="btn-group">
+{% for i in page.nearby() %}
+    {% if i==page.index %}
+            <button class="btn disabled">{{ i }}</button>
+    {% else %}
+            <button class="btn" onclick="location.assign('?category={{ category }}&page={{ i }}')">{{ i }}</button>
+    {% endif %}
+{% endfor %}
+        </div>
+    </div>
+</div>

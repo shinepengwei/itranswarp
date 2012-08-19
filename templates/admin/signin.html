@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Index</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+function check(form) {
+    $('#md5-passwd').val($.md5($('#origin-passwd').val()));
+    return true;
+}
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="height: 120px"></div>
+
+        <div class="row">
+            <div class="span1 offset4">
+                <img src="/static/img/logo.png" width="64" height="64" />
+            </div>
+            <div class="span3" style="padding-top:16px;">
+                <h1>iTranswarp</h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span6 offset3">
+                <hr />
+            </div>
+        </div>
+
+        <div class="row">
+            <form action="/signin" method="post" onsubmit="return check(this)">
+                <div class="span4 offset4">
+{% if error %}
+                    <div class="alert alert-error">
+                        <button type="button" class="close" data-dismiss="alert">×</button>
+                        {{ error|e }}
+                    </div>
+{% endif %}
+                    <label class="control-label">Email:</label>
+                    <input type="text" name="email" maxlength="50" class="input-xlarge" value="{{ email }}" />
+                    <label class="control-label">Password:</label>
+                    <input type="password" id="origin-passwd" maxlength="50" class="input-xlarge" />
+                    <input type="hidden" id="md5-passwd" name="passwd" />
+                    <label class="checkbox"><input type="checkbox" id="remember" name="remember" value="True" /> Remember me</label>
+                </div>
+{% if remember %}
+<script type="text/javascript">
+    $('#remember').attr('checked', 'checked');
+</script>
+{% endif %}
+                <div class="span6 offset3">
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="span5 offset1">
+                                <button type="submit" class="btn btn-primary">Sign In</button>
+                                &nbsp;&nbsp;
+                                <i class="icon-question-sign"></i> <a href="/forgot">Forgot password</a>
+                                &nbsp;&nbsp;
+                                <i class="icon-circle-arrow-left"></i> <a href="/">Back to home</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

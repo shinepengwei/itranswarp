@@ -1,0 +1,133 @@
+<div class="row">
+    <div class="span10">
+        <h3>{{ form_title }}</h3>
+    </div>
+</div>
+
+<div class="row sep"></div>
+
+<div id="div-error" class="row hide">
+    <div class="span10">
+        <div class="alert alert-error">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <span id="span-error"></span>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null || err=='') {
+            $('#div-error').hide();
+            return false;
+        }
+        $('#span-error').text(err);
+        $('#div-error').show();
+        $('#div-' + field_name).addClass('error');
+        if ($('#div-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('#div-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('#submit').attr('disabled', 'disabled');
+            $('#loading').show();
+        }
+        else {
+            $('#submit').removeAttr('disabled');
+            $('#loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        var pw1 = $('#passwd1').val()
+        var pw2 = $('#passwd2').val()
+        if (pw1=='' && pw2=='') {
+            $('#passwd').val('');
+        }
+        else {
+            if (pw1.length<6)
+                return show_error('Password requires at least 6 chars!', 'passwd1');
+            if (pw1!=pw2)
+                return show_error('Passwords not match!', 'passwd2');
+            $('#passwd').val($.md5(pw1));
+        }
+        show_loading(true);
+        $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+            if (result.error) {
+                show_loading(false);
+                show_error(result.error, result.error_field);
+            }
+            else {
+                show_error(null);
+                location.assign(result.redirect);
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('Server error!', '');
+        });
+        return false;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <form id="form-x" action="{{ action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div id="div-name" class="control-group">
+                    <label class="control-label">名称：</label>
+                    <div class="controls">
+                        <input id="name" name="name" type="text" value="{{ name }}" class="input-xlarge" />
+                        <span class="help-inline">请输入你的名字</span>
+                    </div>
+                </div>
+                <div id="div-role" class="control-group">
+                    <label class="control-label">角色：</label>
+                    <div class="controls">
+                        <select id="role" name="role">
+{% for r in roles %}
+                            <option value="{{ r.id }}">{{ r.name|e }}</option>
+{% endfor %}
+                        </select>
+                    </div>
+                </div>
+<script type="text/javascript">
+$('#role option:last').attr('selected', 'selected');
+$('#role option[value={{ role }}]').attr('selected', 'selected');
+</script>
+                <div id="div-email" class="control-group">
+                    <label class="control-label">电子邮件：</label>
+                    <div class="controls">
+                        <input id="email" name="email" type="text" value="{{ email }}" class="input-xlarge" />
+                        <span class="help-inline">请输入你的电子邮件</span>
+                    </div>
+                </div>
+                <div id="div-passwd1" class="control-group">
+                    <label class="control-label">输入口令：</label>
+                    <div class="controls">
+                        <input type="password" id="passwd1" class="input-xlarge" />
+                        <span class="help-inline">字母、数字和特殊符号组成</span>
+                    </div>
+                </div>
+                <div id="div-passwd2" class="control-group">
+                    <label class="control-label">重复口令：</label>
+                    <div class="controls">
+                        <input type="password" id="passwd2" class="input-xlarge" />
+                        <span class="help-inline">请再输入一遍口令</span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <input type="hidden" name="id" value="{{ id }}" />
+                    <input type="hidden" id="passwd" name="passwd" value="" />
+                    <button type="submit" id="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn" onclick="location.assign('users')">取消</button>
+                    <span id="loading" class="loading hide">正在处理请稍候⋯⋯</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
