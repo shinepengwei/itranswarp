@@ -757,7 +757,11 @@ def favicon_handler():
 
 class MultipartFile(object):
     '''
-    Multipart file storage.
+    Multipart file storage get from request input.
+
+    f = ctx.request['file']
+    f.filename # 'test.png'
+    f.file # file-like object
     '''
     def __init__(self, storage):
         self.filename = _unicode(storage.filename)
@@ -1588,6 +1592,30 @@ class Page(object):
         '''
         return self._total
 
+    @property
+    def previous(self):
+        '''
+        Get previous page index. 0 if no previous.
+
+        >>> Page(1, 10, 100).previous
+        0
+        >>> Page(2, 10, 100).previous
+        1
+        '''
+        return (self._index - 1) if self._index > 1 else 0
+
+    @property
+    def next(self):
+        '''
+        Get next page index. 0 if no next.
+
+        >>> Page(1, 10, 100).next
+        2
+        >>> Page(10, 10, 100).next
+        0
+        '''
+        return (self._index + 1) if self._index < self._pages else 0
+
     def nearby(self, number=5):
         '''
         Get nearby page indexes as list. For example, current page index is 10, 
@@ -1747,7 +1775,7 @@ class WSGIApplication(object):
                 reload(mod)
                 shouldreload = True
         if shouldreload:
-            self.static_routes, self.re_routes = self._parse_routes(self.modules, self._debug)
+            self.get_static_routes, self.post_static_routes, self.get_re_routes, self.post_re_routes = self._parse_routes(self.modules, self._debug)
 
     def _parse_modules(self, modules, debug):
         L = []
@@ -1761,8 +1789,10 @@ class WSGIApplication(object):
         return L
 
     def _parse_routes(self, mods, debug):
-        static_routes = {}
-        re_routes = []
+        get_static_routes = {}
+        post_static_routes = {}
+        get_re_routes = []
+        post_re_routes = []
         for mod in mods:
             for p in dir(mod):
                 f = getattr(mod, p)
@@ -1771,16 +1801,24 @@ class WSGIApplication(object):
                     if route:
                         r = Route(route, f)
                         if r.static:
-                            static_routes[r.str_route] = r
-                            _log('found static route: %s' % route)
+                            if f.__web_get__:
+                                get_static_routes[r.str_route] = r
+                                _log('found static route: GET %s' % route)
+                            if f.__web_post__:
+                                post_static_routes[r.str_route] = r
+                                _log('found static route: POST %s' % route)
                         else:
-                            re_routes.append(r)
-                            _log('found regex route: %s' % route)
+                            if f.__web_get__:
+                                get_re_routes.append(r)
+                                _log('found regex route: GET %s' % route)
+                            if f.__web_post__:
+                                post_re_routes.append(r)
+                                _log('found regex route: POST %s' % route)
         # append '^/static/.*$' to serv static files:
-        re_routes.append(Route('/static/<path:path>', static_file_handler))
+        get_re_routes.append(Route('/static/<path:path>', static_file_handler))
         # append '^/favicon.ico$' to serv fav icon:
-        re_routes.append(Route('/favicon.ico', favicon_handler))
-        return static_routes, re_routes
+        get_re_routes.append(Route('/favicon.ico', favicon_handler))
+        return get_static_routes, post_static_routes, get_re_routes, post_re_routes
 
     def __init__(self, modules, document_root=None, encoding='utf-8', template_engine=None, **kw):
         '''
@@ -1800,7 +1838,7 @@ class WSGIApplication(object):
         self._listen = kw.pop('LISTEN', '0.0.0.0')
         self._port = kw.pop('PORT', 8080)
         self.modules = self._parse_modules(modules, self._debug)
-        self.static_routes, self.re_routes = self._parse_routes(self.modules, self._debug)
+        self.get_static_routes, self.post_static_routes, self.get_re_routes, self.post_re_routes = self._parse_routes(self.modules, self._debug)
         self.error_handler = _default_error_handler
 
         if document_root is None:
@@ -1817,13 +1855,20 @@ class WSGIApplication(object):
     def __call__(self, environ, start_response):
         if self._debug:
             self._autoreload()
-        path_info = environ['PATH_INFO']
+        method = environ['REQUEST_METHOD']
+        is_get = method=='GET'
+        is_post = method=='POST'
+        if not is_get and not is_post:
+            return self.error_handler(HttpError(400), start_response)
         kw = None
-        r = self.static_routes.get(path_info, None)
+        static_routes = self.get_static_routes if is_get else self.post_static_routes
+        path_info = environ['PATH_INFO']
+        r = static_routes.get(path_info, None)
         if r:
             _log('matched static route: %s' % path_info)
         else:
-            for rt in self.re_routes:
+            re_routes = self.get_re_routes if is_get else self.post_re_routes
+            for rt in re_routes:
                 m = rt.route.match(path_info)
                 if m:
                     r = rt
