@@ -91,6 +91,9 @@ class DBError(Exception):
 class MultiResultsError(DBError):
     pass
 
+class MultiColumnsError(DBError):
+    pass
+
 class NoResultError(DBError):
     pass
 
@@ -300,14 +303,44 @@ def select_one(sql, *args):
     u'Alice'
     >>> select_one('select * from user where email=?', 'abc@email.com')
     Traceback (most recent call last):
-      ...
+        ...
     NoResultError: Empty result
     >>> select_one('select * from user where passwd=?', 'ABC-12345')
     Traceback (most recent call last):
-      ...
+        ...
     MultiResultsError: Expect unique result
     '''
     return _select(sql, True, *args)
+
+@with_connection
+def select_int(sql, *args):
+    '''
+    Execute select SQL and expected one int and only one int result. 
+    If no result found, NoResultError raises. 
+    If multiple results found, MultiResultsError raises.
+
+    >>> update('delete from user')
+    >>> u1 = dict(id=96900, name='Ada', email='ada@test.org', passwd='A-12345', last_modified=time.time())
+    >>> u2 = dict(id=96901, name='Adam', email='adam@test.org', passwd='A-12345', last_modified=time.time())
+    >>> insert('user', **u1)
+    >>> insert('user', **u2)
+    >>> select_int('select count(*) from user')
+    2
+    >>> select_int('select count(*) from user where email=?', 'ada@test.org')
+    1
+    >>> select_int('select count(*) from user where email=?', 'notexist@test.org')
+    0
+    >>> select_int('select id from user where email=?', 'ada@test.org')
+    96900
+    >>> select_int('select id, name from user where email=?', 'ada@test.org')
+    Traceback (most recent call last):
+        ...
+    MultiColumnsError: Expect only one column.
+    '''
+    d = _select(sql, True, *args)
+    if len(d)!=1:
+        raise MultiColumnsError('Expect only one column.')
+    return d.values()[0]
 
 @with_connection
 def select(sql, *args):
