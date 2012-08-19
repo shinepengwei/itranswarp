@@ -1,0 +1,199 @@
+<div class="row sep">
+    <div class="span10">
+        <h3>General Settings</h3>
+    </div>
+</div>
+
+<div id="div-error" class="row hide">
+    <div class="span10">
+        <div class="alert alert-error">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <span id="span-error"></span>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null || err=='') {
+            $('#div-error').hide();
+            return false;
+        }
+        $('#span-error').text(err);
+        $('#div-error').show();
+        $('#div-' + field_name).addClass('error');
+        if ($('#div-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('#div-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('#submit').attr('disabled', 'disabled');
+            $('#loading').show();
+        }
+        else {
+            $('#submit').removeAttr('disabled');
+            $('#loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        show_loading(true);
+        $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+            if (result.error) {
+                show_loading(false);
+                show_error(result.error, result.error_field);
+            }
+            else {
+                show_error(null);
+                location.assign(result.redirect);
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('Server error!', '');
+        });
+        return false;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <form id="form-x" action="do_update_settings" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div id="div-site_name" class="control-group">
+                    <label class="control-label">Site Name:</label>
+                    <div class="controls">
+                        <input id="site_name" name="site_name" type="text" value="{{ site_name }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div id="div-site_description" class="control-group">
+                    <label class="control-label">Site Description:</label>
+                    <div class="controls">
+                        <input id="site_description" name="site_description" type="text" value="{{ site_description }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div id="div-site_timezone" class="control-group">
+                    <label class="control-label">Default Timezone:</label>
+                    <div class="controls">
+                        <select id="site_timezone" name="site_timezone" class="input-xlarge">
+                            <optgroup label="Africa">
+                                <option value="Africa/Abidjan">Abidjan</option>
+                                <option value="Africa/Bamako">Bamako</option>
+                                <option value="Africa/Cairo">Cairo</option>
+                                <option value="Africa/Dakar">Dakar</option>
+                                <option value="Africa/El_Aaiun">El Aaiun</option>
+                                <option value="Africa/Freetown">Freetown</option>
+                                <option value="Africa/Gaborone">Gaborone</option>
+                                <option value="Africa/Harare">Harare</option>
+                                <option value="Africa/Johannesburg">Johannesburg</option>
+                                <option value="Africa/Sao_Tome">Sao Tome</option>
+                                <option value="Africa/Tripoli">Tripoli</option>
+                                <option value="Africa/Windhoek">Windhoek</option>
+                            </optgroup>
+                            <optgroup label="America">
+                                <option value="America/Adak">Adak</option>
+                                <option value="America/Argentina/Rio_Gallegos">Argentina - Rio Gallegos</option>
+                                <option value="America/Bahia_Banderas">Bahia Banderas</option>
+                                <option value="America/Cancun">Cancun</option>
+                                <option value="America/Curacao">Curacao</option>
+                                <option value="America/Danmarkshavn">Danmarkshavn</option>
+                                <option value="America/Guadeloupe">Guadeloupe</option>
+                                <option value="America/Indiana/Knox">Indiana - Knox</option>
+                                <option value="America/Kralendijk">Kralendijk</option>
+                                <option value="America/Mazatlan">Mazatlan</option>
+                                <option value="America/New_York">New York</option>
+                                <option value="America/Yellowknife">Yellowknife</option>
+                            </optgroup>
+                            <optgroup label="Asia">
+                                <option value="Asia/Aden">Aden</option>
+                                <option value="Asia/Hong_Kong">Hong Kong</option>
+                                <option value="Asia/Shanghai">Shanghai</option>
+                                <option value="Asia/Singapore">Singapore</option>
+                                <option value="Asia/Taipei">Taipei</option>
+                                <option value="Asia/Yerevan">Yerevan</option>
+                            </optgroup>
+                            <optgroup label="Australia">
+                                <option value="Australia/Adelaide">Adelaide</option>
+                                <option value="Australia/Brisbane">Brisbane</option>
+                                <option value="Australia/Broken_Hill">Broken Hill</option>
+                                <option value="Australia/Currie">Currie</option>
+                                <option value="Australia/Sydney">Sydney</option>
+                            </optgroup>
+                            <optgroup label="Europe">
+                                <option value="Europe/Berlin">Berlin</option>
+                                <option value="Europe/Chisinau">Chisinau</option>
+                                <option value="Europe/Dublin">Dublin</option>
+                                <option value="Europe/London">London</option>
+                                <option value="Europe/Moscow">Moscow</option>
+                                <option value="Europe/Paris">Paris</option>
+                                <option value="Europe/Podgorica">Podgorica</option>
+                            </optgroup>
+                        </select>
+                        <span class="help-inline">Default timezone for visitors</span>
+                    </div>
+                </div>
+                <div id="div-site_dateformat" class="control-group">
+                    <label class="control-label">Date Format:</label>
+                    <div class="controls">
+                        <label class="radio"><input type="radio" name="site_dateformat" value="Y-M-d" /> Y-M-d 2012-3-2</label>
+                        <label class="radio"><input type="radio" name="site_dateformat" value="Y/M/d" /> Y/M/d 2012/5/3</label>
+                        <label class="radio"><input type="radio" name="site_dateformat" value="y-m-d" /> y-m-d 12-5-3</label>
+                        <label class="radio"><input type="radio" name="site_dateformat" value="d/m/y" /> d/m/y 3/5/2012</label>
+                        <label class="radio"><input type="radio" name="site_dateformat" value="custom" /> custom 2012 03 05</label>
+                        <input type="text" name="custom" class="input-small" />
+                    </div>
+                </div>
+                <div id="div-site_timeformat" class="control-group">
+                    <label class="control-label">Time Format:</label>
+                    <div class="controls">
+                        <label class="radio"><input type="radio" name="site_timeformat" value="Y-M-d" /> HH:mm:ss 12:32:42</label>
+                        <label class="radio"><input type="radio" name="site_timeformat" value="Y/M/d" /> Y/M/d 2012/5/3</label>
+                        <label class="radio"><input type="radio" name="site_timeformat" value="y-m-d" /> y-m-d 12-5-3</label>
+                        <label class="radio"><input type="radio" name="site_timeformat" value="d/m/y" /> d/m/y 3/5/2012</label>
+                        <label class="radio"><input type="radio" name="site_timeformat" value="custom" /> custom 2012 03 05</label>
+                        <input type="text" name="custom" class="input-small" />
+                    </div>
+                </div>
+                <div id="div-category_pagesize" class="control-group">
+                    <label class="control-label">Display Articles:</label>
+                    <div class="controls">
+                        <select id="category_pagesize" name="category_pagesize" class="input-xlarge">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="30">30</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span class="help-inline">per page</span>
+                    </div>
+                </div>
+                <div id="div-rss_items" class="control-group">
+                    <label class="control-label">RSS Items:</label>
+                    <div class="controls">
+                        <select id="rss_items" name="rss_items" class="input-xlarge">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="30">30</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" id="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn" onclick="resetForm()">Reset</button>
+                    <span id="loading" class="loading hide">Processing, please wait...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

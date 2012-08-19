@@ -76,12 +76,12 @@ def register_navigation_menus():
 
 def register_admin_menus():
     return [
-        dict(order=0, title=u'Articles', items=[
+        dict(order=100, title=u'Articles', items=[
             dict(title=u'Articles', role=0, handler='articles'),
             dict(title=u'Add New Article', role=0, handler='add_article'),
             dict(title=u'Categories', role=0, handler='categories'),
         ]),
-        dict(order=0, title=u'Pages', items=[
+        dict(order=200, title=u'Pages', items=[
             dict(title=u'Pages', role=0, handler='pages'),
             dict(title=u'Add New Page', role=0, handler='add_page'),
         ]),

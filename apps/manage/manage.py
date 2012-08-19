@@ -91,8 +91,8 @@ def register_navigation_menus():
 def register_admin_menus():
     return [
         dict(order=0, title=u'Dashboard', items=[
-            dict(title=u'仪表盘', role=0, handler='dashboard'),
-            dict(title=u'更新', role=0, handler='dashboard'),
+            dict(title=u'Dashboard', role=0, handler='dashboard'),
+            dict(title=u'Updates', role=0, handler='dashboard'),
         ]),
         dict(order=400, title=u'Media', items=[
             dict(title=u'Library', role=0, handler='media'),
@@ -110,7 +110,10 @@ def register_admin_menus():
     ]
 
 def dashboard(user, request, response):
-    return Template('templates/users.html')
+    return Template('templates/dashboard.html')
+
+def general(user, request, response):
+    return Template('templates/general.html')
 
 def _get_roles():
     roles = db.select('select * from roles order by id')
@@ -138,7 +141,7 @@ def do_add_role(user, request, response):
     name = i.name.strip()
     # check:
     if not name:
-        return dict(error=u'名称不能为空', error_field='name')
+        return dict(error=u'Name cannot be empty', error_field='name')
     privileges = []
     if 'privileges' in request:
         privileges = request.gets('privileges')
@@ -154,7 +157,7 @@ def do_edit_role(user, request, response):
     i = request.input()
     role_id = int(i.id)
     if role_id==0:
-        return dict(error=u'Cannot edit administrator role!', error_field='')
+        return dict(error=u'Cannot edit administrator role', error_field='')
     name = i.name.strip()
     if not name:
         return dict(error=u'Name cannot be empty', error_field='name')
@@ -200,18 +203,18 @@ def do_edit_user(user, request, response):
     passwd = i.passwd
     # check:
     if not name:
-        return dict(error=u'名称不能为空', error_field='name')
+        return dict(error=u'Name cannot be empty', error_field='name')
     if not email:
-        return dict(error=u'电子邮件不能为空', error_field='email')
+        return dict(error=u'Email cannot be empty', error_field='email')
     if passwd:
         m = _RE_PASSWD.match(passwd)
         if not m:
-            return dict(error=u'无效的表单', error_field='')
+            return dict(error=u'Invalid form', error_field='')
     user = db.select_one('select * from users where id=?', i.id)
     updates = {}
     if user.email!=email:
         if db.select('select * from users where email=?', email):
-            return dict(error=u'Email已使用', error_field='email')
+            return dict(error=u'Email was in use by other', error_field='email')
         updates['email'] = email
     if user.role!=role:
         if user.locked:
@@ -237,19 +240,17 @@ def do_add_user(user, request, response):
     passwd = i.passwd
     # check:
     if not name:
-        return dict(error=u'名称不能为空', error_field='name')
+        return dict(error=u'Name cannot be empty', error_field='name')
     if not email:
-        return dict(error=u'电子邮件不能为空', error_field='email')
+        return dict(error=u'Email cannot be empty', error_field='email')
     if not passwd:
-        return dict(error=u'Password不能为空', error_field='passwd1')
+        return dict(error=u'Password cannot be empty', error_field='passwd1')
     m = _RE_PASSWD.match(passwd)
     if not m:
-        return dict(error=u'无效的表单', error_field='')
+        return dict(error=u'Invalid form', error_field='')
     # logic:
-    if db.select('select id from users where name=?', name):
-        return dict(error=u'用户名已存在', error_field='name')
     if db.select('select id from users where email=?', email):
-        return dict(error=u'Email已存在', error_field='email')
+        return dict(error=u'Email is exist', error_field='email')
     current = time.time()
     user = Dict(id=db.next_str(), name=name, role=role, email=email, passwd=passwd, creation_time=current, modified_time=current, version=0)
     db.insert('users', **user)
