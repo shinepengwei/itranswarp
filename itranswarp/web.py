@@ -3,8 +3,6 @@
 
 __author__ = 'Michael Liao'
 
-from gevent.pywsgi import WSGIServer
-
 import types, os, re, cgi, sys, base64, json, time, hashlib, inspect, datetime, functools, threading, logging, urllib, collections
 
 # thread local object for storing request and response.
@@ -1831,12 +1829,8 @@ class WSGIApplication(object):
                            The built-in supported template engines are 'mako', 'jinja2' and 'cheetah'.
           kw: keywords args:
               DEBUG = True|False, default to False. Modules will automatically reloaded if changed in debug mode.
-              LISTEN = '0.0.0.0', default to listen all local IPs.
-              PORT = 8080, default to 8080.
         '''
         self._debug = kw.pop('DEBUG', False)
-        self._listen = kw.pop('LISTEN', '0.0.0.0')
-        self._port = kw.pop('PORT', 8080)
         self.modules = self._parse_modules(modules, self._debug)
         self.get_static_routes, self.post_static_routes, self.get_re_routes, self.post_re_routes = self._parse_routes(self.modules, self._debug)
         self.error_handler = _default_error_handler
@@ -1903,10 +1897,6 @@ class WSGIApplication(object):
         start_response(ctx.response.status, ctx.response.headers)
         return ctx.response.body
  
-    def run(self):
-        server = WSGIServer((self._listen, self._port), self)
-        server.serve_forever()
-
 if __name__=='__main__':
     sys.path.append('.')
     import doctest
