@@ -17,7 +17,7 @@ __author__ = 'Michael Liao'
         modified_time real not null,
         version bigint not null,
         primary key(id),
-        unique key email(email)
+        unique key uk_email(email)
     );
 
     create table roles (
@@ -63,17 +63,30 @@ __author__ = 'Michael Liao'
         version bigint not null,
         primary key(id)
     );
+
+    create table settings (
+        id varchar(50) not null,
+        name varchar(50) not null,
+        value varchar(1000) not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        unique key uk_name(name)
+    );
 '''
 
 import os
 import re
 import time
 import logging
+from datetime import datetime
 
 import admin
 
-from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest
+from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest, UTC
 from itranswarp import db
+import iwarpsite
 
 PAGE_SIZE = 5
 
@@ -113,7 +126,88 @@ def dashboard(user, request, response):
     return Template('templates/dashboard.html')
 
 def general(user, request, response):
-    return Template('templates/general.html')
+    TIMEZONES = [
+        '-12:00',
+        '-11:00',
+        '-10:00',
+        '-09:30',
+        '-09:00',
+        '-08:00',
+        '-07:00',
+        '-06:00',
+        '-05:00',
+        '-04:30',
+        '-04:00',
+        '-03:30',
+        '-03:00',
+        '-02:00',
+        '-01:00',
+        '+00:00',
+        '+01:00',
+        '+02:00',
+        '+03:00',
+        '+03:30',
+        '+04:00',
+        '+04:30',
+        '+05:00',
+        '+05:30',
+        '+05:45',
+        '+06:00',
+        '+06:30',
+        '+07:00',
+        '+08:00',
+        '+09:00',
+        '+09:30',
+        '+10:00',
+        '+10:30',
+        '+11:00',
+        '+11:30',
+        '+12:00',
+        '+12:45',
+        '+13:00',
+        '+14:00',
+    ]
+    DATE_FORMATS = [
+        '%B %d, %Y',
+        '%a, %b %d, %Y',
+        '%b %d, %Y',
+        '%m/%d/%Y',
+        '%d/%m/%Y',
+        '%Y-%m-%d',
+        '%y-%m-%d',
+    ]
+    TIME_FORMATS = [
+        '%H:%M:%S',
+        '%H:%M',
+        '%I:%M %p',
+    ]
+    settings = iwarpsite.get_settings()
+    site_timezone = settings.pop('site_timezone', '+00:00')
+    if not site_timezone in TIMEZONES:
+        site_timezone = '+00:00'
+    site_dateformat = settings.pop('site_dateformat', DATE_FORMATS[0])
+    site_timeformat = settings.pop('site_timeformat', TIME_FORMATS[0])
+    dt_format = '%s %s' % (site_dateformat, site_timeformat)
+    utc = datetime.utcfromtimestamp(time.time()).replace(tzinfo=UTC('+00:00'))
+    now = utc.astimezone(UTC(site_timezone))
+    date_examples = zip(DATE_FORMATS, [now.strftime(f) for f in DATE_FORMATS])
+    time_examples = zip(TIME_FORMATS, [now.strftime(f) for f in TIME_FORMATS])
+    return Template('templates/general.html', \
+        current=(utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second), \
+        date_examples=date_examples, time_examples=time_examples, timezones=TIMEZONES, \
+        site_dateformat=site_dateformat, site_timeformat=site_timeformat, \
+        local_example=now.strftime(dt_format), utc_example=utc.strftime(dt_format), \
+        site_timezone=site_timezone, \
+        **settings)
+
+@jsonresult
+def do_save_settings(user, request, response):
+    settings = iwarpsite.get_settings()
+    for k, v in request.input().iteritems():
+        if k in settings and settings[k]==v:
+            continue
+        iwarpsite.set_setting(k, v)
+    return dict(redirect='general')
 
 def _get_roles():
     roles = db.select('select * from roles order by id')
@@ -261,7 +355,7 @@ def _get_menus():
     if menus:
         return menus
     current = time.time()
-    menu = Dict(id=db.next_str(), name=u'Home', description=u'', type='latest_articles', display_order=0, ref='', url='/', creation_time=current, modified_time=current, version=0)
+    menu = Dict(id=db.next_str(), name=u'Home', description=u'', type='custom', display_order=0, ref='/', url='/', creation_time=current, modified_time=current, version=0)
     db.insert('menus', **menu)
     return [menu]
 

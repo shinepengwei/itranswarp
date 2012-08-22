@@ -1123,27 +1123,49 @@ class Request(object):
 
 _TIMEDELTA_ZERO = datetime.timedelta(0)
 
+_RE_TZ = re.compile('^([\+\-])([0-9]{1,2})\:([0-9]{1,2})$')
+
 class UTC(datetime.tzinfo):
     '''
-    A UTC tzinfo object.
+    A UTC tzinfo object. 
 
-    >>> tz = UTC()
-    >>> tz.tzname(None)
-    'UTC+0000'
-    >>> tz = UTC(8)
-    >>> tz.tzname(None)
-    'UTC+0800'
-    >>> tz = UTC(7, 30)
-    >>> tz.tzname(None)
-    'UTC+0730'
-    >>> tz = UTC(-5, 30)
-    >>> tz.tzname(None)
-    'UTC-0530'
+    >>> tz0 = UTC('+00:00')
+    >>> tz0.tzname(None)
+    'UTC+00:00'
+    >>> tz8 = UTC('+8:00')
+    >>> tz8.tzname(None)
+    'UTC+8:00'
+    >>> tz7 = UTC('+7:30')
+    >>> tz7.tzname(None)
+    'UTC+7:30'
+    >>> tz5 = UTC('-05:30')
+    >>> tz5.tzname(None)
+    'UTC-05:30'
+    >>> from datetime import datetime
+    >>> u = datetime.utcnow().replace(tzinfo=tz0)
+    >>> l1 = u.astimezone(tz8)
+    >>> l2 = u.replace(tzinfo=tz8)
+    >>> d1 = u - l1
+    >>> d2 = u - l2
+    >>> d1.seconds
+    0
+    >>> d2.seconds
+    28800
     '''
 
-    def __init__(self, offset_hours=0, offset_minutes=0):
-        self._utcoffset = datetime.timedelta(hours=offset_hours, minutes=offset_minutes)
-        self._tzname = 'UTC%+03d%02d' % (offset_hours, offset_minutes)
+    def __init__(self, utc):
+        utc = str(utc.strip().upper())
+        mt = _RE_TZ.match(utc)
+        if mt:
+            minus = mt.group(1)=='-'
+            h = int(mt.group(2))
+            m = int(mt.group(3))
+            if minus:
+                h, m = (-h), (-m)
+            self._utcoffset = datetime.timedelta(hours=h, minutes=m)
+            self._tzname = 'UTC%s' % utc
+        else:
+            raise ValueError('bad utc time zone')
 
     def utcoffset(self, dt):
         return self._utcoffset
@@ -1154,7 +1176,7 @@ class UTC(datetime.tzinfo):
     def tzname(self, dt):
         return self._tzname
 
-_UTC_0 = UTC(0)
+_UTC_0 = UTC('+00:00')
 
 class Response(object):
 
@@ -1302,7 +1324,7 @@ class Response(object):
         >>> r.set_cookie('company', r'Example="Limited"', expires=1342274794.123, path='/sub/')
         >>> r._cookies
         {'company': 'company=Example%3D%22Limited%22; Expires=Sat, 14 Jul 12 14:06:34 GMT; Path=/sub/'}
-        >>> dt = datetime.datetime(2012, 7, 14, 22, 6, 34, tzinfo=UTC(8))
+        >>> dt = datetime.datetime(2012, 7, 14, 22, 6, 34, tzinfo=UTC('+8:00'))
         >>> r.set_cookie('company', 'Expires', expires=dt)
         >>> r._cookies
         {'company': 'company=Expires; Expires=Sat, 14 Jul 12 14:06:34 GMT; Path=/'}

@@ -4,6 +4,23 @@
     </div>
 </div>
 
+{% if info %}
+<script type="text/javascript">
+    $(function() {
+        $('#div-success').delay(3000).slideUp(300);
+    });
+</script>
+
+<div id="div-success" class="row">
+    <div class="span10">
+        <div class="alert alert-success">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <span>{{ info }}</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div id="div-error" class="row hide">
     <div class="span10">
         <div class="alert alert-error">
@@ -58,11 +75,19 @@
         });
         return false;
     }
+
+    function resetForm() {
+        $('#form-x').get(0).reset();
+        // reset others:
+        $('#site_timezone').val('{{ site_timezone }}');
+    }
+
+    $(function() { resetForm(); });
 </script>
 
 <div class="row">
     <div class="span10">
-        <form id="form-x" action="do_update_settings" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+        <form id="form-x" action="do_save_settings" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div id="div-site_name" class="control-group">
                     <label class="control-label">Site Name:</label>
@@ -76,86 +101,54 @@
                         <input id="site_description" name="site_description" type="text" value="{{ site_description }}" class="input-xlarge" />
                     </div>
                 </div>
+                <div id="div-date_now" class="control-group">
+                    <label class="control-label">UTC Date Time:</label>
+                    <div class="controls">
+                        <span class="input-xlarge uneditable-input">{{ utc_example }}</span>
+                    </div>
+                </div>
+                <div id="div-date_now" class="control-group">
+                    <label class="control-label">Local Date Time:</label>
+                    <div class="controls">
+                        <span class="input-xlarge uneditable-input">{{ local_example }}</span>
+                    </div>
+                </div>
                 <div id="div-site_timezone" class="control-group">
                     <label class="control-label">Default Timezone:</label>
                     <div class="controls">
                         <select id="site_timezone" name="site_timezone" class="input-xlarge">
-                            <optgroup label="Africa">
-                                <option value="Africa/Abidjan">Abidjan</option>
-                                <option value="Africa/Bamako">Bamako</option>
-                                <option value="Africa/Cairo">Cairo</option>
-                                <option value="Africa/Dakar">Dakar</option>
-                                <option value="Africa/El_Aaiun">El Aaiun</option>
-                                <option value="Africa/Freetown">Freetown</option>
-                                <option value="Africa/Gaborone">Gaborone</option>
-                                <option value="Africa/Harare">Harare</option>
-                                <option value="Africa/Johannesburg">Johannesburg</option>
-                                <option value="Africa/Sao_Tome">Sao Tome</option>
-                                <option value="Africa/Tripoli">Tripoli</option>
-                                <option value="Africa/Windhoek">Windhoek</option>
-                            </optgroup>
-                            <optgroup label="America">
-                                <option value="America/Adak">Adak</option>
-                                <option value="America/Argentina/Rio_Gallegos">Argentina - Rio Gallegos</option>
-                                <option value="America/Bahia_Banderas">Bahia Banderas</option>
-                                <option value="America/Cancun">Cancun</option>
-                                <option value="America/Curacao">Curacao</option>
-                                <option value="America/Danmarkshavn">Danmarkshavn</option>
-                                <option value="America/Guadeloupe">Guadeloupe</option>
-                                <option value="America/Indiana/Knox">Indiana - Knox</option>
-                                <option value="America/Kralendijk">Kralendijk</option>
-                                <option value="America/Mazatlan">Mazatlan</option>
-                                <option value="America/New_York">New York</option>
-                                <option value="America/Yellowknife">Yellowknife</option>
-                            </optgroup>
-                            <optgroup label="Asia">
-                                <option value="Asia/Aden">Aden</option>
-                                <option value="Asia/Hong_Kong">Hong Kong</option>
-                                <option value="Asia/Shanghai">Shanghai</option>
-                                <option value="Asia/Singapore">Singapore</option>
-                                <option value="Asia/Taipei">Taipei</option>
-                                <option value="Asia/Yerevan">Yerevan</option>
-                            </optgroup>
-                            <optgroup label="Australia">
-                                <option value="Australia/Adelaide">Adelaide</option>
-                                <option value="Australia/Brisbane">Brisbane</option>
-                                <option value="Australia/Broken_Hill">Broken Hill</option>
-                                <option value="Australia/Currie">Currie</option>
-                                <option value="Australia/Sydney">Sydney</option>
-                            </optgroup>
-                            <optgroup label="Europe">
-                                <option value="Europe/Berlin">Berlin</option>
-                                <option value="Europe/Chisinau">Chisinau</option>
-                                <option value="Europe/Dublin">Dublin</option>
-                                <option value="Europe/London">London</option>
-                                <option value="Europe/Moscow">Moscow</option>
-                                <option value="Europe/Paris">Paris</option>
-                                <option value="Europe/Podgorica">Podgorica</option>
-                            </optgroup>
+{% for tz in timezones %}
+                            <option value="{{ tz }}">UTC{{ tz }}</option>
+{% endfor %}
                         </select>
                         <span class="help-inline">Default timezone for visitors</span>
+                    </div>
+                </div>
+                <div id="div-site_dst" class="control-group">
+                    <label class="control-label">DST:</label>
+                    <div class="controls">
+                        <label class="checkbox"><input type="checkbox" name="site_dst" value="{{ site_dst }}" /> Using Daylight Saving Time</label>
                     </div>
                 </div>
                 <div id="div-site_dateformat" class="control-group">
                     <label class="control-label">Date Format:</label>
                     <div class="controls">
-                        <label class="radio"><input type="radio" name="site_dateformat" value="Y-M-d" /> Y-M-d 2012-3-2</label>
-                        <label class="radio"><input type="radio" name="site_dateformat" value="Y/M/d" /> Y/M/d 2012/5/3</label>
-                        <label class="radio"><input type="radio" name="site_dateformat" value="y-m-d" /> y-m-d 12-5-3</label>
-                        <label class="radio"><input type="radio" name="site_dateformat" value="d/m/y" /> d/m/y 3/5/2012</label>
-                        <label class="radio"><input type="radio" name="site_dateformat" value="custom" /> custom 2012 03 05</label>
-                        <input type="text" name="custom" class="input-small" />
+{% for k, v in date_examples %}
+                        <label class="radio"><input type="radio" name="site_dateformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
+{% endfor %}
+                        <label class="radio"><input type="radio" name="site_dateformat" value="custom" /> custom</label>
+                        <label><input type="text" name="custom" class="input-small" /> 2012-2-2</label>
+                        <input type="hidden" name="site_dateformat" value="{{ site_dateformat }}" />
                     </div>
                 </div>
                 <div id="div-site_timeformat" class="control-group">
                     <label class="control-label">Time Format:</label>
                     <div class="controls">
-                        <label class="radio"><input type="radio" name="site_timeformat" value="Y-M-d" /> HH:mm:ss 12:32:42</label>
-                        <label class="radio"><input type="radio" name="site_timeformat" value="Y/M/d" /> Y/M/d 2012/5/3</label>
-                        <label class="radio"><input type="radio" name="site_timeformat" value="y-m-d" /> y-m-d 12-5-3</label>
-                        <label class="radio"><input type="radio" name="site_timeformat" value="d/m/y" /> d/m/y 3/5/2012</label>
-                        <label class="radio"><input type="radio" name="site_timeformat" value="custom" /> custom 2012 03 05</label>
-                        <input type="text" name="custom" class="input-small" />
+{% for k, v in time_examples %}
+                        <label class="radio"><input type="radio" name="site_timeformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
+{% endfor %}
+                        <label class="radio"><input type="radio" name="site_timeformat" value="custom" /> custom</label>
+                        <label><input type="text" name="custom" class="input-small" /> 4:34 pm</label>
                     </div>
                 </div>
                 <div id="div-category_pagesize" class="control-group">

@@ -62,33 +62,33 @@
     <div class="span10">
         <form id="form-order" name="form-order" action="order_categories">
             <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Date</th>
-                    <th>Operations</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-categories">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Operations</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-categories">
 {% for c in categories %}
-                <tr id="tr-{{ c.id }}">
-                    <td class="name">{{ c.name|e }}</td>
-                    <td>{{ c.description|e }}</td>
-                    <td>{{ c.creation_time|dt }}</td>
-                    <td>
-                        <a href="javascript:moveUp('{{ c.id }}')">Move Up</a> |
-                        <a href="javascript:moveDown('{{ c.id }}')">Move Down</a> |
-                        <a href="?action=edit&id={{ c.id }}">Edit</a>
-{% if not c.locked %}
-                        | <a href="javascript:delete_x('{{ c.id }}')">Delete</a>
-{% endif %}
-                        <input type="hidden" name="order" value="{{ c.id }}" />
-                    </td>
-                </tr>
+                    <tr id="tr-{{ c.id }}">
+                        <td class="name"><a href="/category/{{ c.id }}" target="_blank">{{ c.name|e }}</a></td>
+                        <td>{{ c.description|e }}</td>
+                        <td>{{ c.creation_time|dt }}</td>
+                        <td>
+                            <a href="javascript:moveUp('{{ c.id }}')">Move Up</a> |
+                            <a href="javascript:moveDown('{{ c.id }}')">Move Down</a> |
+                            <a href="?action=edit&id={{ c.id }}">Edit</a>
+    {% if not c.locked %}
+                            | <a href="javascript:delete_x('{{ c.id }}')">Delete</a>
+    {% endif %}
+                            <input type="hidden" name="order" value="{{ c.id }}" />
+                        </td>
+                    </tr>
 {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
         </form>
     </div>
 </div>

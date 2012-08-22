@@ -29,7 +29,11 @@
         if ($('#select-menu-type').val()!=type)
             $('#select-menu-type').val(type);
         $('div.menu-type').hide();
+        $('div.menu-type input').attr('disabled', 'disabled');
+        $('div.menu-type select').attr('disabled', 'disabled');
         $('#div-' + type + '-ref').show();
+        $('#div-' + type + '-ref input').removeAttr('disabled');
+        $('#div-' + type + '-ref select').removeAttr('disabled');
     }
 
     function show_error(err, field_name) {

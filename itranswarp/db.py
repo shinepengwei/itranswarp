@@ -242,7 +242,7 @@ def with_transaction(func):
     ... def update_profile(id, name, rollback):
     ...     u = dict(id=id, name=name, email='%s@test.org' % name, passwd=name, last_modified=time.time())
     ...     insert('user', **u)
-    ...     update('update user set passwd=? where id=?', name.upper(), id)
+    ...     r = update('update user set passwd=? where id=?', name.upper(), id)
     ...     if rollback:
     ...         raise StandardError('will cause rollback...')
     >>> update_profile(8080, 'Julia', False)
@@ -297,7 +297,9 @@ def select_one(sql, *args):
     >>> u1 = dict(id=100, name='Alice', email='alice@test.org', passwd='ABC-12345', last_modified=time.time())
     >>> u2 = dict(id=101, name='Sarah', email='sarah@test.org', passwd='ABC-12345', last_modified=time.time())
     >>> insert('user', **u1)
+    1
     >>> insert('user', **u2)
+    1
     >>> u = select_one('select * from user where id=?', 100)
     >>> u.name
     u'Alice'
@@ -319,11 +321,13 @@ def select_int(sql, *args):
     If no result found, NoResultError raises. 
     If multiple results found, MultiResultsError raises.
 
-    >>> update('delete from user')
+    >>> n = update('delete from user')
     >>> u1 = dict(id=96900, name='Ada', email='ada@test.org', passwd='A-12345', last_modified=time.time())
     >>> u2 = dict(id=96901, name='Adam', email='adam@test.org', passwd='A-12345', last_modified=time.time())
     >>> insert('user', **u1)
+    1
     >>> insert('user', **u2)
+    1
     >>> select_int('select count(*) from user')
     2
     >>> select_int('select count(*) from user where email=?', 'ada@test.org')
@@ -350,7 +354,9 @@ def select(sql, *args):
     >>> u1 = dict(id=200, name='Wall.E', email='wall.e@test.org', passwd='back-to-earth', last_modified=time.time())
     >>> u2 = dict(id=201, name='Eva', email='eva@test.org', passwd='back-to-earth', last_modified=time.time())
     >>> insert('user', **u1)
+    1
     >>> insert('user', **u2)
+    1
     >>> L = select('select * from user where id=?', 900900900)
     >>> L
     []
@@ -374,10 +380,12 @@ def _update(sql, args):
     try:
         cursor = _db_ctx.connection.cursor()
         cursor.execute(sql, args)
+        r = cursor.rowcount
         if _db_ctx.transactions==0:
             # no transaction enviroment:
             _log('auto commit')
             _db_ctx.connection.commit()
+        return r
     finally:
         if cursor:
             cursor.close()
@@ -389,6 +397,7 @@ def insert(table, **kw):
 
     >>> u1 = dict(id=2000, name='Bob', email='bob@test.org', passwd='bobobob', last_modified=time.time())
     >>> insert('user', **u1)
+    1
     >>> u2 = select_one('select * from user where id=?', 2000)
     >>> u2.name
     u'Bob'
@@ -408,12 +417,14 @@ def update(sql, *args):
 
     >>> u1 = dict(id=1000, name='Michael', email='michael@test.org', passwd='123456', last_modified=time.time())
     >>> insert('user', **u1)
+    1
     >>> u2 = select_one('select * from user where id=?', 1000)
     >>> u2.email
     u'michael@test.org'
     >>> u2.passwd
     u'123456'
     >>> update('update user set email=?, passwd=? where id=?', 'michael@example.org', '654321', 1000)
+    1
     >>> u3 = select_one('select * from user where id=?', 1000)
     >>> u3.email
     u'michael@example.org'
@@ -428,12 +439,14 @@ def update_kw(table, where, *args, **kw):
 
     >>> u1 = dict(id=900900, name='Maya', email='maya@test.org', passwd='MAYA', last_modified=time.time())
     >>> insert('user', **u1)
+    1
     >>> u2 = select_one('select * from user where id=?', 900900)
     >>> u2.email
     u'maya@test.org'
     >>> u2.passwd
     u'MAYA'
     >>> update_kw('user', 'id=?', 900900, name='Kate', email='kate@example.org')
+    1
     >>> u3 = select_one('select * from user where id=?', 900900)
     >>> u3.name
     u'Kate'

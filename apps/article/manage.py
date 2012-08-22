@@ -53,7 +53,7 @@ from itranswarp import db
 PAGE_SIZE = 5
 
 def _get_home_url(menu):
-    return '/'
+    return '/latest'
 
 def _get_cat_url(menu):
     return '/category/%s' % menu.ref
