@@ -7,7 +7,7 @@ __author__ = 'Michael Liao'
 Database operation module. This module is independent with web module.
 '''
 
-import os, sys, time, datetime, functools, threading, logging, collections
+import os, sys, time, uuid, datetime, functools, threading, logging, collections
 
 logging.basicConfig(level=logging.INFO)
 
@@ -42,7 +42,7 @@ def next_int():
     return _id_generator.next_id()
 
 def next_str():
-    return str(_id_generator.next_id())
+    return uuid.uuid4().hex
 
 class _Dict(dict):
     '''

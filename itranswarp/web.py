@@ -1738,10 +1738,16 @@ def _init_jinja2(templ_dir, **kw):
         if isinstance(value, str):
             value = value.decode('utf-8')
         return value.replace('\"', '\\\"').replace('\'', '\\\'').replace('\n', '\\n').replace('\r', '\\r')
+    def ellipsis_filter(value):
+        if isinstance(value, basestring):
+            if len(value) > 33:
+                return '%s...%s' % (value[:20], value[-10:])
+        return value
     env.filters['dt'] = datetime_filter
     env.filters['d'] = date_filter
     env.filters['t'] = time_filter
     env.filters['jsstr'] = jsstr_filter
+    env.filters['elli'] = ellipsis_filter
     def _render(_jinja2_temp_name_, **model):
         return env.get_template(_jinja2_temp_name_).render(**model).encode('utf-8')
     return _render
