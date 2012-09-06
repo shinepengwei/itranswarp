@@ -731,7 +731,7 @@ _MIME_MAP = {
 
 def _static_file_generator(fpath):
     BLOCK_SIZE = 8192
-    with open(fpath, 'r') as f:
+    with open(fpath, 'rb') as f:
         block = f.read(BLOCK_SIZE)
         while block:
             yield block
@@ -743,11 +743,11 @@ def static_file_handler(*args, **kw):
         raise HttpError('403')
     fpath = os.path.join(ctx.document_root, pathinfo[1:])
     _log('static file: %s' % fpath)
+    if not os.path.isfile(fpath):
+        raise HttpError(404)
     fext = os.path.splitext(fpath)[1]
     ctx.response.content_type = _MIME_MAP.get(fext.lower(), 'application/octet-stream')
     ctx.response.content_length = os.path.getsize(fpath)
-    if not os.path.isfile(fpath):
-        raise HttpError(404)
     return _static_file_generator(fpath)
 
 def favicon_handler():
@@ -1785,6 +1785,28 @@ def _default_error_handler(e, start_response):
     logging.exception('Exception:')
     start_response('500 Internal Server Error', ())
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
+
+def view(path):
+    '''
+    A view decorator that render a view by dict.
+
+    >>> @view('test/view.html')
+    ... def hello():
+    ...     return dict(name='Bob')
+    >>> t = hello()
+    >>> isinstance(t, Template)
+    True
+    '''
+    def _decorator(func):
+        @functools.wraps(func)
+        def _wrapper(*args, **kw):
+            _log('call @view: %s' % path)
+            r = func(*args, **kw)
+            if isinstance(r, dict):
+                return Template(path, **r)
+            return r
+        return _wrapper
+    return _decorator
 
 class WSGIApplication(object):
 
