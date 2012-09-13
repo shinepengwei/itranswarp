@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-import types, os, re, cgi, sys, base64, json, time, hashlib, inspect, datetime, functools, threading, logging, urllib, collections
+import types, sys, os, re, cgi, sys, base64, json, time, hashlib, inspect, datetime, functools, threading, logging, urllib, collections, linecache
 
 # thread local object for storing request and response.
 ctx = threading.local()
@@ -36,73 +36,6 @@ class Dict(dict):
 
     def __setattr__(self, key, value):
         self[key] = value
-
-def encode_client_session_cookie(uid, passwd, expires, salt):
-    '''
-    Generate a secure client session cookie by constructing:
-    base64(uid, expires, md5(uid, expires, passwd, salt)).
-    Args:
-      uid: user id.
-      expires: unix-timestamp as float.
-      passwd: user's password.
-      salt: a secure string.
-    Returns:
-      base64 encoded cookie value as str.
-
-    Using partial functions to make it easier for use:
-    encode_client_session = functools.partial(encode_client_session_cookie, salt='My salt')
-    encode_client_session('uid-12345', 'passw0rd', 1230000000)
-    
-    >>> encode_client_session_cookie(12345, 'passw0rd', 1343224532, 'X-SALT')
-    'MTIzNDUsMTM0MzIyNDUzMixkOWEzOTU1ODU4NGQyYTdkZTc3NDEzZjQ2YTM3ZGY1Yw@@'
-    >>> encode_client_session_cookie(12345, 'passw0rd', 4496824532, 'X-SALT')
-    'MTIzNDUsNDQ5NjgyNDUzMixhMjk4ZjhhZmI0MWZkZjNlNThhNWIzNTJiMzJjMzQ3NA@@'
-    '''
-    sid = str(uid)
-    exp = str(int(expires))
-    secure = ','.join([sid, exp, str(passwd), str(salt)])
-    cvalue = ','.join([sid, exp, hashlib.md5(secure).hexdigest()])
-    return base64.urlsafe_b64encode(cvalue).replace('=', '@')
-
-def decode_client_session_cookie(s, get_passwd_by_uid, salt):
-    '''
-    Decode a secure client session cookie and return uid, or None if invalid cookie. 
-    Args:
-      s: base64 encoded cookie value.
-      get_passwd_by_uid: function that return password by uid.
-      salt: a secure string.
-    Returns:
-      user id as str, or None if cookie is invalid.
-
-    Using partial functions to make it easier for use:
-
-    decode_client_session = functools.partial(decode_client_session_cookie, get_passwd_by_uid=get_user_pass, salt='My salt')
-    uid = decode_client_session('cookie-encoded-as-base64')
-
-    >>> def passwd(uid):
-    ...     return u'passw0rd'
-    >>> def badpasswd(uid):
-    ...     return u'iForgot'
-    >>> s_bad = 'dGhpcyBpcyBhIGJhZCBjb29raWU@'
-    >>> s_expired = 'MTIzNDUsMTM0MzIyNDUzMixkOWEzOTU1ODU4NGQyYTdkZTc3NDEzZjQ2YTM3ZGY1Yw@@'
-    >>> s_valid = 'MTIzNDUsNDQ5NjgyNDUzMixhMjk4ZjhhZmI0MWZkZjNlNThhNWIzNTJiMzJjMzQ3NA@@'
-    >>> decode_client_session_cookie(s_bad, passwd, 'X-SALT')
-    >>> decode_client_session_cookie(s_expired, passwd, 'X-SALT')
-    >>> decode_client_session_cookie(s_valid, badpasswd, 'X-SALT')
-    >>> decode_client_session_cookie(s_valid, passwd, 'BAD-SALT')
-    >>> decode_client_session_cookie(s_valid, passwd, 'X-SALT')
-    '12345'
-    '''
-    if isinstance(s, unicode):
-        s = s.encode('utf-8')
-    ss = base64.urlsafe_b64decode(s.replace('@', '=')).split(',')
-    if len(ss)!=3:
-        return None
-    uid, exp, md5 = ss
-    if float(exp) < time.time():
-        return None
-    expected = ','.join([uid, exp, str(get_passwd_by_uid(uid)), str(salt)])
-    return uid if hashlib.md5(expected).hexdigest()==md5 else None
 
 def _json_loads(s, expected=None):
     '''
@@ -289,6 +222,27 @@ class HttpError(StandardError):
     def __str__(self):
         return self.status
 
+class RedirectError(StandardError):
+    '''
+    RedirectError that defines http redirect code.
+
+    >>> e = RedirectError(302, 'http://www.apple.com/')
+    >>> e.status
+    '302 Found'
+    >>> e.location
+    'http://www.apple.com/'
+    '''
+    def __init__(self, code, location):
+        '''
+        Init an HttpError with response code.
+        '''
+        super(RedirectError, self).__init__()
+        self.status = '%d %s' % (code, _RESPONSE_STATUSES[code])
+        self.location = location
+
+    def __str__(self):
+        return self.status
+
 class JsonRpcError(StandardError):
     pass
 
@@ -359,9 +313,7 @@ def internalerror():
     return HttpError(500)
 
 def _redirect(code, location):
-    e = HttpError(code)
-    e.header('Location', location)
-    return e
+    return RedirectError(code, location)
 
 def redirect(location):
     '''
@@ -370,7 +322,7 @@ def redirect(location):
     >>> raise redirect('http://www.itranswarp.com/')
     Traceback (most recent call last):
       ...
-    HttpError: 301 Moved Permanently
+    RedirectError: 301 Moved Permanently
     '''
     return _redirect(301, location)
 
@@ -381,7 +333,7 @@ def found(location):
     >>> raise found('http://www.itranswarp.com/')
     Traceback (most recent call last):
       ...
-    HttpError: 302 Found
+    RedirectError: 302 Found
     '''
     return _redirect(302, location)
 
@@ -392,7 +344,10 @@ def seeother(location):
     >>> raise seeother('http://www.itranswarp.com/')
     Traceback (most recent call last):
       ...
-    HttpError: 303 See Other
+    RedirectError: 303 See Other
+    >>> e = seeother('http://www.itranswarp.com/seeother?r=123')
+    >>> e.location
+    'http://www.itranswarp.com/seeother?r=123'
     '''
     return _redirect(303, location)
 
@@ -1323,18 +1278,18 @@ class Response(object):
         {'company': 'company=Abc%2C%20Inc.; Max-Age=3600; Path=/'}
         >>> r.set_cookie('company', r'Example="Limited"', expires=1342274794.123, path='/sub/')
         >>> r._cookies
-        {'company': 'company=Example%3D%22Limited%22; Expires=Sat, 14 Jul 12 14:06:34 GMT; Path=/sub/'}
+        {'company': 'company=Example%3D%22Limited%22; Expires=Sat, 14-Jul-2012 14:06:34 GMT; Path=/sub/'}
         >>> dt = datetime.datetime(2012, 7, 14, 22, 6, 34, tzinfo=UTC('+8:00'))
         >>> r.set_cookie('company', 'Expires', expires=dt)
         >>> r._cookies
-        {'company': 'company=Expires; Expires=Sat, 14 Jul 12 14:06:34 GMT; Path=/'}
+        {'company': 'company=Expires; Expires=Sat, 14-Jul-2012 14:06:34 GMT; Path=/'}
         '''
         L = ['%s=%s' % (_quote(name), _quote(value))]
         if expires is not None:
             if isinstance(expires, (float, int, long)):
-                L.append('Expires=%s' % datetime.datetime.fromtimestamp(expires, _UTC_0).strftime('%a, %d %b %y %H:%M:%S GMT'))
+                L.append('Expires=%s' % datetime.datetime.fromtimestamp(expires, _UTC_0).strftime('%a, %d-%b-%Y %H:%M:%S GMT'))
             if isinstance(expires, (datetime.date, datetime.datetime)):
-                L.append('Expires=%s' % expires.astimezone(_UTC_0).strftime('%a, %d %b %y %H:%M:%S GMT'))
+                L.append('Expires=%s' % expires.astimezone(_UTC_0).strftime('%a, %d-%b-%Y %H:%M:%S GMT'))
         elif isinstance(max_age, (int, long)):
             L.append('Max-Age=%d' % max_age)
         L.append('Path=%s' % path)
@@ -1777,13 +1732,15 @@ def _install_template_engine(name, templ_dir, **kw):
         return _init_cheetah(templ_dir, **kw)
     raise StandardError('no such template engine: %s' % name)
 
-def _default_error_handler(e, start_response):
+def _default_error_handler(e, start_response, is_debug):
     if isinstance(e, HttpError):
         logging.info('HttpError: %s' % e.status)
         start_response(e.status, e.headers)
         return ('<html><body><h1>%s</h1></body></html>' % e.status)
     logging.exception('Exception:')
     start_response('500 Internal Server Error', ())
+    if is_debug:
+        return _debug()
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
 
 def view(path):
@@ -1807,6 +1764,158 @@ def view(path):
             return r
         return _wrapper
     return _decorator
+
+def _html_encode(s):
+    return s.replace('<', '&lt;').replace('>', '&gt;').replace(' ', '&nbsp;')
+
+def _debug():
+    etype, evalue, tb = sys.exc_info()
+    while tb.tb_next:
+        tb = tb.tb_next
+    stack = []
+    f = tb.tb_frame
+    while f:
+        stack.append(f)
+        f = f.f_back
+    stack.reverse()
+    L = [r'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Debug Info</title>
+    <style>
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 18px;
+  color: #333;
+  background-color: #fff;
+}
+a {
+  color: #0088cc;
+  text-decoration: none;
+}
+a:hover {
+  color: #005580;
+  text-decoration: underline;
+}
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: inherit;
+  font-weight: bold;
+  color: inherit;
+  text-rendering: optimizelegibility;
+}
+h1 {
+  font-size: 30px;
+  line-height: 36px;
+}
+h1 small {
+  font-size: 18px;
+}
+h2 {
+  font-size: 24px;
+  line-height: 36px;
+}
+h3 {
+  font-size: 18px;
+  line-height: 27px;
+}
+div {
+  padding: 0px;
+  margin: 0px;
+}
+div.line {
+  border-top: solid 1px #ccc;
+  margin: 6px 0px;
+}
+div.icon {
+  background-position: 2px center;
+  background-repeat: no-repeat;
+  padding-left: 28px;
+}
+div.open {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAADpSURBVHjapFNLCoMwEB1LFHHlTtDLpBdx6aGydNsrFPQk3Sm4qisXfpsXTKBYbCQDA2Z48/IyvvG2bSOX8EAghMB3xRjjQRCQTnlWoHmeaRxHk/Jcy/K9KApSiHVdqyzLeJqmVre2bcubpqlActtv4EmS0LIsVgksetCrFKAImVcCPYZgmiaVV0LjmR4SCn3f/yXyfZ/iODaKjQJMdxgGyvP8lKAsS4qi6FuBfgJYX+9z6VrtgQAKEM+HOCWAN4D9OYMwDK0HeJiB019w8YF2Yi2tae1EYPd9MLtwh7e7rru0TGYbXeIjwADyUf86yz+/bQAAAABJRU5ErkJggg==);
+}
+div.closed {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAFESURBVHjapFM7a4RAEF6DL7QRLAT9M16dFMEmXJPSv5PeKoRASCMJpPf+ioWChWCl4DPOxB334iUkODDu7MznvHZGmqaJ7SEZPlEUwZHIsuyrqso4z3cE9X3P2rYlnu+nWX0Iw/DLwTiOied5vuu6f4qa57mfZVkCTuQlgu84DhuGgUBlWWI0IMjGtm2yATZNU59KgB8hTZGapmFBEKAcx/HGzoOhg67rkEWCH4Zxlb/b+V0WAVVVnQG7cY02142yoijMsizKiDKAeuu6Zrd39+SgXVpyHRxJ9/b6xAzDOM+Al4DPNfz+AjzbjQPe8fg5IvDNMcTz42XVwWwA9mIPdF0nIPZDaCLULTZw04Ndr3BpDiRJYu+PD5T2T3NwtUQ4zaOJSs6apjHTNJFBFm2AXfaBduEAs10Uxb+WCTPdu86fAgwA4uoU1viDGFwAAAAASUVORK5CYII=);
+}
+div.indent {
+  padding-left: 26px;
+}
+div.local {
+  background-color: #efefef;
+}
+div.normal {
+  color: #0088cc;
+  cursor: pointer;
+}
+div.hl {
+  color: #0088cc;
+  cursor: pointer;
+  background-color: #efefef;
+}
+    </style>
+    <script type="text/javascript">
+function changeClass(ele, fromCls, toCls) {
+  ele.className = ele.className.replace(fromCls, toCls);
+}
+function changeIcon(ele, childId) {
+  if (ele.className.indexOf('open')!=(-1)) {
+    ele.className = ele.className.replace('open', 'closed');
+    document.getElementById(childId).style.display='none';
+  }
+  else {
+    ele.className = ele.className.replace('closed', 'open');
+    document.getElementById(childId).style.display='';
+  }
+}
+    </script>
+</head>
+<body>
+    ''', '<div><h3>500 Internal Server Error</h3></div><div class="line"></div><div><div class="indent icon">Traceback (most recent call last):</div></div>']
+    n = 0
+    for frame in stack:
+        n = n + 1
+        line1 = r'File "%s", line %s, in %s' % (frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)
+        line2 = linecache.getline(frame.f_code.co_filename, frame.f_lineno, frame.f_globals)
+        part1 = '<div><div class="indent icon closed normal" onclick="changeIcon(this, \'div-%s\')" onmouseover="changeClass(this, \'normal\', \'hl\')" onmouseout="changeClass(this, \'hl\', \'normal\')">&nbsp;&nbsp;%s</div>' \
+                % (n, line1)
+        part2 = ''
+        if line2:
+            part2 = '<div class="indent icon">&nbsp;&nbsp;&nbsp;&nbsp;%s</div>' % line2.strip()
+
+        part3 = '<div id="div-%s" class="icon local" style="display:none">' % n
+
+        local_L = []
+        for key, value in frame.f_locals.items():
+            s = '<Error get value>'
+            try:
+                s = str(value)
+            except Exception, e:
+                pass
+            local_L.append(r'<div class="indent">&nbsp;&nbsp;&nbsp;&nbsp;%s = %s <span class="t">%s</span></div>' % (key, _html_encode(s), _html_encode(str(type(value)))))
+        if not local_L:
+            local_L.append(r'<div class="indent">&nbsp;&nbsp;&nbsp;&nbsp;no local variable</div>')
+        part4 = ''.join(local_L)
+        part5 = '</div></div>'
+        L.append(part1)
+        L.append(part2)
+        L.append(part3)
+        L.append(part4)
+        L.append(part5)
+    L.append('<div><div class="icon">%s: %s</div></div>' % (etype.__name__, evalue.message))
+    L.append(r'<div class="line"></div><div>Powered by <a href="http://www.itranswarp.com/" target="_blank">iTranswarp</a></div></body></html>')
+    return L
 
 class WSGIApplication(object):
 
@@ -1903,7 +2012,7 @@ class WSGIApplication(object):
         is_get = method=='GET'
         is_post = method=='POST'
         if not is_get and not is_post:
-            return self.error_handler(HttpError(400), start_response)
+            return self.error_handler(HttpError(400), start_response, self._debug)
         kw = None
         static_routes = self.get_static_routes if is_get else self.post_static_routes
         path_info = environ['PATH_INFO']
@@ -1921,7 +2030,7 @@ class WSGIApplication(object):
                     break
         if not r:
             _log('no route matched: %s' % path_info)
-            return self.error_handler(HttpError(404), start_response)
+            return self.error_handler(HttpError(404), start_response, self._debug)
 
         global ctx
         ctx.document_root = self.document_root
@@ -1930,8 +2039,12 @@ class WSGIApplication(object):
         _log('ctx.document_root: %s' % ctx.document_root)
         try:
             ret = r.execute() if kw is None else r.execute(**kw)
+        except RedirectError as e:
+            ctx.response.set_header('Location', e.location)
+            start_response(e.status, ctx.response.headers)
+            return ()
         except Exception as e:
-            return self.error_handler(e, start_response)
+            return self.error_handler(e, start_response, self._debug)
         if isinstance(ret, types.GeneratorType):
             start_response(ctx.response.status, ctx.response.headers)
             return ret
@@ -1946,7 +2059,7 @@ class WSGIApplication(object):
             ctx.response.write(str(ret))
         start_response(ctx.response.status, ctx.response.headers)
         return ctx.response.body
- 
+
 if __name__=='__main__':
     sys.path.append('.')
     import doctest
