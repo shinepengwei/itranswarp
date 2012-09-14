@@ -79,14 +79,14 @@
         <form id="form-x" action="{{ action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div id="div-name" class="control-group">
-                    <label class="control-label">名称：</label>
+                    <label class="control-label">Name:</label>
                     <div class="controls">
                         <input id="name" name="name" type="text" value="{{ name }}" class="input-xlarge" />
-                        <span class="help-inline">请输入你的名字</span>
+                        <span class="help-inline">Your name</span>
                     </div>
                 </div>
                 <div id="div-role" class="control-group">
-                    <label class="control-label">角色：</label>
+                    <label class="control-label">Role:</label>
                     <div class="controls">
                         <select id="role" name="role">
 {% for r in roles %}
@@ -96,36 +96,36 @@
                     </div>
                 </div>
 <script type="text/javascript">
-$('#role option:last').attr('selected', 'selected');
-$('#role option[value={{ role }}]').attr('selected', 'selected');
+    $('#role option:last').attr('selected', 'selected');
+    $('#role option[value={{ role }}]').attr('selected', 'selected');
 </script>
                 <div id="div-email" class="control-group">
-                    <label class="control-label">电子邮件：</label>
+                    <label class="control-label">Email:</label>
                     <div class="controls">
                         <input id="email" name="email" type="text" value="{{ email }}" class="input-xlarge" />
-                        <span class="help-inline">请输入你的电子邮件</span>
+                        <span class="help-inline">Your email address</span>
                     </div>
                 </div>
                 <div id="div-passwd1" class="control-group">
-                    <label class="control-label">输入口令：</label>
+                    <label class="control-label">Enter password:</label>
                     <div class="controls">
                         <input type="password" id="passwd1" class="input-xlarge" />
-                        <span class="help-inline">字母、数字和特殊符号组成</span>
+                        <span class="help-inline">Minimum 6 characters.</span>
                     </div>
                 </div>
                 <div id="div-passwd2" class="control-group">
-                    <label class="control-label">重复口令：</label>
+                    <label class="control-label">Repeat password:</label>
                     <div class="controls">
                         <input type="password" id="passwd2" class="input-xlarge" />
-                        <span class="help-inline">请再输入一遍口令</span>
+                        <span class="help-inline">Enter password again.</span>
                     </div>
                 </div>
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
                     <input type="hidden" id="passwd" name="passwd" value="" />
-                    <button type="submit" id="submit" class="btn btn-primary">保存</button>
-                    <button type="button" class="btn" onclick="location.assign('users')">取消</button>
-                    <span id="loading" class="loading hide">正在处理请稍候⋯⋯</span>
+                    <button type="submit" id="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn" onclick="location.assign('users')">Cancel</button>
+                    <span id="loading" class="loading hide">Processing...</span>
                 </div>
             </fieldset>
         </form>

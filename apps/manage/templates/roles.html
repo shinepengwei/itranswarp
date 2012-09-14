@@ -52,7 +52,7 @@
                     <td>{{ r.privileges }}</td>
                     <td>{{ r.creation_time|dt }}</td>
                     <td>
-{% if r.id!=0 %}
+{% if not r.locked %}
                         <a href="?action=edit&id={{ r.id }}">Edit</a> | <a href="javascript:delete_x('{{ r.id }}')">Delete</a>
 {% endif %}
                     </td>

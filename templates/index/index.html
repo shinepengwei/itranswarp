@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Index</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <link rel="stylesheet" href="/static/css/redactor.css" />
+    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/redactor.min.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('.carousel').carousel();
+            $('.redactor').redactor();
+        });
+    </script>
+    <style>
+.subnav {
+  width: 100%;
+  height: 36px;
+  background-color: #eeeeee; /* Old browsers */
+  background-repeat: repeat-x; /* Repeat the gradient */
+  background-image: -moz-linear-gradient(top, #f5f5f5 0%, #eeeeee 100%); /* FF3.6+ */
+  background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f5f5f5), color-stop(100%,#eeeeee)); /* Chrome,Safari4+ */
+  background-image: -webkit-linear-gradient(top, #f5f5f5 0%,#eeeeee 100%); /* Chrome 10+,Safari 5.1+ */
+  background-image: -ms-linear-gradient(top, #f5f5f5 0%,#eeeeee 100%); /* IE10+ */
+  background-image: -o-linear-gradient(top, #f5f5f5 0%,#eeeeee 100%); /* Opera 11.10+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f5f5f5', endColorstr='#eeeeee',GradientType=0 ); /* IE6-9 */
+  background-image: linear-gradient(top, #f5f5f5 0%,#eeeeee 100%); /* W3C */
+  border: 1px solid #e5e5e5;
+  -webkit-border-radius: 4px;
+     -moz-border-radius: 4px;
+          border-radius: 4px;
+}
+.subnav .nav {
+  margin-bottom: 0;
+}
+.subnav .nav > li > a {
+  margin: 0;
+  padding-top:    11px;
+  padding-bottom: 11px;
+  padding-left: 24px;
+  padding-right: 24px;
+  border-left: 1px solid #f5f5f5;
+  border-right: 1px solid #e5e5e5;
+  -webkit-border-radius: 0;
+     -moz-border-radius: 0;
+          border-radius: 0;
+}
+.subnav .nav > li.right {
+  float: right;
+}
+.subnav .nav > li.right > span {
+  margin: 0;
+  float: right;
+  padding-top:    11px;
+  padding-bottom: 11px;
+  padding-left: 3px;
+  padding-right: 15px;
+}
+
+.subnav .nav > .active > a,
+.subnav .nav > .active > a:hover {
+  color: #777;
+  background-color: #e9e9e9;
+  border-right-color: #ddd;
+  border-left: 0;
+  -webkit-box-shadow: inset 0 3px 5px rgba(0,0,0,.05);
+     -moz-box-shadow: inset 0 3px 5px rgba(0,0,0,.05);
+          box-shadow: inset 0 3px 5px rgba(0,0,0,.05);
+}
+.subnav .nav > .active > a .caret,
+.subnav .nav > .active > a:hover .caret {
+  border-top-color: #777;
+}
+.subnav .nav > li:first-child > a,
+.subnav .nav > li:first-child > a:hover {
+  border-left: 0;
+  -webkit-border-radius: 4px 0 0 4px;
+     -moz-border-radius: 4px 0 0 4px;
+          border-radius: 4px 0 0 4px;
+}
+.subnav .nav > li:last-child > a {
+  border-right: 0;
+}
+.subnav .dropdown-menu {
+  -webkit-border-radius: 0 0 4px 4px;
+     -moz-border-radius: 0 0 4px 4px;
+          border-radius: 0 0 4px 4px;
+}
+
+/* form.navbar-search > input.subnav-search */
+
+.subnav form.navbar-search {
+  margin: 0px;
+  padding-top: 0px;
+}
+
+.navbar-search .navbar-search-query {
+  padding: 5px 10px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-transition: none;
+  -moz-transition: none;
+  -ms-transition: none;
+  -o-transition: none;
+  transition: none;
+  color: #333333;
+  text-shadow: 0 1px 0 #ffffff;
+  background-color: #ffffff;
+  border: 0;
+  border-radius: 14px;
+  -webkit-box-shadow: 0 0 3px rgba(0, 0, 0, 0.15);
+  -moz-box-shadow: 0 0 3px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.15);
+  outline: 0;
+}
+
+.navbar-search .navbar-search-query:-moz-placeholder {
+  color: #cccccc;
+}
+.navbar-search .navbar-search-query:-ms-input-placeholder {
+  color: #cccccc;
+}
+.navbar-search .navbar-search-query::-webkit-input-placeholder {
+  color: #cccccc;
+}
+
+    </style>
+</head>
+<body>
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <a class="brand" href="/">云市场</a>
+                <div class="nav-collapse">
+                    <ul class="nav">
+                        <li class="active"><a href="#">首页</a></li>
+                        <li><a href="#">文章</a></li>
+                        <li><a href="#">相册</a></li>
+                        <li class="divider-vertical"></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">更多 <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">管理</a></li>
+                                <li><a href="#">管理</a></li>
+                                <li class="divider"></li>
+                                <li class="nav-header">管理员</li>
+                                <li><a href="#">管理</a></li>
+                                <li><a href="#">管理</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <form class="navbar-search pull-left" action="/" method="post">
+                        <input type="text" name="q" placeholder="请输入关键字" class="search-query span2" />
+                    </form>
+                    <ul class="nav pull-right">
+                        <li><a href="#">登录</a></li>
+                        <li><a href="#">短消息 <span class="badge badge-warning">3</span></a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">我的市场 <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/">我的Devices</a></li>
+                                <li><a href="/">我的Apps</a></li>
+                                <li><a href="/">在线升级</a></li>
+                                <li class="divider"></li>
+                                <li class="nav-header">我的账户</li>
+                                <li><a href="/">安全设置</a></li>
+                                <li><a href="/">我的订单</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div><!-- /navbar -->
+
+    <div class="container">
+
+        <div class="row" style="height: 60px"></div>
+
+        <div class="row">
+            <div class="span12">
+                <div class="subnav">
+                    <ul class="nav nav-pills">
+                        <li><a href="/">首页</a></li>
+                        <li class="active"><a href="#">IT技术</a></li>
+                        <li><a href="#">生活</a></li>
+                        <li><a href="#">出版</a></li>
+                        <li class="dropdown">
+                            <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">iPhone <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#navs">Nav, tabs, pills</a></li>
+                                <li><a href="#navbar">Navbar</a></li>
+                                <li><a href="#breadcrumbs">Breadcrumbs</a></li>
+                                <li><a href="#pagination">Pagination</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#">iPad</a></li>
+                        <li class="active"><a href="#">技术支持</a></li>
+                        <li class="right"><span><a href="#">帮助</a></span></li>
+                        <li class="right"><span><a href="#">登录</a></span></li>
+                        <li class="right"><span style="padding-top: 6px"><form class="navbar-search"><input name="q" class="navbar-search-query span2" placeholder="请输入关键字" /></form></span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="height: 24px"></div>
+
+        <div class="row">
+            <div class="span12">
+                <ul class="breadcrumb">
+                    <li><a href="#">首页</a> <span class="divider">/</span></li>
+                    <li><a href="#">我的账户</a> <span class="divider">/</span></li>
+                    <li class="active">设置</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span9">
+                <div id="main-carousel" class="carousel slide" style="width:640px">
+                    <div class="carousel-inner">
+                        <div class="item active">
+                            <img src="/static/img/01.jpg" />
+                            <div class="carousel-caption">
+                                <h4>海上明珠：卡布里岛</h4>
+                                <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <img src="/static/img/02.jpg" />
+                            <div class="carousel-caption">
+                                <h4>Second Thumbnail label</h4>
+                                <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <img src="/static/img/03.jpg" />
+                            <div class="carousel-caption">
+                                <h4>Third Thumbnail label</h4>
+                                <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a class="left carousel-control" href="#main-carousel" data-slide="prev">&lsaquo;</a>
+                    <a class="right carousel-control" href="#main-carousel" data-slide="next">&rsaquo;</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span2">
+                <ul class="nav nav-list">
+                    <li class="nav-header">系统设置</li>
+                    <li class="active"><a href="#"><i class="icon-white icon-home"></i> 转码设置</a></li>
+                    <li><a href="#"><i class="icon-book"></i> 水印设置</a></li>
+                    <li><a href="#"><i class="icon-pencil"></i> 分享设置</a></li>
+                    <li class="nav-header">用户设置</li>
+                    <li><a href="#"><i class="icon-user"></i> 我的信息</a></li>
+                    <li><a href="#"><i class="icon-cog"></i> 我的设置</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#"><i class="icon-flag"></i> 帮助信息</a></li>
+                </ul>
+            </div>
+            <div class="span8">
+                <div class="alert alert-error">请填写正确的验证码！</div>
+                <form class="form-horizontal">
+                    <fieldset>
+                        <legend>注册新用户</legend>
+                        <div class="control-group">
+                            <label class="control-label">用户名</label>
+                            <div class="controls">
+                                <input type="text" class="input-xlarge" />
+                                <span class="help-inline">用户名由3－20个字母、数字和_组成</span>
+                            </div>
+                        </div>
+                        <div class="control-group error">
+                            <label class="control-label">电子邮件</label>
+                            <div class="controls">
+                                <input type="text" class="input-xlarge" />
+                                <span class="help-inline">请填写正确的电子邮件地址</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">输入口令：</label>
+                            <div class="controls">
+                                <input type="password" class="input-xlarge" />
+                                <span class="help-inline">字母、数字和特殊符号组成</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">重复口令：</label>
+                            <div class="controls">
+                                <input type="password" class="input-xlarge" />
+                                <span class="help-inline">请再输入一遍口令</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">付费方式：</label>
+                            <div class="controls">
+                                <label class="checkbox">
+                                    <input type="checkbox" value="plan1" />
+                                    按月付费
+                                </label>
+                            </div>
+                            <div class="controls">
+                                <label class="checkbox">
+                                    <input type="checkbox" value="plan2" />
+                                    按季度付费
+                                </label>
+                            </div>
+                            <div class="controls">
+                                <label class="checkbox">
+                                    <textarea name="hi">HI</textarea>
+                                    按年付费
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">保存设置</button>
+                            <button class="btn">取消</button>
+                        </div>
+                    </fieldset>
+                </form>
+                <div class="progress progress-striped active">
+                    <div class="bar" style="width: 40%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="height:24px"></div>
+
+        <div class="row">
+            <div class="span12">
+                <button class="btn">普通</button>
+                <button class="btn btn-primary">确定 OK</button>
+                <button class="btn btn-warning">警告</button>
+                <button class="btn btn-danger">删除</button>
+            </div>
+        </div>
+
+        <div class="row" style="height:24px"></div>
+
+        <div class="row">
+            <div class="span10 offset2">
+                <div class="btn-group">
+                    <button class="btn">首页</button>
+                    <button class="btn">1</button>
+                    <button class="btn">2</button>
+                    <button class="btn">3</button>
+                    <button class="btn">4</button>
+                    <button class="btn">5</button>
+                    <button class="btn">...</button>
+                    <button class="btn">末页</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="height:24px"></div>
+
+        <div class="row">
+            <div class="span12">
+                <textarea id="redactor-editor" class="redactor span12" style="height: 340px;">
+                    <p>I never did quite grasp him, though he endeavored to explain it to me upon numerous occasions.  I suggested telepathy, but he said no, that it was not telepathy since they could only communicate when in each others' presence, nor could they talk with the Sagoths or the other inhabitants of Pellucidar by the same method they used to converse with one another.</p>
+                    <p>"What they do," said Perry, "is to project their thoughts into the fourth dimension, when they become appreciable to the sixth sense of their listener.  Do I make myself quite clear?"</p>
+                    <p>"You do not, Perry," I replied.  He shook his head in despair, and returned to his work.  They had set us to carrying a great accumulation of Maharan literature from one apartment to another, and there arranging it upon shelves.</p>
+                </textarea>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="span12">
+            <p>Designed and built with all the love in the world <a href="http://twitter.com/twitter" target="_blank">@twitter</a> by <a href="http://twitter.com/mdo" target="_blank">@mdo</a> and <a href="http://twitter.com/fat" target="_blank">@fat</a>.</p>
+            <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License v2.0</a>. Documentation licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+            <p>Icons from <a href="http://glyphicons.com">Glyphicons Free</a>, licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -80,6 +80,9 @@
         $('#form-x').get(0).reset();
         // reset others:
         $('#site_timezone').val('{{ site_timezone }}');
+        $('#category_pagesize').val('{{ category_pagesize }}');
+        $('#rss_items').val('{{ rss_items }}');
+        $('input:radio[name="search_provider"]').filter('[value="{{ search_provider }}"]').attr('checked', 'checked');
     }
 
     $(function() { resetForm(); });
@@ -99,6 +102,13 @@
                     <label class="control-label">Site Description:</label>
                     <div class="controls">
                         <input id="site_description" name="site_description" type="text" value="{{ site_description }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div id="div-site_domain" class="control-group">
+                    <label class="control-label">Site Domain:</label>
+                    <div class="controls">
+                        <input id="site_domain" name="site_domain" type="text" value="{{ site_domain }}" class="input-xlarge" />
+                        <span class="help-inline">Auto detect if empty</span>
                     </div>
                 </div>
                 <div id="div-date_now" class="control-group">
@@ -137,7 +147,7 @@
                         <label class="radio"><input type="radio" name="site_dateformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
 {% endfor %}
                         <label class="radio"><input type="radio" name="site_dateformat" value="custom" /> custom</label>
-                        <label><input type="text" name="custom" class="input-small" /> 2012-2-2</label>
+                        <label><input type="text" name="site_dateformat" disabled="disabled" class="input-small" /> 2012-2-2</label>
                         <input type="hidden" name="site_dateformat" value="{{ site_dateformat }}" />
                     </div>
                 </div>
@@ -148,7 +158,7 @@
                         <label class="radio"><input type="radio" name="site_timeformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
 {% endfor %}
                         <label class="radio"><input type="radio" name="site_timeformat" value="custom" /> custom</label>
-                        <label><input type="text" name="custom" class="input-small" /> 4:34 pm</label>
+                        <label><input type="text" name="site_timeformat" disabled="disabled" class="input-small" /> 4:34 pm</label>
                     </div>
                 </div>
                 <div id="div-category_pagesize" class="control-group">
@@ -179,6 +189,16 @@
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
+                    </div>
+                </div>
+                <div id="div-search_provider" class="control-group">
+                    <label class="control-label">Search Engine Provider:</label>
+                    <div class="controls">
+                        <label class="radio"><input type="radio" name="search_provider" value="google" /> Google Custom Search</label>
+
+                        <label class="radio"><input type="radio" name="search_provider" value="baidu" /> Baidu Custom Search</label>
+
+                        <label class="radio"><input type="radio" name="search_provider" value="local" /> Local Database Search (slow)</label>
                     </div>
                 </div>
                 <div class="form-actions">

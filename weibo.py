@@ -1,0 +1,1 @@
+../sinaweibopy/src/weibo.py

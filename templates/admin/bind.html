@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Sign In</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+    function showtab(name) {
+        $('#ul-tab a#a-' + name).tab('show');
+        $('div.div-tab').hide();
+        $('#div-' + name).show();
+    };
+
+    function show_error(formid, err) {
+        if (err==null || err=='') {
+            $('#' + formid + ' div.alert').hide();
+            return false;
+        }
+        $('#' + formid + ' span.error').text(err);
+        $('#' + formid + ' div.alert').show();
+        return false;
+    }
+
+    function show_loading(formid, show) {
+        if (show) {
+            $('#' + formid + ' btn.btn').attr('disabled', 'disabled');
+            $('#' + formid + ' span.loading').show();
+        }
+        else {
+            $('#' + formid + ' btn.btn').removeAttr('disabled');
+            $('#' + formid + ' span.loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        formid = $(form).attr('id');
+        show_error(formid, null);
+        show_loading(formid, true);
+        if ($('#origin-passwd').val()=='')
+            $('#md5-passwd').val('');
+        else
+            $('#md5-passwd').val($.md5($('#origin-passwd').val()));
+        $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+            if (result.error) {
+                show_loading(formid, false);
+                show_error(formid, result.error);
+            }
+            else {
+                show_error(formid, null);
+                location.assign(result.redirect);
+            }
+        }).error(function() {
+            show_loading(formid, false);
+            show_error(formid, 'Server error!', '');
+        });
+        return false;
+    }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="height: 120px"></div>
+
+        <div class="row">
+            <div class="span1 offset4">
+                <img src="/static/img/logo.png" width="64" height="64" />
+            </div>
+            <div class="span3" style="padding-top:16px;">
+                <h1>iTranswarp</h1>
+            </div>
+        </div>
+
+        <div class="row sep"></div>
+
+        <div class="row">
+            <div class="span6 offset3">
+                <ul id="ul-tab" class="nav nav-tabs">
+                    <li><span style="display:block;width:80px;height:10px;"></span></li>
+                    <li class="active"><a id="a-tab-email" href="javascript:showtab('tab-email')">Enter Email</a></li>
+                    <li><a id="a-tab-form" href="javascript:showtab('tab-form')">Attach with exist account</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="div-tab-email" class="div-tab row">
+            <form id="form-email" action="/auth/bind" method="post" onsubmit="return ajax_post(this)">
+                <div class="span4 offset4">
+                    <div class="row">
+                        <div class="alert alert-error hide">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            <span class="error"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="span4 offset4">
+                    <label class="control-label">Email:</label>
+                    <input type="text" name="email" maxlength="50" class="input-xlarge" />
+                    <input type="hidden" name="type" value="email" />
+                    <input type="hidden" name="key" value="{{ key }}" />
+                </div>
+                <div class="span6 offset3">
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="span5 offset1">
+                                <button type="submit" class="btn btn-primary">Save</button>
+                                <span class="loading hide">Processing, please wait...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="div-tab-form" class="div-tab row hide">
+            <form id="form-user" action="/auth/bind" method="post" onsubmit="return ajax_post(this)">
+                <div class="span4 offset4">
+                    <div class="row">
+                        <div class="alert alert-error hide">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            <span class="error"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="span4 offset4">
+                    <label class="control-label">Email:</label>
+                    <input type="text" name="email" maxlength="50" class="input-xlarge" />
+                    <label class="control-label">Password:</label>
+                    <input type="password" id="origin-passwd" maxlength="50" class="input-xlarge" />
+                    <input type="hidden" id="md5-passwd" name="passwd" />
+                    <input type="hidden" name="type" value="user" />
+                    <input type="hidden" name="key" value="{{ key }}" />
+                </div>
+                <div class="span6 offset3">
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="span5 offset1">
+                                <button type="submit" class="btn btn-primary">Sign In</button>
+                                <span class="loading hide">Processing, please wait...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -88,7 +88,7 @@ $('#type-filter option[value="{{ type }}"]').attr('selected', 'selected');
                     </td>
                     <td>{{ m.name|e }}</td>
                     <td><script type="text/javascript"> document.write(filesize({{ m.size }})); </script></td>
-                    <td><a href="{{ m.url }}" target="_blank">{{ m.url }}</a></td>
+                    <td><a href="{{ m.url }}" target="_blank">{{ m.url|elli }}</a></td>
                     <td>{{ m.creation_time|dt }}</td>
                     <td>
                         <a href="?action=edit&id={{ m.id }}">Edit</a> |
