@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-import types, sys, os, re, cgi, sys, base64, json, time, hashlib, inspect, datetime, functools, threading, logging, urllib, collections, linecache
+import types, sys, os, re, cgi, sys, base64, json, time, hashlib, inspect, datetime, functools, mimetypes, threading, logging, urllib, collections, linecache
 
 # thread local object for storing request and response.
 ctx = threading.local()
@@ -669,21 +669,6 @@ class Route(object):
 
     __repr__ = __str__
 
-_MIME_MAP = {
-    '.html': 'text/html',
-    '.htm': 'text/html',
-    '.shtml': 'text/html',
-    '.shtm': 'text/html',
-    '.js': 'application/x-javascript',
-    '.css': 'text/css',
-    '.gif': 'image/gif',
-    '.png': 'image/png',
-    '.jpeg': 'image/jpeg',
-    '.jpg': 'image/jpeg',
-    '.jpe': 'image/jpeg',
-    '.ico': 'image/x-icon',
-}
-
 def _static_file_generator(fpath):
     BLOCK_SIZE = 8192
     with open(fpath, 'rb') as f:
@@ -701,7 +686,7 @@ def static_file_handler(*args, **kw):
     if not os.path.isfile(fpath):
         raise HttpError(404)
     fext = os.path.splitext(fpath)[1]
-    ctx.response.content_type = _MIME_MAP.get(fext.lower(), 'application/octet-stream')
+    ctx.response.content_type = mimetypes.types_map.get(fext.lower(), 'application/octet-stream')
     ctx.response.content_length = os.path.getsize(fpath)
     return _static_file_generator(fpath)
 
