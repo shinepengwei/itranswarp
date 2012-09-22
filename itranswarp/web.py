@@ -1161,7 +1161,7 @@ class Response(object):
 
     def header(self, name):
         '''
-        Get header by name.
+        Get header by name, case-insensitive.
 
         >>> r = Response()
         >>> r.header('content-type')
@@ -1256,6 +1256,15 @@ class Response(object):
         '8192'
         '''
         self.set_header('CONTENT-LENGTH', str(value))
+
+    def delete_cookie(self, name):
+        '''
+        Delete a cookie immediately.
+
+        Args:
+          name: the cookie name.
+        '''
+        self.set_cookie(name, '__deleted__', expires=time.time() - 31536000)
 
     def set_cookie(self, name, value, max_age=None, expires=None, path='/', domain=None, secure=False, http_only=False):
         '''
@@ -1977,7 +1986,11 @@ class WSGIApplication(object):
         get_re_routes.append(Route('/favicon.ico', favicon_handler))
         return get_static_routes, post_static_routes, get_re_routes, post_re_routes
 
-    def __init__(self, modules, document_root=None, encoding='utf-8', template_engine=None, **kw):
+    def _dofilters(self):
+        for f in self._filters:
+            f()
+
+    def __init__(self, modules, filters=None, document_root=None, encoding='utf-8', template_engine=None, **kw):
         '''
         Init a WSGIApplication.
 
@@ -1991,6 +2004,7 @@ class WSGIApplication(object):
         '''
         self._debug = kw.pop('DEBUG', False)
         self.modules = self._parse_modules(modules, self._debug)
+        self._filters = filters if filters else ()
         self.get_static_routes, self.post_static_routes, self.get_re_routes, self.post_re_routes = self._parse_routes(self.modules, self._debug)
         self.error_handler = _default_error_handler
 
@@ -2034,10 +2048,12 @@ class WSGIApplication(object):
 
         global ctx
         ctx.document_root = self.document_root
+        ctx.server_name = environ.get('SERVER_NAME', '')
         ctx.request = Request(environ)
         ctx.response = Response()
         _log('ctx.document_root: %s' % ctx.document_root)
         try:
+            self._dofilters()
             ret = r.execute() if kw is None else r.execute(**kw)
         except RedirectError as e:
             ctx.response.set_header('Location', e.location)
