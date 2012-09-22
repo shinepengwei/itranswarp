@@ -15,14 +15,28 @@ class SigninProvider(object):
     def __init__(self, **settings):
         self._app_key = settings.get('app_key', '')
         self._app_secret = settings.get('app_secret', '')
-        self._callback = settings.get('callback', '')
-        if not self._app_key or not self._app_secret or not self._callback:
-            raise StandardError('weibo signin is not configured')
+        domain = settings.get('domain', '')
+        if not domain:
+            domain = ctx.server_name
+        if not domain:
+            raise StandardError('domain is not configued')
+        self._callback = 'http://%s/auth/callback/sinaweibo' % domain
+        if not self._app_key or not self._app_secret:
+            raise StandardError('weibo signin app_key or app_secret is not configued')
 
-    def get_settings(self):
-        return (dict(key='app_key', name='App Key', description=''),
-                dict(key='app_secret', name='App Secret', description=''),
-                dict(key='callback', name='Callback', description=''))
+    @staticmethod
+    def get_name():
+        return u'Sina Weibo'
+
+    @staticmethod
+    def get_description():
+        return u'Sina Weibo Signin'
+
+    @staticmethod
+    def get_settings():
+        return (dict(key='app_key', name='App Key', description='App key'),
+                dict(key='app_secret', name='App Secret', description='App secret'),
+                dict(key='domain', name='Domain', description='Website domain'))
 
     def get_auth_url(self):
         referer = ctx.request.header('referer', '/')

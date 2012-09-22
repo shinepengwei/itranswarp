@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>iTranswarp</title>
+    <title>{{ __site_name__ }}</title>
     <!--[if lt IE 9]>
         <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -30,45 +30,32 @@
     <div class="navbar">
         <div class="navbar-inner">
             <div class="container" style="width:940px">
-                <a class="brand" style="color:#fff" href="http://www.iwarpsite.com/" target="_blank">iWarpSite</a>
+                <a class="brand" style="color:#fff" href="/" target="_blank" title="{{ __site_description__|e }}">{{ __site_name__ }}</a>
                 <div class="nav-collapse">
                     <ul class="nav">
-                        <li><a href="/" target="_blank">Site</a></li>
-                        <li><a href="#" target="_blank">Designers</a></li>
-                        <li><a href="#" target="_blank">Developers</a></li>
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Help <b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="/">About iTranswarp</a></li>
-                                <li class="divider"></li>
-                                <li><a href="/">iTranswarp.org</a></li>
-                                <li><a href="/">Documentation</a></li>
-                                <li><a href="/">Support Forums</a></li>
-                                <li><a href="/">Feedback</a></li>
-                            </ul>
-                        </li>
+                        <li><a href="/" target="_blank">Visit Site</a></li>
+                        <li><a href="#" target="_blank">Documentation</a></li>
+                        <li><a href="#" target="_blank">Feedback</a></li>
                     </ul>
+<!--
                     <form class="navbar-search pull-left" action="/" method="post">
                         <input type="text" name="q" placeholder="Type keywords" class="search-query span2" />
                     </form>
+-->
                     <ul class="nav pull-right">
-                        <li><a href="#">登录</a></li>
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Messages <span class="badge badge-warning">3</span> <b class="caret"></b></a>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" style="color:#fff">
+                                {{ __user__.name }}
+                                <span class="badge badge-warning">3</span>
+                                <b class="caret" style="opacity:1.0"></b>
+                            </a>
                             <ul class="dropdown-menu">
                                 <li><a href="/">Comments <span class="badge badge-warning pull-right">3</span></a></li>
                                 <li><a href="/">My Connect <span class="badge badge-warning pull-right">3</span></a></li>
-                                <li class="divider"></li>
-                                <li><a href="/">Sign Out</a></li>
-                            </ul>
-                        </li>
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">USERNAME <b class="caret"></b></a>
-                            <ul class="dropdown-menu">
                                 <li><a href="/">My Profile</a></li>
                                 <li><a href="/">My Connect</a></li>
                                 <li class="divider"></li>
-                                <li><a href="/">Sign Out</a></li>
+                                <li><a href="/signout?redirect=/">Sign Out</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -112,12 +99,13 @@
                 <p><a href="https://github.com/michaelliao/itranswarp" target="_blank">iTranswarp</a> by <a href="http://twitter.com/liaoxuefeng" target="_blank">@liaoxuefeng</a>.</p>
             </div>
             <div class="span4">
-                <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License v2.0</a>.</p>
-            </div>
-            <div class="span4">
                 <p>CSS from <a href="http://twitter.github.com/bootstrap/" target="_blank">Bootstrap</a>.</p>
                 <p>JavaScript from <a href="http://www.jquery.com/" target="_blank">JQuery</a>.</p>
                 <p>WYSIWYG from <a href="http://redactorjs.com/" target="_blank">Redactor</a>.</p>
+            </div>
+            <div class="span4">
+                <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License v2.0</a>.</p>
+                <p>Running on <a href="http://www.python.org/" target="_blank">Python 2.6+</a> with WSGI-compatible.</p>
             </div>
         </div>
     </div>

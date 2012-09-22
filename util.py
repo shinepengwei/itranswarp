@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-import re, time, base64, hashlib, logging, functools
+import os, re, time, base64, hashlib, logging, functools
 
 from itranswarp.web import ctx, get, post, route, jsonrpc, Dict, Template, seeother, notfound, badrequest
 from itranswarp import db
@@ -15,6 +15,86 @@ _REG_EMAIL = re.compile(r'^[0-9a-z]([\-\.\w]*[0-9a-z])*\@([0-9a-z][\-\w]*[0-9a-z
 _SESSION_COOKIE_NAME = '_auth_session_cookie'
 _SESSION_COOKIE_KEY = '_SECURE_keyabc123xyz_BIND_'
 _SESSION_COOKIE_EXPIRES = 31536000.0
+
+def load_module(module_name):
+    '''
+    Load a module and return the module reference.
+    '''
+    pos = module_name.rfind('.')
+    if pos==(-1):
+        return __import__(module_name, globals(), locals(), [module_name])
+    return __import__(module_name, globals(), locals(), [module_name[pos+1:]])
+
+def scan_submodules(module_name):
+    '''
+    Scan sub modules and import as dict (key=module name, value=module).
+
+    >>> ms = scan_submodules('apps')
+    >>> type(ms['article'])
+    <type 'module'>
+    >>> ms['article'].__name__
+    'apps.article'
+    >>> type(ms['manage'])
+    <type 'module'>
+    >>> ms['manage'].__name__
+    'apps.manage'
+    '''
+    web_root = os.path.dirname(os.path.abspath(__file__))
+    mod_path = os.path.join(web_root, *module_name.split('.'))
+    if not os.path.isdir(mod_path):
+        raise IOError('No such file or directory: %s' % mod_path)
+    dirs = os.listdir(mod_path)
+    mod_dict = {}
+    for name in dirs:
+        if name=='__init__.py':
+            continue
+        p = os.path.join(mod_path, name)
+        if os.path.isfile(p) and name.endswith('.py'):
+            pyname = name[:-3]
+            mod_dict[pyname] = __import__('%s.%s' % (module_name, pyname), globals(), locals(), [pyname])
+        if os.path.isdir(p) and os.path.isfile(os.path.join(mod_path, name, '__init__.py')):
+            mod_dict[name] = __import__('%s.%s' % (module_name, name), globals(), locals(), [name])
+    return mod_dict
+
+def _load_signin_settings(provider_name, provider_cls):
+    stored = get_settings(kind='signins.%s' % provider_name, remove_prefix=True)
+    settings = list(provider_cls.get_settings())
+    for setting in settings:
+        setting['value'] = stored.get(setting['key'], '')
+    return settings, int(stored.get('order', 100000 + ord(provider_name[0]))), bool(stored.get('enabled', ''))
+
+def save_signin_provider_settings(name, enabled, settings):
+    provider = load_module('plugin.signin.%s' % name).SigninProvider
+    set_setting(name='signins.%s_enabled' % name, value='True' if enabled else '')
+    for setting in provider.get_settings():
+        key = setting['key']
+        set_setting(name='signins.%s_%s' % (name, key), value=settings.get(key, ''))
+
+def create_signin_provider(name):
+    provider = load_module('plugin.signin.%s' % name)
+    return provider.SigninProvider(**get_settings(kind='signins.%s' % name, remove_prefix=True))
+
+def get_signin_provider_settings(name):
+    provider = load_module('plugin.signin.%s' % name).SigninProvider
+    settings, order, enabled = _load_signin_settings(name, provider)
+    return settings, provider.get_description(), enabled
+
+def get_signin_providers(names_only=False):
+    '''
+    Get signin providers as list.
+    '''
+    ps = scan_submodules('plugin.signin')
+    if names_only:
+        return ps.keys()
+    providers = []
+    for name, mod in ps.iteritems():
+        settings, order, enabled = _load_signin_settings(name, mod.SigninProvider)
+        provider = dict(name=mod.SigninProvider.get_name(), description=mod.SigninProvider.get_description(), settings=settings)
+        provider['id'] = name
+        provider['order'] = order
+        provider['enabled'] = enabled
+        providers.append(provider)
+    return sorted(providers, key=lambda p: p['order'])
 
 def make_session_cookie(provider, uid, passwd, expires):
     '''
@@ -72,7 +152,7 @@ def extract_session_cookie():
 
 def delete_session_cookie():
     ' delete the session cookie immediately '
-    ctx.response.set_cookie(_SESSION_COOKIE_NAME, 'deleted', expires=time.time() - _SESSION_COOKIE_EXPIRES)
+    ctx.response.delete_cookie(_SESSION_COOKIE_NAME)
 
 def get_menus():
     '''
@@ -86,7 +166,7 @@ def get_menus():
     db.insert('menus', **menu)
     return [menu]
 
-def get_settings(kind=None):
+def get_settings(kind=None, remove_prefix=False):
     '''
     Get all settings.
     '''
@@ -96,7 +176,8 @@ def get_settings(kind=None):
     else:
         L = db.select('select name, value from settings')
     for s in L:
-        settings[s.name] = s.value
+        key = s.name[s.name.find('_')+1:] if remove_prefix else s.name
+        settings[key] = s.value
     return settings
 
 def get_setting(name, default=''):
@@ -130,6 +211,17 @@ def get_setting_site_name():
 def get_setting_site_description():
     return get_setting('site_description', '')
 
+def _init_theme(path, model):
+    theme = 'default'
+    model['__get_theme_path__'] = lambda _templpath: 'themes/%s/%s' % (theme, _templpath)
+    model['__menus__'] = db.select('select * from menus order by display_order, name')
+    if not '__title__' in model:
+        model['__title__'] = 'iTranswarp'
+    model.update(get_settings('site'))
+    model['ctx'] = ctx
+    model['__layout_categories__'] = db.select('select * from categories order by display_order, name')
+    return 'themes/%s/%s' % (theme, path), model
+
 def theme(path):
     '''
     ThemeTemplate uses 'themes/<active-theme>' + template path to get real template.
@@ -139,15 +231,8 @@ def theme(path):
         def _wrapper(*args, **kw):
             r = func(*args, **kw)
             if isinstance(r, dict):
-                theme = 'default'
-                template_name = 'themes/%s/%s' % (theme, path)
-                r['__get_theme_path__'] = lambda _templpath: 'themes/%s/%s' % (theme, _templpath)
-                r['__menus__'] = db.select('select * from menus order by display_order, name')
-                if not '__title__' in r:
-                    r['__title__'] = 'iTranswarp'
-                r.update(get_settings('site'))
-                r['__layout_categories__'] = db.select('select * from categories order by display_order, name')
-                return Template(template_name, **r)
+                templ_path, model = _init_theme(path, r)
+                return Template(templ_path, model)
             return r
         return _wrapper
     return _decorator
@@ -156,17 +241,9 @@ class ThemeTemplate(Template):
     '''
     ThemeTemplate uses 'themes/<active-theme>' + template path to get real template.
     '''
-    def __init__(self, template_name, model=None, **kw):
-        super(ThemeTemplate, self).__init__(template_name, model=model, **kw)
-        theme = 'default'
-        self.template_name = 'themes/%s/%s' % (theme, template_name)
-        # init other models:
-        self.model['__get_theme_path__'] = lambda page: 'themes/%s/%s' % (theme, page)
-        self.model['__menus__'] = db.select('select * from menus order by display_order, name')
-        if not '__title__' in self.model:
-            self.model['__title__'] = 'iTranswarp'
-        self.model.update(get_settings('site'))
-        self.model['__layout_categories__'] = db.select('select * from categories order by display_order, name')
+    def __init__(self, path, model=None, **kw):
+        templ_path, m = _init_theme(path, r)
+        super(ThemeTemplate, self).__init__(templ_path, m, **kw)
 
 def validate_email(email):
     '''

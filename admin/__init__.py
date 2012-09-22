@@ -57,16 +57,10 @@ class _AppMenuItem(object):
         self.title = title
 
 def _imports():
-    mods = ['article', 'manage']
+    mdict = util.scan_submodules('apps')
     L = []
-    for mod in mods:
-        try:
-            logging.info('try import %s...' % mod)
-            m = __import__('apps.%s.manage' % mod, globals(), locals(), ['manage'])
-            L.append((mod, m))
-        except ImportError:
-            logging.exception('Import error!')
-            continue
+    for name, mod in mdict.iteritems():
+        L.append((name, util.load_module('apps.%s.manage' % name)))
     return L
 
 def _get_all_nav_menus():
@@ -144,6 +138,7 @@ def menu_item(mod, handler):
     return r
 
 @get('/signin')
+@view('templates/admin/signin.html')
 def signin():
     redirect = ctx.request.get('redirect', '')
     if not redirect:
@@ -152,7 +147,7 @@ def signin():
         redirect = '/'
     ctx.response.set_cookie(_COOKIE_SIGNIN_REDIRECT, redirect)
     providers = [p for p in util.get_signin_providers() if p['enabled']]
-    return Template('templates/admin/signin.html', providers=providers)
+    return dict(providers=providers)
 
 @post('/signin')
 def do_signin():
@@ -176,7 +171,12 @@ def do_signin():
 @get('/signout')
 def signout():
     util.delete_session_cookie()
-    raise seeother(ctx.request.get('redirect', '/'))
+    redirect = ctx.request.get('redirect', '')
+    if not redirect:
+        redirect = ctx.request.header('REFERER', '')
+    if not redirect or redirect.find('/admin/')!=(-1) or redirect.find('/signin')!=(-1):
+        redirect = '/'
+    raise seeother(redirect)
 
 @get('/auth/from/<provider>')
 def auth_start(provider):
