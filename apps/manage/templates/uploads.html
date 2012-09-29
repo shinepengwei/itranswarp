@@ -1,32 +1,6 @@
-<script type="text/JavaScript">
-    function saveOrders() {
-        $('#btn-order').hide();
-        $('#loading').show();
-        $('#form-order').submit();
-    }
-
-    function moveUp(trid) {
-        var me = $('#tr-' + trid);
-        var x = me.prev();
-        if (x.length > 0) {
-            me.after(x);
-            $('#btn-order').show();
-        }
-    }
-
-    function moveDown(trid) {
-        var me = $('#tr-' + trid);
-        var x = me.next();
-        if (x.length > 0) {
-            me.before(x);
-            $('#btn-order').show();
-        }
-    }
-</script>
-
 <div class="row sep">
     <div class="span10">
-        <h3>3rd-part Signin Providers</h3>
+        <h3>Upload Providers</h3>
     </div>
 </div>
 
@@ -99,10 +73,11 @@
 
 <div class="row">
     <div class="span10">
-        <form id="form-order" name="form-order" method="post" action="order_signins">
+        <form id="form-select" name="form-select" action="select_upload" onsubmit="return ajax_post(this)">
         <table class="table table-bordered">
             <thead>
                 <tr>
+                    <th>&nbsp;</th>
                     <th>Name</th>
                     <th>Description</th>
                     <th>Enabled</th>
@@ -112,6 +87,7 @@
             <tbody>
 {% for p in providers %}
                 <tr id="tr-{{ p.id }}">
+                    <td><input type="radio" name="selected" value="True" /></td>
                     <td>{{ p.name|e }}</td>
                     <td>{{ p.description|e }}</td>
                     <td>{{ p.enabled }}</td>
@@ -131,7 +107,7 @@
 
 <div class="row sep">
     <div class="span10">
-        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">Save Orders</button>
+        <button id="btn-save" type="submit" class="btn btn-info pull-right">Save</button>
         <span id="loading" class="loading pull-right hide">Saving orders...</span>
     </div>
 </div>

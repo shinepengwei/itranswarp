@@ -12,12 +12,53 @@ __author__ = 'Michael Liao'
         name varchar(50) not null,
         role int not null,
         email varchar(50) not null,
+        verified bool not null,
         passwd varchar(32) not null,
+        image_url varchar(1000) not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
         primary key(id),
-        unique key uk_email(email)
+        unique key uk_email(email),
+        index idx_creation_time(creation_time)
+    );
+
+    create table auth_users (
+        id varchar(200) not null,
+        user_id varchar(50) not null,
+        provider varchar(50) not null,
+        name varchar(50) not null,
+        image_url varchar(1000) not null,
+        auth_token varchar(2000) not null,
+        expired_time real not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        unique key uk_user_id(user_id)
+    );
+
+    create table auth_emails (
+        id varchar(50) not null,
+        user_id varchar(50) not null,
+        email varchar(50) not null,
+        auth_token varchar(50) not null,
+        expired_time real not null,
+        creation_time real not null,
+        primary key(id),
+        index idx_user_id(user_id),
+        index idx_creation_time(creation_time)
+    );
+
+    create table auth_passwd (
+        id varchar(50) not null,
+        user_id varchar(50) not null,
+        auth_token varchar(50) not null,
+        expired_time real not null,
+        creation_time real not null,
+        primary key(id),
+        index idx_user_id(user_id),
+        index idx_creation_time(creation_time)
     );
 
     create table roles (
@@ -42,7 +83,8 @@ __author__ = 'Michael Liao'
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
-        primary key(id)
+        primary key(id),
+        index idx_creation_time(creation_time)
     );
 
     create table media (
@@ -61,32 +103,52 @@ __author__ = 'Michael Liao'
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
-        primary key(id)
+        primary key(id),
+        index idx_creation_time(creation_time)
     );
 
     create table settings (
         id varchar(50) not null,
+        kind varchar(50) not null,
         name varchar(50) not null,
         value varchar(1000) not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
         primary key(id),
-        unique key uk_name(name)
+        unique key uk_name(name),
+        index idx_kind(kind)
     );
+
+    create table comments (
+        id varchar(50) not null,
+        ref_id varchar(50) not null,
+        user_id varchar(50) not null,
+        image_url varchar(1000) not null,
+        name varchar(50) not null,
+        content text not null,
+        creation_time real not null,
+        version bigint not null,
+        primary key(id),
+        index idx_user_id(user_id),
+        index idx_creation_time(creation_time)
+    );
+
 '''
 
 import os
 import re
 import time
 import logging
+import hashlib
 from datetime import datetime
 
 import admin
 
 from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest, UTC
 from itranswarp import db
-import iwarpsite
+
+import util
 
 PAGE_SIZE = 5
 
@@ -95,6 +157,9 @@ def _get_custom_url(menu):
     if url.startswith('http://') or url.startswith('https://'):
         return url
     raise ValueError('Bad url.')
+
+def _get_avatar(email):
+    return 'http://www.gravatar.com/avatar/%s' % hashlib.md5(str(email)).hexdigest()
 
 def register_navigation_menus():
     return [
@@ -119,11 +184,50 @@ def register_admin_menus():
         dict(order=1000, title=u'Settings', items=[
             dict(title=u'General', role=0, handler='general'),
             dict(title=u'Menus', role=0, handler='menus'),
+            dict(title=u'Widgets', role=0, handler='widgets'),
+            dict(title=u'Layout', role=0, handler='menus'),
+        ]),
+        dict(order=1100, title=u'Plugins', items=[
+            dict(title='Signins', role=0, handler='signins'),
+            dict(title='Uploads', role=0, handler='uploads'),
         ]),
     ]
 
 def dashboard(user, request, response):
     return Template('templates/dashboard.html')
+
+def signins(user, request, response):
+    i = ctx.request.input(action='')
+    if i.action=='edit':
+        settings, description, enabled = util.get_plugin_settings('signin', i.id)
+        return Template('templates/pluginform.html', plugin_type='signin', form_title=description, action='save_signin', id=i.id, name=i.id, settings=settings, enabled=enabled)
+    providers = util.get_plugin_providers('signin')
+    return Template('templates/signins.html', providers=providers)
+
+@jsonresult
+def save_signin(user, request, response):
+    i = ctx.request.input(enabled='')
+    util.save_plugin_settings('signin', i.id, i.enabled=='True', i)
+    return dict(redirect='signins')
+
+def order_signins(user, request, response):
+    orders = request.gets('order')
+    util.order_plugin_providers('signin', orders)
+    raise seeother('signins')
+
+def uploads(user, request, response):
+    i = ctx.request.input(action='')
+    if i.action=='edit':
+        settings, description, enabled = util.get_plugin_settings('upload', i.id)
+        return Template('templates/pluginform.html', plugin_type='upload', form_title=description, action='save_upload', id=i.id, name=i.id, settings=settings, enabled=enabled)
+    providers = util.get_plugin_providers('upload')
+    return Template('templates/uploads.html', providers=providers)
+
+@jsonresult
+def save_upload(user, request, response):
+    i = ctx.request.input(enabled='')
+    util.save_plugin_settings('upload', i.id, i.enabled=='True', i)
+    return dict(redirect='uploads')
 
 def general(user, request, response):
     TIMEZONES = [
@@ -181,7 +285,7 @@ def general(user, request, response):
         '%H:%M',
         '%I:%M %p',
     ]
-    settings = iwarpsite.get_settings()
+    settings = util.get_settings()
     site_timezone = settings.pop('site_timezone', '+00:00')
     if not site_timezone in TIMEZONES:
         site_timezone = '+00:00'
@@ -202,11 +306,11 @@ def general(user, request, response):
 
 @jsonresult
 def do_save_settings(user, request, response):
-    settings = iwarpsite.get_settings()
+    settings = util.get_settings()
     for k, v in request.input().iteritems():
         if k in settings and settings[k]==v:
             continue
-        iwarpsite.set_setting(k, v)
+        util.set_setting(k, v)
     return dict(redirect='general')
 
 def _get_roles():
@@ -214,9 +318,11 @@ def _get_roles():
     if roles:
         return roles
     current = time.time()
-    role = Dict(id=0, locked=True, name=u'Administrator', privileges='', creation_time=current, modified_time=current, version=0)
-    db.insert('roles', **role)
-    return [role]
+    role_admin = Dict(id=0, locked=True, name=u'Administrator', privileges='', creation_time=current, modified_time=current, version=0)
+    role_guest = Dict(id=100000000, locked=True, name=u'Guest', privileges='', creation_time=current, modified_time=current, version=0)
+    db.insert('roles', **role_admin)
+    db.insert('roles', **role_guest)
+    return [role_admin, role_guest]
 
 def roles(user, request, response):
     i = request.input(action='')
@@ -240,7 +346,7 @@ def do_add_role(user, request, response):
     if 'privileges' in request:
         privileges = request.gets('privileges')
     # check:
-    max_id = db.select_one('select max(id) as m from roles').m
+    max_id = db.select_one('select max(id) as m from roles where id<100000000').m
     current = time.time()
     role = Dict(id=max_id+1, locked=False, name=name, privileges=','.join(privileges), creation_time=current, modified_time=current, version=0)
     db.insert('roles', **role)
@@ -250,11 +356,12 @@ def do_add_role(user, request, response):
 def do_edit_role(user, request, response):
     i = request.input()
     role_id = int(i.id)
-    if role_id==0:
-        return dict(error=u'Cannot edit administrator role', error_field='')
     name = i.name.strip()
     if not name:
         return dict(error=u'Name cannot be empty', error_field='name')
+    role = db.select_one('select * from roles where id=?', role_id)
+    if role.locked:
+        return dict(error=u'Cannot edit this role', error_field='')
     privileges = []
     if 'privileges' in request:
         privileges = request.gets('privileges')
@@ -337,6 +444,8 @@ def do_add_user(user, request, response):
         return dict(error=u'Name cannot be empty', error_field='name')
     if not email:
         return dict(error=u'Email cannot be empty', error_field='email')
+    if not util.validate_email(email):
+        return dict(error=u'Invalid email', error_field='email')
     if not passwd:
         return dict(error=u'Password cannot be empty', error_field='passwd1')
     m = _RE_PASSWD.match(passwd)
@@ -346,18 +455,9 @@ def do_add_user(user, request, response):
     if db.select('select id from users where email=?', email):
         return dict(error=u'Email is exist', error_field='email')
     current = time.time()
-    user = Dict(id=db.next_str(), name=name, role=role, email=email, passwd=passwd, creation_time=current, modified_time=current, version=0)
+    user = Dict(id=db.next_str(), name=name, role=role, email=email, passwd=passwd, verified=False, image_url=_get_avatar(email), creation_time=current, modified_time=current, version=0)
     db.insert('users', **user)
     return dict(redirect='users')
-
-def _get_menus():
-    menus = db.select('select * from menus order by display_order, name')
-    if menus:
-        return menus
-    current = time.time()
-    menu = Dict(id=db.next_str(), name=u'Home', description=u'', type='custom', display_order=0, ref='/', url='/', creation_time=current, modified_time=current, version=0)
-    db.insert('menus', **menu)
-    return [menu]
 
 def _prepare_menus():
     menus = []
@@ -375,11 +475,11 @@ def menus(user, request, response):
         return Template('templates/menuform.html', form_title=u'Edit Menu', action='do_edit_menu', menus=_prepare_menus(), **menu)
     if i.action=='add':
         return Template('templates/menuform.html', form_title=u'Add Menu', action='do_add_menu', menus=_prepare_menus())
-    return Template('templates/menus.html', menus=_get_menus())
+    return Template('templates/menus.html', menus=util.get_menus())
 
 def order_menus(user, request, response):
     orders = request.gets('order')
-    menus = _get_menus()
+    menus = util.get_menus()
     l = len(menus)
     if l!=len(orders):
         raise badrequest()
