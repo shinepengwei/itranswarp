@@ -7,12 +7,22 @@ __author__ = 'Michael Liao'
 Database operation module. This module is independent with web module.
 '''
 
-import os, sys, time, uuid, datetime, functools, threading, logging, collections
+import os, re, sys, time, uuid, socket, datetime, functools, threading, logging, collections
 
 logging.basicConfig(level=logging.INFO)
 
 class _IdGenerator():
     def __init__(self, server_id=0):
+        '''
+        Init an id generator with server id. Server id can be automatically got from 
+        hostname. e.g. 'server-100' => 100, 'test01' => 1.
+
+        Server id makes each server generate different id at the same time.
+        '''
+        if server_id == 0:
+            m = re.match('^[^0-9]*([0-9]+)$', socket.gethostname())
+            if m:
+                server_id = int(m.group(1)) & 255
         self.server_id = server_id
         self.time_reduction = 1262275200000
         self.last_time = self._get_current_time()
@@ -470,30 +480,37 @@ def update_kw(table, where, *args, **kw):
     params.extend(args)
     return update(sql, *params)
 
-def init(dbn, db, user='', passwd='', host=None, driver=None, **kw):
+def init(db_type, db_schema, db_host, db_port=0, db_user=None, db_password=None, db_driver=None, **db_args):
     '''
-    Initialize database by:
-      dbn: db name, 'mysql', 'sqlite3'.
-      db: schema name.
-      user: username.
-      passwd: password.
-      host: db host.
-      driver: db driver, default to None.
-      **kw: other parameters, e.g. use_unicode=True
+    Initialize database.
+
+    Args:
+      db_type: db type, 'mysql', 'sqlite3'.
+      db_schema: schema name.
+      db_host: db host.
+      db_user: username.
+      db_password: password.
+      db_driver: db driver, default to None.
+      **db_args: other parameters, e.g. use_unicode=True
     '''
-    global _db_connect, _db_convert, _id_generator
-    if dbn=='mysql':
+    global _db_connect, _db_convert
+    if db_type=='mysql':
         _log('init mysql...')
         import MySQLdb
-        _db_connect = lambda: MySQLdb.connect(host, user, passwd, db, use_unicode=True, charset='utf8')
+        if not 'use_unicode' in db_args:
+            db_args['use_unicode'] = True
+        if not 'charset' in db_args:
+            db_args['charset'] = 'utf8'
+        if db_port==0:
+            db_port = 3306
+        _db_connect = lambda: MySQLdb.connect(db_host, db_user, db_password, db_schema, db_port, **db_args)
         _db_convert = '%s'
-    elif dbn=='sqlite3':
+    elif db_type=='sqlite3':
         _log('init sqlite3...')
         import sqlite3
-        _db_connect = lambda: sqlite3.connect(db)
+        _db_connect = lambda: sqlite3.connect(db_schema)
     else:
-        raise DBError('Unsupported db: %s' % dbn)
-    _id_generator = _IdGenerator(kw.pop('sharding', 0))
+        raise DBError('Unsupported db: %s' % db_type)
 
 if __name__=='__main__':
     sys.path.append('.')
