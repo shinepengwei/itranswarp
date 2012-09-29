@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+'''
+A simple, lightweight, WSGI-compatible web framework.
+'''
+
 __author__ = 'Michael Liao'
 
 import types, sys, os, re, cgi, sys, base64, json, time, hashlib, inspect, datetime, functools, mimetypes, threading, logging, urllib, collections, linecache
