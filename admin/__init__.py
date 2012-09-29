@@ -146,7 +146,7 @@ def signin():
     if not redirect or redirect.find('/signin')!=(-1):
         redirect = '/'
     ctx.response.set_cookie(_COOKIE_SIGNIN_REDIRECT, redirect)
-    providers = [p for p in util.get_signin_providers() if p['enabled']]
+    providers = [p for p in util.get_plugin_providers('signin') if p['enabled']]
     return dict(providers=providers)
 
 @post('/signin')
