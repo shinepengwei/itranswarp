@@ -15,7 +15,8 @@ __author__ = 'Michael Liao'
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
-        primary key(id)
+        primary key(id),
+        index idx_display_order(display_order)
     );
 
     create table articles (
@@ -28,7 +29,9 @@ __author__ = 'Michael Liao'
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
-        primary key(id)
+        primary key(id),
+        index idx_category_id(category_id),
+        index idx_creation_time(creation_time)
     );
 
     create table pages (
@@ -40,8 +43,10 @@ __author__ = 'Michael Liao'
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
-        primary key(id)
+        primary key(id),
+        index idx_creation_time(creation_time)
     );
+
 '''
 
 import time
@@ -52,7 +57,7 @@ from itranswarp import db
 
 PAGE_SIZE = 5
 
-def _get_home_url(menu):
+def _get_latest_url(menu):
     return '/latest'
 
 def _get_cat_url(menu):
@@ -69,9 +74,9 @@ def _nav_page_supplies():
 
 def register_navigation_menus():
     return [
-        dict(type='latest_articles', name='Latest', description='Display latest articles on home page.', input_type=None, supplies=None, handler=_get_home_url),
+        dict(type='latest_articles', name='Latest', description='Display latest articles on home page.', input_type=None, supplies=None, handler=_get_latest_url),
         dict(type='category', name='Category', description='Display articles belong to the specified category.', input_type='select', input_prompt='Category:', supplies=_nav_category_supplies, handler=_get_cat_url),
-        dict(type='static_page', name='Static Page', description='Display a static page.', input_type='select', input_prompt='Static Page:', supplies=_nav_page_supplies, handler=_get_page_url),
+        dict(type='page', name='Static Page', description='Display a static page.', input_type='select', input_prompt='Static Page:', supplies=_nav_page_supplies, handler=_get_page_url),
     ]
 
 def register_admin_menus():
