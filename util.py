@@ -3,6 +3,8 @@
 
 __author__ = 'Michael Liao'
 
+' Util module '
+
 import os, re, time, base64, hashlib, logging, functools
 
 from itranswarp.web import ctx, get, post, route, jsonrpc, Dict, Template, seeother, notfound, badrequest
@@ -56,40 +58,48 @@ def scan_submodules(module_name):
             mod_dict[name] = __import__('%s.%s' % (module_name, name), globals(), locals(), [name])
     return mod_dict
 
-def _load_signin_settings(provider_name, provider_cls):
-    stored = get_settings(kind='signins.%s' % provider_name, remove_prefix=True)
+def _load_plugin_settings(plugin_type, provider_name, provider_cls):
+    stored = get_settings(kind='%s.%s' % (plugin_type, provider_name), remove_prefix=True)
     settings = list(provider_cls.get_settings())
     for setting in settings:
         setting['value'] = stored.get(setting['key'], '')
     return settings, int(stored.get('order', 100000 + ord(provider_name[0]))), bool(stored.get('enabled', ''))
 
-def save_signin_provider_settings(name, enabled, settings):
-    provider = load_module('plugin.signin.%s' % name).SigninProvider
-    set_setting(name='signins.%s_enabled' % name, value='True' if enabled else '')
+def save_plugin_settings(plugin_type, name, enabled, settings):
+    provider = load_module('plugin.%s.%s' % (plugin_type, name)).Provider
+    set_setting(name='%s.%s_enabled' % (plugin_type, name), value='True' if enabled else '')
     for setting in provider.get_settings():
         key = setting['key']
-        set_setting(name='signins.%s_%s' % (name, key), value=settings.get(key, ''))
+        set_setting(name='%s.%s_%s' % (plugin_type, name, key), value=settings.get(key, ''))
 
 def create_signin_provider(name):
     provider = load_module('plugin.signin.%s' % name)
-    return provider.SigninProvider(**get_settings(kind='signins.%s' % name, remove_prefix=True))
+    return provider.Provider(**get_settings(kind='signin.%s' % name, remove_prefix=True))
 
-def get_signin_provider_settings(name):
-    provider = load_module('plugin.signin.%s' % name).SigninProvider
-    settings, order, enabled = _load_signin_settings(name, provider)
+def get_plugin_settings(plugin_type, name):
+    provider = load_module('plugin.%s.%s' % (plugin_type, name)).Provider
+    settings, order, enabled = _load_plugin_settings(plugin_type, name, provider)
     return settings, provider.get_description(), enabled
 
-def get_signin_providers(names_only=False):
+def order_plugin_providers(plugin_type, orders):
+    providers = get_plugin_providers(plugin_type, names_only=True)
+    n = 0
+    for name in orders:
+        if name in providers:
+            set_setting(name='%s.%s_order' % (plugin_type, name), value=str(n))
+            n = n + 1
+
+def get_plugin_providers(plugin_type, names_only=False):
     '''
-    Get signin providers as list.
+    Get plugin providers as list.
     '''
-    ps = scan_submodules('plugin.signin')
+    ps = scan_submodules('plugin.%s' % plugin_type)
     if names_only:
         return ps.keys()
     providers = []
     for name, mod in ps.iteritems():
-        settings, order, enabled = _load_signin_settings(name, mod.SigninProvider)
-        provider = dict(name=mod.SigninProvider.get_name(), description=mod.SigninProvider.get_description(), settings=settings)
+        settings, order, enabled = _load_plugin_settings(plugin_type, name, mod.Provider)
+        provider = dict(name=mod.Provider.get_name(), description=mod.Provider.get_description(), settings=settings)
         provider['id'] = name
         provider['order'] = order
         provider['enabled'] = enabled
@@ -98,16 +108,17 @@ def get_signin_providers(names_only=False):
 
 def make_session_cookie(provider, uid, passwd, expires):
     '''
-    Generate a secure client session cookie by constructing:
+    Generate a secure client session cookie by constructing: 
     base64(uid, expires, md5(auth_provider, uid, expires, passwd, salt)).
+    
     Args:
-      auth_provider: auth provider
-      uid: user id.
-      expires: unix-timestamp as float.
-      passwd: user's password.
-      salt: a secure string.
+        auth_provider: auth provider.
+        uid: user id.
+        expires: unix-timestamp as float.
+        passwd: user's password.
+        salt: a secure string.
     Returns:
-      base64 encoded cookie value as str.
+        base64 encoded cookie value as str.
     '''
     pvd = str(provider)
     sid = str(uid)
@@ -120,13 +131,10 @@ def make_session_cookie(provider, uid, passwd, expires):
 
 def extract_session_cookie():
     '''
-    Decode a secure client session cookie and return uid, or None if invalid cookie. 
-    Args:
-      s: base64 encoded cookie value.
-      get_passwd_by_uid: function that return password by uid.
-      salt: a secure string.
+    Decode a secure client session cookie and return uid, or None if invalid cookie.
+
     Returns:
-      provider, user id as str, or None if cookie is invalid.
+        user id as str, or None if cookie is invalid.
     '''
     def _get_passwd_by_uid(provider, userid):
         if provider==const.LOCAL_SIGNIN_PROVIDER:
@@ -151,12 +159,12 @@ def extract_session_cookie():
     return uid
 
 def delete_session_cookie():
-    ' delete the session cookie immediately '
+    ' delete the session cookie immediately. '
     ctx.response.delete_cookie(_SESSION_COOKIE_NAME)
 
 def get_menus():
     '''
-    Get navigation menus.
+    Get navigation menus as list, each element is a Dict object.
     '''
     menus = db.select('select * from menus order by display_order, name')
     if menus:
@@ -213,6 +221,7 @@ def get_setting_site_description():
 
 def _init_theme(path, model):
     theme = 'default'
+    model['__theme_path__'] = '/themes/%s' % theme
     model['__get_theme_path__'] = lambda _templpath: 'themes/%s/%s' % (theme, _templpath)
     model['__menus__'] = db.select('select * from menus order by display_order, name')
     if not '__title__' in model:
