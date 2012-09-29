@@ -1,0 +1,43 @@
+{% include __get_theme_path__('__inc_header.html') %}
+
+        <div class="row">
+            <div class="span9">
+{% for a in articles %}
+                <div class="row">
+                    <div class="span9">
+                        <h3><a href="/article/{{ a.id }}">{{ a.name|e }}</a></h3>
+                    </div>
+                </div>
+                <div class="row sep">
+                    <div class="span9">
+                        <p>post at {{ a.creation_time|dt }}</p>
+                        {{ a.content }}
+                    </div>
+                </div>
+{% endfor %}
+            </div>
+            <div class="span3">
+                <div class="box">
+                    <h4>Categories</h4>
+{% for c in __layout_categories__ %}
+                    <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+{% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span9">
+                <div class="btn-group">
+{% for i in page.nearby() %}
+    {% if i==page.index %}
+                    <button class="btn disabled">{{ i }}</button>
+    {% else %}
+                    <button class="btn" onclick="location.assign('?category={{ category }}&page={{ i }}')">{{ i }}</button>
+    {% endif %}
+{% endfor %}
+                </div>
+            </div>
+        </div>
+
+{% include __get_theme_path__('__inc_footer.html') %}

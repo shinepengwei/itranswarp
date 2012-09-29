@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ __title__ }}</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="row sep"></div>
+        <div class="row sep">
+            <div class="span8">
+                <h1>{{ site_name }}</h1>
+            </div>
+            <div class="span4">
+{% if ctx.user %}
+                        <span class="pull-right" style="padding-right:8px"><a href="/signout">Sign Out</a></span>
+                        <span class="pull-right" style="padding-right:8px"> | </span>
+                        <span class="pull-right" style="padding-right:8px"><a href="/profile">{{ ctx.user.name }}</a></span>
+{% else %}
+                        <span class="pull-right" style="padding-right:8px"><a href="/signin">Sign In</a></span>
+{% endif %}
+            </div>
+        </div>
+        <div class="row sep">
+            <div class="span12">
+                <div class="subnav">
+                    <ul id="nav-menus" class="nav nav-pills">
+{% for m in __menus__ %}
+                        <li class="{{ m.type }}{{ m.ref }}"><a href="{{ m.url }}">{{ m.name }}</a></li>
+{% endfor %}
+                        <li class="right"><span style="padding-top:7px;"><a href="/feed"><img src="{{ __theme_path__ }}/static/img/feed.png" style="width:24px;height:24px" /></a></span></li>
+                        <li class="right">
+                            <span style="padding-top: 6px">
+                                <form class="navbar-search" target="_blank" method="get" action="http://www.google.com/cse">
+                                    <input name="q" class="navbar-search-query span2" placeholder="请输入关键字" />
+                                    <input type="hidden" name="url" value="http://{{ site_domain }}" />
+                                    <input type="hidden" name="cref" value="http://www.google.com/cse/tools/makecse?url=http%3A%2F%2F{{ site_domain }}%2F" />
+                                </form>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+<script type="text/javascript">
+    $('#nav-menus li.{{ __active_menu__ }}').addClass('active');
+</script>
+<!-- END __inc_header -->
