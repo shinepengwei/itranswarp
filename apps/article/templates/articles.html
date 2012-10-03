@@ -15,30 +15,30 @@
 <div id="delete-modal" class="modal hide fade">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h3>Deletion Confirm</h3>
+        <h3>{{ _('Deletion Confirm') }}</h3>
     </div>
     <div class="modal-body">
         <p>Are you sure you want to permanently delete the article "<strong><span id="span-delete-x-name"></span></strong>"?</p>
         <p>This operation is unrecoverable!</p>
     </div>
     <div class="modal-footer">
-        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">Delete</a>
-        <a href="javascript:void(0)" class="btn" data-dismiss="modal">Close</a>
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
     </div>
 </div>
 
 <div class="row sep">
     <div class="span10">
-        <h3>All Articles</h3>
+        <h3>{{ _('All Articles') }}</h3>
     </div>
 </div>
 
 <div class="row">
     <div class="span10">
         <form name="x-filter-form" action="articles" class="well form-inline">
-            <label>Category:</label>
+            <label>{{ _('Category') }}:</label>
             <select id="category-filter" name="category">
-                <option value="">All</option>
+                <option value="">{{ _('All') }}</option>
 {% for c in categories %}
                 <option value="{{ c.id }}">{{ c.name|e }}</option>
 {% endfor %}
@@ -46,8 +46,8 @@
 <script type="text/javascript">
 $('#category-filter').val('{{ category }}');
 </script>
-            <button type="submit" class="btn">Filter</button>
-            <a href="add_article" class="btn btn-primary pull-right">Add New Article</a>
+            <button type="submit" class="btn">{{ _('Filter') }}</button>
+            <a href="add_article" class="btn btn-primary pull-right">{{ _('Add New Article') }}</a>
         </form>
     </div>
 </div>
@@ -57,11 +57,11 @@ $('#category-filter').val('{{ category }}');
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Tags</th>
-                    <th>Creation Date</th>
-                    <th>Operations</th>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('Category') }}</th>
+                    <th>{{ _('Tags') }}</th>
+                    <th>{{ _('Creation Date') }}</th>
+                    <th>{{ _('Operations') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,7 +72,7 @@ $('#category-filter').val('{{ category }}');
                     <td>{{ a.tags|e }}</td>
                     <td>{{ a.creation_time|dt }}</td>
                     <td>
-                        <a href="?action=edit&id={{ a.id }}">Edit</a> | <a href="javascript:delete_x('{{ a.id }}')">Delete</a>
+                        <a href="?action=edit&id={{ a.id }}">{{ _('Edit') }}</a> | <a href="javascript:delete_x('{{ a.id }}')">{{ _('Delete') }}</a>
                     </td>
                 </tr>
 {% endfor %}

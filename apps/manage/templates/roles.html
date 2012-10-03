@@ -17,20 +17,20 @@
         <p>This operation is unrecoverable!</p>
     </div>
     <div class="modal-footer">
-        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">Delete</a>
-        <a href="javascript:void(0)" class="btn" data-dismiss="modal">Close</a>
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
     </div>
 </div>
 
 <div class="row sep">
     <div class="span10">
-        <h3>All Roles</h3>
+        <h3>{{ _('All Roles') }}</h3>
     </div>
 </div>
 
 <div class="row sep">
     <div class="span10">
-        <a href="?action=add" class="btn btn-primary pull-right">Add New Role</a>
+        <a href="?action=add" class="btn btn-primary pull-right">{{ _('Add New Role') }}</a>
     </div>
 </div>
 
@@ -39,10 +39,10 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th>{{ _('Name') }}</th>
                     <th>Privileges</th>
-                    <th>Date</th>
-                    <th>Operations</th>
+                    <th>{{ _('Date') }}</th>
+                    <th>{{ _('Operations') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,7 +53,7 @@
                     <td>{{ r.creation_time|dt }}</td>
                     <td>
 {% if not r.locked %}
-                        <a href="?action=edit&id={{ r.id }}">Edit</a> | <a href="javascript:delete_x('{{ r.id }}')">Delete</a>
+                        <a href="?action=edit&id={{ r.id }}">{{ _('Edit') }}</a> | <a href="javascript:delete_x('{{ r.id }}')">{{ _('Delete') }}</a>
 {% endif %}
                     </td>
                 </tr>

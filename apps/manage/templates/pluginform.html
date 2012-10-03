@@ -67,7 +67,7 @@
         <form id="form-x" action="{{ action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div id="div-enabled" class="control-group">
-                    <label class="control-label">Enabled:</label>
+                    <label class="control-label">{{ _('Enabled') }}:</label>
                     <div class="controls">
                         <label class="checkbox"><input id="enabled" name="enabled" type="checkbox" value="True" class="input-xlarge" /> Enable this plugin</label>
                     </div>
@@ -90,9 +90,9 @@
 {% endfor %}
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
-                    <button type="submit" id="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn" onclick="location.assign('{{ plugin_type }}s')">Cancel</button>
-                    <span id="loading" class="loading hide">Processing...</span>
+                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('{{ plugin_type }}s')">{{ _('Cancel') }}</button>
+                    <span id="loading" class="loading hide">{{ _('Processing') }}...</span>
                 </div>
             </fieldset>
         </form>

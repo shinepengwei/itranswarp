@@ -67,14 +67,14 @@
         <form id="form-x" action="{{ action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div id="div-name" class="control-group">
-                    <label class="control-label">Title:</label>
+                    <label class="control-label">{{ _('Name') }}:</label>
                     <div class="controls">
                         <input id="name" name="name" type="text" value="{{ name|e }}" class="input-xlarge" />
                     </div>
                 </div>
 {% if not static %}
                 <div id="div-category_id" class="control-group">
-                    <label class="control-label">Category:</label>
+                    <label class="control-label">{{ _('Category') }}:</label>
                     <div class="controls">
                         <select id="category_id" name="category_id" class="input-xlarge">
     {% for c in categories %}
@@ -88,7 +88,7 @@ $('#category_id').val('{{ category_id }}');
 </script>
 {% endif %}
                 <div id="div-tags" class="control-group">
-                    <label class="control-label">Tags:</label>
+                    <label class="control-label">{{ _('Tags') }}:</label>
                     <div class="controls">
                         <input id="tags" name="tags" type="text" value="{{ tags|e }}" class="input-xlarge" />
                         <span class="help-inline">Tags seperated by ,</span>
@@ -101,9 +101,9 @@ $('#category_id').val('{{ category_id }}');
                 </div>
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
-                    <button type="submit" id="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn" onclick="location.assign('{{ 'pages' if static else 'articles' }}')">Cancel</button>
-                    <span id="loading" class="loading hide">Processing, please wait...</span>
+                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('{{ 'pages' if static else 'articles' }}')">{{ _('Cancel') }}</button>
+                    <span id="loading" class="loading hide">{{ _('Processing, please wait') }}...</span>
                 </div>
             </fieldset>
         </form>

@@ -41,20 +41,20 @@
         <p>This operation is unrecoverable!</p>
     </div>
     <div class="modal-footer">
-        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">Delete</a>
-        <a href="javascript:void(0)" class="btn" data-dismiss="modal">Close</a>
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
     </div>
 </div>
 
 <div class="row">
     <div class="span10">
-        <h3>All Categories</h3>
+        <h3>{{ _('All Categories') }}</h3>
     </div>
 </div>
 
 <div class="row sep">
     <div class="span10">
-        <a href="?action=add" class="btn btn-primary pull-right">Add New Category</a>
+        <a href="?action=add" class="btn btn-primary pull-right">{{ _('Add New Category') }}</a>
     </div>
 </div>
 
@@ -64,10 +64,10 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Date</th>
-                        <th>Operations</th>
+                        <th>{{ _('Name') }}</th>
+                        <th>{{ _('Description') }}</th>
+                        <th>{{ _('Date') }}</th>
+                        <th>{{ _('Operations') }}</th>
                     </tr>
                 </thead>
                 <tbody id="tbody-categories">
@@ -77,11 +77,11 @@
                         <td>{{ c.description|e }}</td>
                         <td>{{ c.creation_time|dt }}</td>
                         <td>
-                            <a href="javascript:moveUp('{{ c.id }}')">Move Up</a> |
-                            <a href="javascript:moveDown('{{ c.id }}')">Move Down</a> |
-                            <a href="?action=edit&id={{ c.id }}">Edit</a>
+                            <a href="javascript:moveUp('{{ c.id }}')">{{ _('Move Up') }}</a> |
+                            <a href="javascript:moveDown('{{ c.id }}')">{{ _('Move Down') }}</a> |
+                            <a href="?action=edit&id={{ c.id }}">{{ _('Edit') }}</a>
     {% if not c.locked %}
-                            | <a href="javascript:delete_x('{{ c.id }}')">Delete</a>
+                            | <a href="javascript:delete_x('{{ c.id }}')">{{ _('Delete') }}</a>
     {% endif %}
                             <input type="hidden" name="order" value="{{ c.id }}" />
                         </td>
@@ -95,7 +95,7 @@
 
 <div class="row sep">
     <div class="span10">
-        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">Save Orders</button>
-        <span id="loading" class="loading pull-right hide">Saving orders...</span>
+        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">{{ _('Save Orders') }}</button>
+        <span id="loading" class="loading pull-right hide">{{ _('Saving orders') }}...</span>
     </div>
 </div>

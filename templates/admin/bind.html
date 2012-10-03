@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Sign In</title>
+    <title>{{ _('Bind Email') }}</title>
     <!--[if lt IE 9]>
         <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -59,7 +59,7 @@
             }
         }).error(function() {
             show_loading(formid, false);
-            show_error(formid, 'Server error!', '');
+            show_error(formid, '{{ '_(Server error') }}', '');
         });
         return false;
     }
@@ -84,8 +84,8 @@
             <div class="span6 offset3">
                 <ul id="ul-tab" class="nav nav-tabs">
                     <li><span style="display:block;width:80px;height:10px;"></span></li>
-                    <li class="active"><a id="a-tab-email" href="javascript:showtab('tab-email')">Enter Email</a></li>
-                    <li><a id="a-tab-form" href="javascript:showtab('tab-form')">Attach with exist account</a></li>
+                    <li class="active"><a id="a-tab-email" href="javascript:showtab('tab-email')">{{ _('Enter Email') }}</a></li>
+                    <li><a id="a-tab-form" href="javascript:showtab('tab-form')">{{ _('Attach with Exist Account') }}</a></li>
                 </ul>
             </div>
         </div>
@@ -101,7 +101,7 @@
                     </div>
                 </div>
                 <div class="span4 offset4">
-                    <label class="control-label">Email:</label>
+                    <label class="control-label">{{ _('Email') }}:</label>
                     <input type="text" name="email" maxlength="50" class="input-xlarge" />
                     <input type="hidden" name="type" value="email" />
                     <input type="hidden" name="key" value="{{ key }}" />
@@ -110,8 +110,8 @@
                     <div class="form-actions">
                         <div class="row">
                             <div class="span5 offset1">
-                                <button type="submit" class="btn btn-primary">Save</button>
-                                <span class="loading hide">Processing, please wait...</span>
+                                <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                                <span class="loading hide">{{ _('Processing, please wait') }}...</span>
                             </div>
                         </div>
                     </div>
@@ -130,9 +130,9 @@
                     </div>
                 </div>
                 <div class="span4 offset4">
-                    <label class="control-label">Email:</label>
+                    <label class="control-label">{{ _('Email') }}:</label>
                     <input type="text" name="email" maxlength="50" class="input-xlarge" />
-                    <label class="control-label">Password:</label>
+                    <label class="control-label">{{ _('Password') }}:</label>
                     <input type="password" id="origin-passwd" maxlength="50" class="input-xlarge" />
                     <input type="hidden" id="md5-passwd" name="passwd" />
                     <input type="hidden" name="type" value="user" />
@@ -142,8 +142,8 @@
                     <div class="form-actions">
                         <div class="row">
                             <div class="span5 offset1">
-                                <button type="submit" class="btn btn-primary">Sign In</button>
-                                <span class="loading hide">Processing, please wait...</span>
+                                <button type="submit" class="btn btn-primary">{{ _('Sign In') }}</button>
+                                <span class="loading hide">{{ _('Processing, please wait') }}...</span>
                             </div>
                         </div>
                     </div>

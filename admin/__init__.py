@@ -3,15 +3,10 @@
 
 __author__ = 'Michael Liao'
 
-import time
-import json
-import uuid
-import base64
-import hashlib
-import logging
+import os, re, time, json, uuid, base64, hashlib, logging
 
 from itranswarp.web import ctx, view, get, post, route, jsonrpc, jsonresult, Dict, Template, seeother, notfound, badrequest
-from itranswarp import db
+from itranswarp import db, i18n
 
 import const, util
 
@@ -98,6 +93,13 @@ def _get_all_admin_menus():
 _admin_modules, _admin_menus = _get_all_admin_menus()
 _nav_menus = _get_all_nav_menus()
 
+for the_name, the_mod in _imports():
+    the_path = os.path.dirname(os.path.abspath(the_mod.__file__))
+    the_i18n = os.path.join(the_path, 'i18n')
+    if os.path.isdir(the_i18n):
+        for the_fname in os.listdir(the_i18n):
+            i18n.load_i18n(os.path.join(os.path.join(the_i18n, the_fname)))
+
 def get_navigation_menus():
     return _nav_menus[:]
 
@@ -156,13 +158,13 @@ def do_signin():
     passwd = i.passwd
     remember = i.remember
     if not email or not passwd:
-        return Template('templates/admin/signin.html', email=email, remember=remember, error='Bad email or password.')
+        return Template('templates/admin/signin.html', email=email, remember=remember, error=_('Bad email or password'))
     us = db.select('select id, passwd from users where email=?', email)
     if not us:
-        return Template('templates/admin/signin.html', email=email, remember=remember, error='Bad email or password.')
+        return Template('templates/admin/signin.html', email=email, remember=remember, error=_('Bad email or password'))
     u = us[0]
     if passwd != u.passwd:
-        return Template('templates/admin/signin.html', email=email, remember=remember, error='Bad email or password.')
+        return Template('templates/admin/signin.html', email=email, remember=remember, error=_('Bad email or password'))
     expires = time.time() + const.SESSION_COOKIE_EXPIRES_TIME if remember else None
     util.make_session_cookie(const.LOCAL_SIGNIN_PROVIDER, u.id, passwd, expires)
     ctx.response.delete_cookie(_COOKIE_SIGNIN_REDIRECT)
@@ -227,11 +229,11 @@ def do_bind():
     email = i.email.strip().lower()
     current = time.time()
     if not util.validate_email(email):
-        return dict(error=u'Invalid email')
+        return dict(error=_('Invalid email'))
     if i.type=='email':
         users = db.select('select email from users where email=?', email)
         if users:
-            return dict(error=u'Email exists.')
+            return dict(error=_('Email exists'))
         # create user:
         user = dict(id=db.next_str(), \
                 locked=False, \
@@ -253,13 +255,13 @@ def do_bind():
     elif i.type=='user':
         passwd = i.passwd
         if not passwd:
-            return dict(error=u'Bad email or password', field='')
+            return dict(error=_('Bad email or password'), field='')
         users = db.select('select id, passwd from users where email=?', email)
         if not users:
-            return dict(error=u'Bad email or password', field='')
+            return dict(error=_('Bad email or password'), field='')
         user = users[0]
         if passwd != user.passwd:
-            return dict(error=u'Bad email or password', field='')
+            return dict(error=_('Bad email or password'), field='')
         db.update('update auth_users set user_id=? where id=?', user.id, auser.id)
         util.make_session_cookie(auser.provider, user['id'], auser.auth_token, auser.expired_time)
         ctx.response.delete_cookie(_COOKIE_SIGNIN_REDIRECT)

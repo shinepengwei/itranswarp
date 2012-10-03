@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Sign In</title>
+    <title>_('Sign In')</title>
     <!--[if lt IE 9]>
         <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -54,8 +54,8 @@ function check(form) {
             <div class="span6 offset3">
                 <ul id="ul-tab" class="nav nav-tabs">
                     <li><span style="display:block;width:80px;height:10px;"></span></li>
-                    <li class="active"><a id="a-tab-form" href="javascript:showtab('tab-form')">Sign In</a></li>
-                    <li><a id="a-tab-3rdpart" href="javascript:showtab('tab-3rdpart')">3rd-part Sign In</a></li>
+                    <li class="active"><a id="a-tab-form" href="javascript:showtab('tab-form')">{{ _('Sign In') }}</a></li>
+                    <li><a id="a-tab-3rdpart" href="javascript:showtab('tab-3rdpart')">{{ _('3rd-part Sign In') }}</a></li>
                 </ul>
             </div>
         </div>
@@ -69,12 +69,12 @@ function check(form) {
                         {{ error|e }}
                     </div>
 {% endif %}
-                    <label class="control-label">Email:</label>
+                    <label class="control-label">{{ _('Email') }}:</label>
                     <input type="text" name="email" maxlength="50" class="input-xlarge" value="{{ email }}" />
-                    <label class="control-label">Password:</label>
+                    <label class="control-label">{{ _('Password') }}:</label>
                     <input type="password" id="origin-passwd" maxlength="50" class="input-xlarge" />
                     <input type="hidden" id="md5-passwd" name="passwd" />
-                    <label class="checkbox"><input type="checkbox" id="remember" name="remember" value="True" /> Remember me</label>
+                    <label class="checkbox"><input type="checkbox" id="remember" name="remember" value="True" /> {{ _('Remember me') }}</label>
                 </div>
 {% if remember %}
 <script type="text/javascript">
@@ -85,11 +85,11 @@ function check(form) {
                     <div class="form-actions">
                         <div class="row">
                             <div class="span5 offset1">
-                                <button type="submit" class="btn btn-primary">Sign In</button>
+                                <button type="submit" class="btn btn-primary">{{ _('Sign In') }}</button>
                                 &nbsp;&nbsp;
-                                <i class="icon-question-sign"></i> <a href="/forgot">Forgot password</a>
+                                <i class="icon-question-sign"></i> <a href="/forgot">{{ _('Forgot password') }}</a>
                                 &nbsp;&nbsp;
-                                <i class="icon-circle-arrow-left"></i> <a href="/">Back to home</a>
+                                <i class="icon-circle-arrow-left"></i> <a href="/">{{ _('Back to home') }}</a>
                             </div>
                         </div>
                     </div>

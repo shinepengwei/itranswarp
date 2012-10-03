@@ -41,7 +41,7 @@
     </div>
     <div class="modal-footer">
         <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">Delete</a>
-        <a href="javascript:void(0)" class="btn" data-dismiss="modal">Close</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
     </div>
 </div>
 
@@ -79,10 +79,10 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>URL</th>
-                    <th>Operations</th>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('Description') }}</th>
+                    <th>{{ _('URL') }}</th>
+                    <th>{{ _('Operations') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -92,10 +92,10 @@
                     <td>{{ m.description|e }}</td>
                     <td><a href="{{ m.url }}" target="_blank">{{ m.url }}</a></td>
                     <td>
-                        <a href="javascript:moveUp('{{ m.id }}')">Move Up</a> |
-                        <a href="javascript:moveDown('{{ m.id }}')">Move Down</a> |
-                        <a href="?action=edit&id={{ m.id }}">Edit</a> |
-                        <a href="javascript:delete_x('{{ m.id }}', '{{ m.name }}')">Delete</a>
+                        <a href="javascript:moveUp('{{ m.id }}')">{{ _('Move Up') }}</a> |
+                        <a href="javascript:moveDown('{{ m.id }}')">{{ _('Move Down') }}</a> |
+                        <a href="?action=edit&id={{ m.id }}">{{ _('Edit') }}</a> |
+                        <a href="javascript:delete_x('{{ m.id }}', '{{ m.name }}')">{{ _('Delete') }}</a>
                         <input type="hidden" name="order" value="{{ m.id }}" />
                     </td>
                 </tr>
@@ -108,7 +108,7 @@
 
 <div class="row sep">
     <div class="span10">
-        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">Save Orders</button>
-        <span id="loading" class="loading pull-right hide">Saving orders...</span>
+        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">{{ _('Save Orders') }}</button>
+        <span id="loading" class="loading pull-right hide">{{ _('Saving orders') }}...</span>
     </div>
 </div>

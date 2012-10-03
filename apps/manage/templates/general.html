@@ -71,7 +71,7 @@
             }
         }).error(function() {
             show_loading(false);
-            show_error('Server error!', '');
+            show_error('{{ _('Server error') }}!', '');
         });
         return false;
     }
@@ -93,19 +93,19 @@
         <form id="form-x" action="do_save_settings" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div id="div-site_name" class="control-group">
-                    <label class="control-label">Site Name:</label>
+                    <label class="control-label">{{ _('Site Name') }}:</label>
                     <div class="controls">
                         <input id="site_name" name="site_name" type="text" value="{{ site_name }}" class="input-xlarge" />
                     </div>
                 </div>
                 <div id="div-site_description" class="control-group">
-                    <label class="control-label">Site Description:</label>
+                    <label class="control-label">{{ _('Site Description') }}:</label>
                     <div class="controls">
                         <input id="site_description" name="site_description" type="text" value="{{ site_description }}" class="input-xlarge" />
                     </div>
                 </div>
                 <div id="div-site_domain" class="control-group">
-                    <label class="control-label">Site Domain:</label>
+                    <label class="control-label">{{ _('Site Domain') }}:</label>
                     <div class="controls">
                         <input id="site_domain" name="site_domain" type="text" value="{{ site_domain }}" class="input-xlarge" />
                         <span class="help-inline">Auto detect if empty</span>
@@ -124,7 +124,7 @@
                     </div>
                 </div>
                 <div id="div-site_timezone" class="control-group">
-                    <label class="control-label">Default Timezone:</label>
+                    <label class="control-label">{{ _('Default Timezone') }}:</label>
                     <div class="controls">
                         <select id="site_timezone" name="site_timezone" class="input-xlarge">
 {% for tz in timezones %}
@@ -141,7 +141,7 @@
                     </div>
                 </div>
                 <div id="div-site_dateformat" class="control-group">
-                    <label class="control-label">Date Format:</label>
+                    <label class="control-label">{{ _('Date Format') }}:</label>
                     <div class="controls">
 {% for k, v in date_examples %}
                         <label class="radio"><input type="radio" name="site_dateformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
@@ -152,7 +152,7 @@
                     </div>
                 </div>
                 <div id="div-site_timeformat" class="control-group">
-                    <label class="control-label">Time Format:</label>
+                    <label class="control-label">{{ _('Time Format') }}:</label>
                     <div class="controls">
 {% for k, v in time_examples %}
                         <label class="radio"><input type="radio" name="site_timeformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
@@ -202,9 +202,9 @@
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" id="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn" onclick="resetForm()">Reset</button>
-                    <span id="loading" class="loading hide">Processing, please wait...</span>
+                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="resetForm()">{{ _('Reset') }}</button>
+                    <span id="loading" class="loading hide">{{ _('Processing, please wait') }}...</span>
                 </div>
             </fieldset>
         </form>

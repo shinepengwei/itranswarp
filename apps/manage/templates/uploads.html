@@ -1,6 +1,6 @@
 <div class="row sep">
     <div class="span10">
-        <h3>Upload Providers</h3>
+        <h3>{{ _('Upload Providers') }}</h3>
     </div>
 </div>
 
@@ -65,49 +65,48 @@
             }
         }).error(function() {
             show_loading(false);
-            show_error('Server error!', '');
+            show_error('{{ _('Server error') }}', '');
         });
         return false;
     }
 </script>
 
+<form id="form-select" name="form-select" action="select_upload" onsubmit="return ajax_post(this)">
 <div class="row">
     <div class="span10">
-        <form id="form-select" name="form-select" action="select_upload" onsubmit="return ajax_post(this)">
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>&nbsp;</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Enabled</th>
-                    <th>Operations</th>
+                    <th>{{ _('Select') }}</th>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('Description') }}</th>
+                    <th>{{ _('Enabled') }}</th>
+                    <th>{{ _('Operations') }}</th>
                 </tr>
             </thead>
             <tbody>
 {% for p in providers %}
                 <tr id="tr-{{ p.id }}">
-                    <td><input type="radio" name="selected" value="True" /></td>
+                    <td><input type="radio" name="id" value="{{ p.id }}" /></td>
                     <td>{{ p.name|e }}</td>
                     <td>{{ p.description|e }}</td>
                     <td>{{ p.enabled }}</td>
                     <td>
-                        <a href="javascript:moveUp('{{ p.id }}')">Move Up</a> |
-                        <a href="javascript:moveDown('{{ p.id }}')">Move Down</a> |
-                        <a href="?action=edit&id={{ p.id }}">Edit</a>
-                        <input type="hidden" name="order" value="{{ p.id }}" />
+                        <a href="javascript:moveUp('{{ p.id }}')">{{ _('Move Up') }}</a> |
+                        <a href="javascript:moveDown('{{ p.id }}')">{{ _('Move Down') }}</a> |
+                        <a href="?action=edit&id={{ p.id }}">{{ _('Edit') }}</a>
                     </td>
                 </tr>
 {% endfor %}
             </tbody>
         </table>
-        </form>
+    </div>
+<script type="text/javascript">
+    $('input[value={{ selected }}]').attr('checked', 'checked');
+</script>
+    <div class="span10 sep">
+        <button id="btn-save" type="submit" class="btn btn-info pull-right">{{ _('Save') }}</button>
+        <span id="loading" class="loading pull-right hide">{{ _('Saving') }}...</span>
     </div>
 </div>
-
-<div class="row sep">
-    <div class="span10">
-        <button id="btn-save" type="submit" class="btn btn-info pull-right">Save</button>
-        <span id="loading" class="loading pull-right hide">Saving orders...</span>
-    </div>
-</div>
+</form>

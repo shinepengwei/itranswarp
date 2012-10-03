@@ -79,14 +79,14 @@
         <form id="form-x" action="{{ action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div id="div-name" class="control-group">
-                    <label class="control-label">Name:</label>
+                    <label class="control-label">{{ _('Name') }}:</label>
                     <div class="controls">
                         <input id="name" name="name" type="text" value="{{ name }}" class="input-xlarge" />
                         <span class="help-inline">Your name</span>
                     </div>
                 </div>
                 <div id="div-role" class="control-group">
-                    <label class="control-label">Role:</label>
+                    <label class="control-label">{{ _('Role') }}:</label>
                     <div class="controls">
                         <select id="role" name="role">
 {% for r in roles %}
@@ -100,21 +100,21 @@
     $('#role option[value={{ role }}]').attr('selected', 'selected');
 </script>
                 <div id="div-email" class="control-group">
-                    <label class="control-label">Email:</label>
+                    <label class="control-label">{{ _('Email') }}:</label>
                     <div class="controls">
                         <input id="email" name="email" type="text" value="{{ email }}" class="input-xlarge" />
                         <span class="help-inline">Your email address</span>
                     </div>
                 </div>
                 <div id="div-passwd1" class="control-group">
-                    <label class="control-label">Enter password:</label>
+                    <label class="control-label">{{ _('Enter password') }}:</label>
                     <div class="controls">
                         <input type="password" id="passwd1" class="input-xlarge" />
                         <span class="help-inline">Minimum 6 characters.</span>
                     </div>
                 </div>
                 <div id="div-passwd2" class="control-group">
-                    <label class="control-label">Repeat password:</label>
+                    <label class="control-label">{{ _('Repeat password') }}:</label>
                     <div class="controls">
                         <input type="password" id="passwd2" class="input-xlarge" />
                         <span class="help-inline">Enter password again.</span>
@@ -123,9 +123,9 @@
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
                     <input type="hidden" id="passwd" name="passwd" value="" />
-                    <button type="submit" id="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn" onclick="location.assign('users')">Cancel</button>
-                    <span id="loading" class="loading hide">Processing...</span>
+                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('users')">{{ _('Cancel') }}</button>
+                    <span id="loading" class="loading hide">{{ _('Processing') }}...</span>
                 </div>
             </fieldset>
         </form>

@@ -148,6 +148,7 @@ import admin
 from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest, UTC
 from itranswarp import db
 
+from plugin import upload
 import util
 
 PAGE_SIZE = 5
@@ -173,7 +174,7 @@ def register_admin_menus():
             dict(title=u'Updates', role=0, handler='dashboard'),
         ]),
         dict(order=400, title=u'Media', items=[
-            dict(title=u'Library', role=0, handler='media'),
+            dict(title=u'Media Library', role=0, handler='media'),
             dict(title=u'Add New Media', role=0, handler='add_media'),
         ]),
         dict(order=600, title=u'Users', items=[
@@ -215,13 +216,20 @@ def order_signins(user, request, response):
     util.order_plugin_providers('signin', orders)
     raise seeother('signins')
 
+@jsonresult
+def select_upload(user, request, response):
+    uid = ctx.request.input(id='').id
+    upload.set_selected_upload(uid)
+    return dict(redirect='uploads')
+
 def uploads(user, request, response):
     i = ctx.request.input(action='')
     if i.action=='edit':
         settings, description, enabled = util.get_plugin_settings('upload', i.id)
         return Template('templates/pluginform.html', plugin_type='upload', form_title=description, action='save_upload', id=i.id, name=i.id, settings=settings, enabled=enabled)
     providers = util.get_plugin_providers('upload')
-    return Template('templates/uploads.html', providers=providers)
+    selected_name, selected_provider = upload.get_selected_upload()
+    return Template('templates/uploads.html', providers=providers, selected=selected_name)
 
 @jsonresult
 def save_upload(user, request, response):
@@ -391,7 +399,7 @@ def users(user, request, response):
     return Template('templates/users.html', roles=_get_roles(), role=i.role, users=users, page=page)
 
 def add_user(user, request, response):
-    return Template('templates/userform.html', roles=_get_roles(), form_title=u'Add New User', action='do_add_user')
+    return Template('templates/userform.html', roles=_get_roles(), form_title=_('Add New User'), action='do_add_user')
 
 _RE_PASSWD = re.compile(r'^[0-9a-f]{32}$')
 
@@ -631,8 +639,10 @@ def do_add_media(user, request, response):
             modified_time = current, \
             version = 0 \
     )
-    from apps.manage.uploader import localuploader
-    uploader = localuploader.Uploader(document_root=ctx.document_root)
+    uname, uprovider = upload.get_selected_upload()
+    if uname is None:
+        return dict(error=_('No uploader selected'))
+    uploader = util.create_upload_provider(uname)
     r = uploader.upload(fname, ftype, f.file)
     for k in r:
         if k in m:

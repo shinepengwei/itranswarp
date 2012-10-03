@@ -26,7 +26,7 @@
 
 <div class="row sep">
     <div class="span10">
-        <h3>3rd-part Signin Providers</h3>
+        <h3>{{ _('3rd-part Signin Providers') }}</h3>
     </div>
 </div>
 
@@ -103,10 +103,10 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Enabled</th>
-                    <th>Operations</th>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('Description') }}</th>
+                    <th>{{ _('Enabled') }}</th>
+                    <th>{{ _('Operations') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -116,9 +116,9 @@
                     <td>{{ p.description|e }}</td>
                     <td>{{ p.enabled }}</td>
                     <td>
-                        <a href="javascript:moveUp('{{ p.id }}')">Move Up</a> |
-                        <a href="javascript:moveDown('{{ p.id }}')">Move Down</a> |
-                        <a href="?action=edit&id={{ p.id }}">Edit</a>
+                        <a href="javascript:moveUp('{{ p.id }}')">{{ _('Move Up') }}</a> |
+                        <a href="javascript:moveDown('{{ p.id }}')">{{ _('Move Down') }}</a> |
+                        <a href="?action=edit&id={{ p.id }}">{{ _('Edit') }}</a>
                         <input type="hidden" name="order" value="{{ p.id }}" />
                     </td>
                 </tr>
@@ -131,7 +131,7 @@
 
 <div class="row sep">
     <div class="span10">
-        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">Save Orders</button>
-        <span id="loading" class="loading pull-right hide">Saving orders...</span>
+        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">{{ _('Save Orders') }}</button>
+        <span id="loading" class="loading pull-right hide">{{ _('Saving orders') }}...</span>
     </div>
 </div>

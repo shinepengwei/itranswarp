@@ -55,7 +55,7 @@
                                 <li><a href="/">My Profile</a></li>
                                 <li><a href="/">My Connect</a></li>
                                 <li class="divider"></li>
-                                <li><a href="/signout?redirect=/">Sign Out</a></li>
+                                <li><a href="/signout?redirect=/">{{ _('Sign Out') }}</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -70,13 +70,13 @@
                 <div class="well" style="padding: 8px 0px;">
                     <ul class="nav nav-list">
 {% for m in __menus__ %}
-                        <li class="nav-header">{{ m.title }}</li>
+                        <li class="nav-header">{{ _(m.title) }}</li>
     {% for i in m.items %}
-                        <li id="menuitem-{{ m.mod }}-{{ i.handler }}"><a href="/admin/{{ m.mod }}/{{ i.handler }}">{{ i.title }}</a></li>
+                        <li id="menuitem-{{ m.mod }}-{{ i.handler }}"><a href="/admin/{{ m.mod }}/{{ i.handler }}">{{ _(i.title) }}</a></li>
     {% endfor %}
 {% endfor %}
                         <li class="divider"></li>
-                        <li><a href="http://www.itranswarp.com/help" target="_blank">Help</a></li>
+                        <li><a href="http://www.itranswarp.com/help" target="_blank">{{ _('Help') }}</a></li>
                     </ul>
                 </div>
             </div>

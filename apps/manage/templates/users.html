@@ -22,8 +22,8 @@
         <p>The operation is unrecoverable!</p>
     </div>
     <div class="modal-footer">
-        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">Delete</a>
-        <a href="javascript:void(0)" class="btn" data-dismiss="modal">Close</a>
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
     </div>
 </div>
 
@@ -57,11 +57,11 @@ $('#role-filter').val('{{ role }}');
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Registered Date</th>
-                    <th>Operations</th>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('Email') }}</th>
+                    <th>{{ _('Role') }}</th>
+                    <th>{{ _('Registered Date') }}</th>
+                    <th>{{ _('Operations') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -71,9 +71,9 @@ $('#role-filter').val('{{ role }}');
                     <td>{{ u.email }}{% if not u.verified %} <i class="icon icon-question-sign"></i>{% endif %}</td>
                     <td><script type="text/javascript">document.write(ROLES['{{ u.role }}']);</script></td>
                     <td>{{ u.creation_time|dt }}</td>
-                    <td><a href="?action=edit&id={{ u.id }}">Edit</a>
+                    <td><a href="?action=edit&id={{ u.id }}">{{ _('Edit') }}</a>
     {% if not u.locked %}
-                        | <a href="javascript:delete_x('{{ u.id }}')">Delete</a>
+                        | <a href="javascript:delete_x('{{ u.id }}')">{{ _('Delete') }}</a>
     {% endif %}
                     </td>
                 </tr>

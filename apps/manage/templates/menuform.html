@@ -87,21 +87,21 @@
         <form id="form-x" action="{{ action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div id="div-name" class="control-group">
-                    <label class="control-label">Name:</label>
+                    <label class="control-label">{{ _('Name') }}:</label>
                     <div class="controls">
                         <input id="name" name="name" type="text" value="{{ name|e }}" class="input-xlarge" />
                         <span class="help-inline">Menu name</span>
                     </div>
                 </div>
                 <div id="div-description" class="control-group">
-                    <label class="control-label">Description:</label>
+                    <label class="control-label">{{ _('Description') }}:</label>
                     <div class="controls">
                         <input id="description" name="description" type="text" value="{{ description|e }}" class="input-xlarge" />
                         <span class="help-inline">Menu description</span>
                     </div>
                 </div>
                 <div id="div-menu-type" class="control-group">
-                    <label class="control-label">Type:</label>
+                    <label class="control-label">{{ _('Type') }}:</label>
                     <div class="controls">
                         <select id="select-menu-type" name="type" class="input-xlarge">
 {% for m in menus %}
@@ -138,9 +138,9 @@
 
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
-                    <button type="submit" id="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn" onclick="location.assign('menus')">Cancel</button>
-                    <span id="loading" class="loading hide">Processing, please wait...</span>
+                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('menus')">{{ _('Cancel') }}</button>
+                    <span id="loading" class="loading hide">{{ _('Processing, please wait') }}...</span>
                 </div>
             </fieldset>
         </form>
