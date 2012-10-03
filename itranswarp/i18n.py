@@ -19,6 +19,7 @@ def _load(fpath):
     '''
     Load a i18n file.
 
+    >>> _locale.locales = ['en']
     >>> d = _load('test/i18n-test.txt')
     >>> d['Hello, world!']
     u'\u4f60\u597d\uff0c\u4e16\u754c\uff01'
@@ -26,6 +27,7 @@ def _load(fpath):
     u'\u55e8\uff0c%s\uff01'
     >>> d['1 + 1 = 2']
     u'\u4e00\u52a0\u4e00\u7b49\u4e8e\u4e8c'
+    >>> del _locale.locales
     '''
     d = dict()
     with codecs.open(fpath, 'r', 'utf-8') as f:
@@ -47,12 +49,13 @@ class _Locale(object):
     Locale object that can set and cleanup locales.
 
     >>> with locale(): _locale.locales
-    ()
+    []
     >>> with locale('en', 'zh_cn', 'fr'): _locale.locales
-    ('en', 'zh_cn', 'fr')
+    ['en', 'zh_cn', 'fr']
     '''
     def __init__(self, *locales):
-        self._locales = locales
+        logging.info('set locale: %s' % str(locales))
+        self._locales = [str(l).replace('-', '_') for l in locales]
 
     def __enter__(self):
         global _locale
@@ -87,11 +90,13 @@ def locale(*locales):
 
 def i18n(text):
     '''
+    >>> _locale.locales = ['zh_cn']
     >>> _I18N_MAP['zh_cn'] = _load('test/i18n-test.txt')
     >>> i18n('Hello, world!')
     u'\u4f60\u597d\uff0c\u4e16\u754c\uff01'
+    >>> del _locale.locales
     '''
-    locale = 'zh_cn'
+    locale = first_locale()
     translate = _I18N_MAP.get(locale)
     if translate:
         return translate.get(text, text)
