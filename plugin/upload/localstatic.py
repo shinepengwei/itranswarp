@@ -14,10 +14,12 @@ import logging
 import Image
 from datetime import datetime
 
+from itranswarp.web import ctx
+
 class Provider(object):
 
     def __init__(self, **kw):
-        self._document_root = kw.pop('document_root')
+        self._document_root = ctx.request.document_root
         logging.info('init local uploader: set document_root: %s' % self._document_root)
         self._upload_dir = os.path.join(self._document_root, 'static', 'upload')
         if not os.path.isdir(self._upload_dir):
@@ -29,7 +31,7 @@ class Provider(object):
 
     @staticmethod
     def get_description():
-        return 'Upload files to local dir /static/upload/'
+        return 'Upload files to local directory'
 
     def can_handle(fname, ftype):
         return True

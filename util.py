@@ -76,6 +76,10 @@ def create_signin_provider(name):
     provider = load_module('plugin.signin.%s' % name)
     return provider.Provider(**get_settings(kind='signin.%s' % name, remove_prefix=True))
 
+def create_upload_provider(name):
+    provider = load_module('plugin.upload.%s' % name)
+    return provider.Provider(**get_settings(kind='upload.%s' % name, remove_prefix=True))
+
 def get_plugin_settings(plugin_type, name):
     provider = load_module('plugin.%s.%s' % (plugin_type, name)).Provider
     settings, order, enabled = _load_plugin_settings(plugin_type, name, provider)
@@ -97,10 +101,10 @@ def get_plugin_providers(plugin_type, names_only=False):
     if names_only:
         return ps.keys()
     providers = []
-    for name, mod in ps.iteritems():
-        settings, order, enabled = _load_plugin_settings(plugin_type, name, mod.Provider)
+    for mod_name, mod in ps.iteritems():
+        settings, order, enabled = _load_plugin_settings(plugin_type, mod_name, mod.Provider)
         provider = dict(name=mod.Provider.get_name(), description=mod.Provider.get_description(), settings=settings)
-        provider['id'] = name
+        provider['id'] = mod_name
         provider['order'] = order
         provider['enabled'] = enabled
         providers.append(provider)
