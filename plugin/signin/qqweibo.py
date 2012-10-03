@@ -21,11 +21,11 @@ class Provider(object):
 
     @staticmethod
     def get_name():
-        return u'QQ Weibo'
+        return _('QQ Weibo')
 
     @staticmethod
     def get_description():
-        return u'QQ Weibo Signin'
+        return _('QQ Weibo Signin')
 
     @staticmethod
     def get_settings():

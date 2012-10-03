@@ -26,11 +26,11 @@ class Provider(object):
 
     @staticmethod
     def get_name():
-        return u'Sina Weibo'
+        return _('Sina Weibo')
 
     @staticmethod
     def get_description():
-        return u'Sina Weibo Signin'
+        return _('Sina Weibo Signin')
 
     @staticmethod
     def get_settings():
