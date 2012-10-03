@@ -7,6 +7,7 @@ A simple, lightweight, WSGI-compatible web framework.
 
 __author__ = 'Michael Liao'
 
+import __builtin__
 import types, sys, os, re, cgi, sys, base64, json, time, hashlib, inspect, datetime, functools, mimetypes, threading, logging, urllib, collections, linecache
 
 # thread local object for storing request and response.
@@ -1646,6 +1647,8 @@ class Template(object):
         if model:
             self.model.update(model)
         self.model.update(kw)
+        if '_' in __builtin__.__dict__:
+            self.model['_'] = _
 
 def _init_mako(templ_dir, **kw):
     '''
@@ -1975,9 +1978,16 @@ class WSGIApplication(object):
         get_re_routes.append(Route('/favicon.ico', favicon_handler))
         return get_static_routes, post_static_routes, get_re_routes, post_re_routes
 
-    def _dofilters(self):
-        for f in self._filters:
-            f()
+    def _mkfilters(self, filters):
+        if filters:
+            L = list(filters)
+            L.reverse()
+            func = self._exec
+            for f in L:
+                func = f(func)
+            return func
+        else:
+            return self._exec
 
     def __init__(self, modules, filters=None, document_root=None, encoding='utf-8', template_engine=None, **kw):
         '''
@@ -1993,20 +2003,41 @@ class WSGIApplication(object):
         '''
         self._debug = kw.pop('DEBUG', False)
         self.modules = self._parse_modules(modules, self._debug)
-        self._filters = filters if filters else ()
+        self._filters = self._mkfilters(filters)
         self.get_static_routes, self.post_static_routes, self.get_re_routes, self.post_re_routes = self._parse_routes(self.modules, self._debug)
         self.error_handler = _default_error_handler
-
-        if document_root is None:
-            # suppose document_root is ../web.py:
-            document_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.document_root = document_root
-        _log('load document_root: %s' % self.document_root)
+        _log('load document_root: %s' % str(self.document_root))
 
         if isinstance(template_engine, basestring):
             self.template_render = _install_template_engine(template_engine, self.document_root)
         elif callable(template_engine):
             self.template_render = template_engine
+
+    def _exec(self, r, kw, start_response):
+        global ctx
+        try:
+            ret = r.execute() if kw is None else r.execute(**kw)
+        except RedirectError as e:
+            ctx.response.set_header('Location', e.location)
+            start_response(e.status, ctx.response.headers)
+            return ()
+        except Exception as e:
+            return self.error_handler(e, start_response, self._debug)
+        if isinstance(ret, types.GeneratorType):
+            start_response(ctx.response.status, ctx.response.headers)
+            return ret
+        # if ret instance of Template...
+        if isinstance(ret, str):
+            ctx.response.write(ret)
+        elif isinstance(ret, unicode):
+            ctx.response.write(ret.encode('utf-8'))
+        elif isinstance(ret, Template):
+            ctx.response.write(self.template_render(ret.template_name, **ret.model))
+        else:
+            ctx.response.write(str(ret))
+        start_response(ctx.response.status, ctx.response.headers)
+        return ctx.response.body
 
     def __call__(self, environ, start_response):
         if self._debug:
@@ -2036,34 +2067,18 @@ class WSGIApplication(object):
             return self.error_handler(HttpError(404), start_response, self._debug)
 
         global ctx
-        ctx.document_root = self.document_root
+        ctx.document_root = self.document_root or environ.get('DOCUMENT_ROOT', '')
         ctx.server_name = environ.get('SERVER_NAME', '')
         ctx.request = Request(environ)
         ctx.response = Response()
         _log('ctx.document_root: %s' % ctx.document_root)
         try:
-            self._dofilters()
-            ret = r.execute() if kw is None else r.execute(**kw)
-        except RedirectError as e:
-            ctx.response.set_header('Location', e.location)
-            start_response(e.status, ctx.response.headers)
-            return ()
-        except Exception as e:
-            return self.error_handler(e, start_response, self._debug)
-        if isinstance(ret, types.GeneratorType):
-            start_response(ctx.response.status, ctx.response.headers)
-            return ret
-        # if ret instance of Template...
-        if isinstance(ret, str):
-            ctx.response.write(ret)
-        elif isinstance(ret, unicode):
-            ctx.response.write(ret.encode('utf-8'))
-        elif isinstance(ret, Template):
-            ctx.response.write(self.template_render(ret.template_name, **ret.model))
-        else:
-            ctx.response.write(str(ret))
-        start_response(ctx.response.status, ctx.response.headers)
-        return ctx.response.body
+            return self._filters(r, kw, start_response)
+        finally:
+            del ctx.document_root
+            del ctx.server_name
+            del ctx.request
+            del ctx.response
 
 if __name__=='__main__':
     sys.path.append('.')
