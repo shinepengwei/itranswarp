@@ -92,11 +92,11 @@ def register_admin_menus():
         ]),
     ]
 
-def articles(user, request, response):
-    i = request.input(action='', page='1', category='')
+def articles():
+    i = ctx.request.input(action='', page='1', category='')
     if i.action=='edit':
         kw = db.select_one('select * from articles where id=?', i.id)
-        return Template('templates/articleform.html', categories=_get_categories(), form_title=u'Edit Article', action='do_edit_article', **kw)
+        return Template('templates/articleform.html', categories=_get_categories(), form_title=_('Edit Article'), action='do_edit_article', **kw)
     category = ''
     if i.category:
         category = db.select_one('select id from categories where id=?', i.category).id
@@ -113,32 +113,32 @@ def articles(user, request, response):
 def _get_pages(selects='id, name'):
     return db.select('select %s from pages order by creation_time desc' % selects)
 
-def pages(user, request, response):
-    i = request.input(action='')
+def pages():
+    i = ctx.request.input(action='')
     if i.action=='edit':
         kw = db.select_one('select * from pages where id=?', i.id)
-        return Template('templates/articleform.html', static=True, form_title=u'Edit Page', action='do_edit_page', **kw)
+        return Template('templates/articleform.html', static=True, form_title=_('Edit Page'), action='do_edit_page', **kw)
     selects = 'id,name,visible,tags,creation_time,modified_time,version'
     ps = _get_pages(selects=selects)
     return Template('templates/pages.html', pages=ps)
 
-def do_delete_article(user, request, response):
+def do_delete_article():
     db.update('delete from articles where id=?', request['id'])
     raise seeother('articles')
 
-def do_delete_page(user, request, response):
+def do_delete_page():
     db.update('delete from pages where id=?', request['id'])
     raise seeother('pages')
 
-def add_article(user, request, response):
-    return Template('templates/articleform.html', static=False, categories=_get_categories(), form_title=u'Add New Article', action='do_add_article')
+def add_article():
+    return Template('templates/articleform.html', static=False, categories=_get_categories(), form_title=_('Add New Article'), action='do_add_article')
 
-def add_page(user, request, response):
+def add_page():
     return Template('templates/articleform.html', static=True, form_title=u'Add New Page', action='do_add_page')
 
 @jsonresult
-def do_edit_article(user, request, response):
-    i = request.input()
+def do_edit_article():
+    i = ctx.request.input()
     name = i.name.strip()
     tags = i.tags.strip()
     content = i.content.strip()
@@ -154,8 +154,8 @@ def do_edit_article(user, request, response):
     return dict(redirect='articles')
 
 @jsonresult
-def do_edit_page(user, request, response):
-    i = request.input()
+def do_edit_page():
+    i = ctx.request.input()
     name = i.name.strip()
     tags = i.tags.strip()
     content = i.content.strip()
@@ -168,8 +168,8 @@ def do_edit_page(user, request, response):
     return dict(redirect='pages')
 
 @jsonresult
-def do_add_article(user, request, response):
-    i = request.input()
+def do_add_article():
+    i = ctx.request.input()
     name = i.name.strip()
     tags = i.tags.strip()
     content = i.content.strip()
@@ -186,15 +186,15 @@ def do_add_article(user, request, response):
     return dict(redirect='articles')
 
 @jsonresult
-def do_add_page(user, request, response):
-    i = request.input()
+def do_add_page():
+    i = ctx.request.input()
     name = i.name.strip()
     tags = i.tags.strip()
     content = i.content.strip()
     if not name:
-        return dict(error=u'Name cannot be empty', error_field='name')
+        return dict(error=_('Name cannot be empty'), error_field='name')
     if not content:
-        return dict(error=u'Content cannot be empty', error_field='')
+        return dict(error=_('Content cannot be empty'), error_field='')
     current = time.time()
     page = dict(id=db.next_str(), visible=True, name=name, tags=tags, content=content, creation_time=current, modified_time=current, version=0)
     db.insert('pages', **page)
@@ -214,18 +214,18 @@ def _get_categories():
         cats = [uncategorized]
     return cats
 
-def categories(user, request, response):
-    i = request.input(action='')
+def categories():
+    i = ctx.request.input(action='')
     if i.action=='add':
-        return Template('templates/categoryform.html', form_title=u'Add New Category', action='do_add_category')
+        return Template('templates/categoryform.html', form_title=_('Add New Category'), action='do_add_category')
     if i.action=='edit':
         cat = db.select_one('select * from categories where id=?', i.id)
-        return Template('templates/categoryform.html', form_title=u'Edit Category', action='do_edit_category', **cat)
+        return Template('templates/categoryform.html', form_title=_('Edit Category'), action='do_edit_category', **cat)
     return Template('templates/categories.html', categories=_get_categories())
 
 @jsonresult
-def do_add_category(user, request, response):
-    i = request.input()
+def do_add_category():
+    i = ctx.request.input()
     name = i.name.strip()
     description = i.description.strip()
     if not name:
@@ -239,8 +239,8 @@ def do_add_category(user, request, response):
     return dict(redirect='categories')
 
 @jsonresult
-def do_edit_category(user, request, response):
-    i = request.input()
+def do_edit_category():
+    i = ctx.request.input()
     name = i.name.strip()
     description = i.description.strip()
     if not name:
@@ -249,8 +249,8 @@ def do_edit_category(user, request, response):
     db.update_kw('categories', 'id=?', i.id, name=name, description=description, modified_time=time.time())
     return dict(redirect='categories')
 
-def do_delete_category(user, request, response):
-    cat_id = request.input().id
+def do_delete_category():
+    cat_id = ctx.request.input().id
     cat = db.select_one('select id,locked from categories where id=?', cat_id)
     if cat.locked:
         raise badrequest()
@@ -259,8 +259,8 @@ def do_delete_category(user, request, response):
     db.update('update articles set category_id=? where category_id=?', uncategorized.id, cat_id)
     raise seeother('categories')
 
-def order_categories(user, request, response):
-    orders = request.gets('order')
+def order_categories():
+    orders = ctx.request.gets('order')
     cats = _get_categories()
     l = len(cats)
     if l!=len(orders):

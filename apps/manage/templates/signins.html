@@ -114,7 +114,7 @@
                 <tr id="tr-{{ p.id }}">
                     <td>{{ p.name|e }}</td>
                     <td>{{ p.description|e }}</td>
-                    <td>{{ p.enabled }}</td>
+                    <td>{% if p.enabled %}<i class="icon-ok"></i>{% else %}<i class="icon-ban-circle"></i>{% endif %}</td>
                     <td>
                         <a href="javascript:moveUp('{{ p.id }}')">{{ _('Move Up') }}</a> |
                         <a href="javascript:moveDown('{{ p.id }}')">{{ _('Move Down') }}</a> |

@@ -71,13 +71,11 @@
     }
 </script>
 
-<form id="form-select" name="form-select" action="select_upload" onsubmit="return ajax_post(this)">
 <div class="row">
     <div class="span10">
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>{{ _('Select') }}</th>
                     <th>{{ _('Name') }}</th>
                     <th>{{ _('Description') }}</th>
                     <th>{{ _('Enabled') }}</th>
@@ -87,26 +85,13 @@
             <tbody>
 {% for p in providers %}
                 <tr id="tr-{{ p.id }}">
-                    <td><input type="radio" name="id" value="{{ p.id }}" /></td>
                     <td>{{ p.name|e }}</td>
                     <td>{{ p.description|e }}</td>
-                    <td>{{ p.enabled }}</td>
-                    <td>
-                        <a href="javascript:moveUp('{{ p.id }}')">{{ _('Move Up') }}</a> |
-                        <a href="javascript:moveDown('{{ p.id }}')">{{ _('Move Down') }}</a> |
-                        <a href="?action=edit&id={{ p.id }}">{{ _('Edit') }}</a>
-                    </td>
+                    <td>{% if p.enabled %}<i class="icon-ok"></i>{% else %}<i class="icon-ban-circle"></i>{% endif %}</td>
+                    <td><a href="?action=edit&id={{ p.id }}">{{ _('Edit') }}</a></td>
                 </tr>
 {% endfor %}
             </tbody>
         </table>
     </div>
-<script type="text/javascript">
-    $('input[value={{ selected }}]').attr('checked', 'checked');
-</script>
-    <div class="span10 sep">
-        <button id="btn-save" type="submit" class="btn btn-info pull-right">{{ _('Save') }}</button>
-        <span id="loading" class="loading pull-right hide">{{ _('Saving') }}...</span>
-    </div>
 </div>
-</form>

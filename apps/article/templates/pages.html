@@ -52,7 +52,7 @@
                     <td>{{ p.tags|e }}</td>
                     <td>{{ p.creation_time|dt }}</td>
                     <td>
-                        <a href="?action=edit&id={{ p.id }}">Edit</a> | <a href="javascript:delete_x('{{ p.id }}')">{{ _('Delete') }}</a>
+                        <a href="?action=edit&id={{ p.id }}">{{ _('Edit') }}</a> | <a href="javascript:delete_x('{{ p.id }}')">{{ _('Delete') }}</a>
                     </td>
                 </tr>
 {% endfor %}

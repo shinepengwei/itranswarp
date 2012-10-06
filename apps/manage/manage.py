@@ -194,10 +194,10 @@ def register_admin_menus():
         ]),
     ]
 
-def dashboard(user, request, response):
+def dashboard():
     return Template('templates/dashboard.html')
 
-def signins(user, request, response):
+def signins():
     i = ctx.request.input(action='')
     if i.action=='edit':
         settings, description, enabled = util.get_plugin_settings('signin', i.id)
@@ -206,38 +206,37 @@ def signins(user, request, response):
     return Template('templates/signins.html', providers=providers)
 
 @jsonresult
-def save_signin(user, request, response):
+def save_signin():
     i = ctx.request.input(enabled='')
     util.save_plugin_settings('signin', i.id, i.enabled=='True', i)
     return dict(redirect='signins')
 
-def order_signins(user, request, response):
-    orders = request.gets('order')
+def order_signins():
+    orders = ctx.request.gets('order')
     util.order_plugin_providers('signin', orders)
     raise seeother('signins')
 
-@jsonresult
-def select_upload(user, request, response):
-    uid = ctx.request.input(id='').id
-    upload.set_selected_upload(uid)
-    return dict(redirect='uploads')
-
-def uploads(user, request, response):
+def uploads():
     i = ctx.request.input(action='')
     if i.action=='edit':
         settings, description, enabled = util.get_plugin_settings('upload', i.id)
         return Template('templates/pluginform.html', plugin_type='upload', form_title=description, action='save_upload', id=i.id, name=i.id, settings=settings, enabled=enabled)
     providers = util.get_plugin_providers('upload')
-    selected_name, selected_provider = upload.get_selected_upload()
-    return Template('templates/uploads.html', providers=providers, selected=selected_name)
+    return Template('templates/uploads.html', providers=providers)
 
 @jsonresult
-def save_upload(user, request, response):
+def save_upload():
     i = ctx.request.input(enabled='')
-    util.save_plugin_settings('upload', i.id, i.enabled=='True', i)
+    enabled = i.enabled=='True'
+    util.save_plugin_settings('upload', i.id, enabled, i)
+    if enabled:
+        # set other uploads enabled=False:
+        names = [n for n in util.get_plugin_providers('upload', names_only=True) if n!=i.id]
+        for n in names:
+            util.save_plugin_setting_enabled('upload', n, False)
     return dict(redirect='uploads')
 
-def general(user, request, response):
+def general():
     TIMEZONES = [
         '-12:00',
         '-11:00',
@@ -313,9 +312,9 @@ def general(user, request, response):
         **settings)
 
 @jsonresult
-def do_save_settings(user, request, response):
+def do_save_settings():
     settings = util.get_settings()
-    for k, v in request.input().iteritems():
+    for k, v in ctx.request.input().iteritems():
         if k in settings and settings[k]==v:
             continue
         util.set_setting(k, v)
@@ -332,20 +331,20 @@ def _get_roles():
     db.insert('roles', **role_guest)
     return [role_admin, role_guest]
 
-def roles(user, request, response):
-    i = request.input(action='')
+def roles():
+    i = ctx.request.input(action='')
     if i.action=='edit':
         role = db.select_one('select * from roles where id=?', i.id)
-        return Template('templates/roleform.html', form_title=u'Edit Role', action='do_edit_role', **role)
+        return Template('templates/roleform.html', form_title=_('Edit Role'), action='do_edit_role', **role)
     if i.action=='add':
-        return Template('templates/roleform.html', form_title=u'Add New Role', action='do_add_role')
+        return Template('templates/roleform.html', form_title=_('Add New Role'), action='do_add_role')
     if i.action=='delete':
         pass
     return Template('templates/roles.html', roles=_get_roles())
 
 @jsonresult
-def do_add_role(user, request, response):
-    i = request.input()
+def do_add_role():
+    i = ctx.request.input()
     name = i.name.strip()
     # check:
     if not name:
@@ -361,8 +360,8 @@ def do_add_role(user, request, response):
     return dict(redirect='roles')
 
 @jsonresult
-def do_edit_role(user, request, response):
-    i = request.input()
+def do_edit_role():
+    i = ctx.request.input()
     role_id = int(i.id)
     name = i.name.strip()
     if not name:
@@ -377,18 +376,18 @@ def do_edit_role(user, request, response):
     db.update_kw('roles', 'id=?', role_id, name=name, privileges=','.join(privileges), modified_time=time.time())
     return dict(redirect='roles')
 
-def do_delete_role(user, request, response):
+def do_delete_role():
     role_id = int(request.input().id)
     if role_id==0:
         raise badrequest()
     db.update('delete from roles where id=?', role_id)
     raise seeother('roles')
 
-def users(user, request, response):
-    i = request.input(action='', role='', page='1')
+def users():
+    i = ctx.request.input(action='', role='', page='1')
     if i.action=='edit':
         user = db.select_one('select * from users where id=?', i.id)
-        return Template('templates/userform.html', roles=_get_roles(), form_title=u'Edit User', action='do_edit_user', **user)
+        return Template('templates/userform.html', roles=_get_roles(), form_title=_('Edit User'), action='do_edit_user', **user)
     total = db.select_int('select count(id) from users where role=?', int(i.role)) if i.role else db.select_int('select count(id) from users')
     page = Page(int(i.page), PAGE_SIZE, total)
     users = None
@@ -398,14 +397,14 @@ def users(user, request, response):
         users=db.select('select * from users order by creation_time desc limit ?,?', page.offset, page.limit)
     return Template('templates/users.html', roles=_get_roles(), role=i.role, users=users, page=page)
 
-def add_user(user, request, response):
+def add_user():
     return Template('templates/userform.html', roles=_get_roles(), form_title=_('Add New User'), action='do_add_user')
 
 _RE_PASSWD = re.compile(r'^[0-9a-f]{32}$')
 
 @jsonresult
-def do_edit_user(user, request, response):
-    i = request.input()
+def do_edit_user():
+    i = ctx.request.input()
     name = i.name.strip()
     role = int(i.role)
     email = i.email.strip().lower()
@@ -435,14 +434,14 @@ def do_edit_user(user, request, response):
         db.update_kw('users', 'id=?', i.id, **updates)
     return dict(redirect='users')
 
-def do_delete_user(user, request, response):
-    uid = request['id']
+def do_delete_user():
+    uid = ctx.request['id']
     db.update('delete from users where id=?', uid)
     raise seeother('users')
 
 @jsonresult
-def do_add_user(user, request, response):
-    i = request.input()
+def do_add_user():
+    i = ctx.request.input()
     name = i.name.strip()
     role = int(i.role)
     email = i.email.strip().lower()
@@ -476,17 +475,17 @@ def _prepare_menus():
         menus.append(menu)
     return menus
 
-def menus(user, request, response):
-    i = request.input(action='')
+def menus():
+    i = ctx.request.input(action='')
     if i.action=='edit':
         menu = db.select_one('select * from menus where id=?', i.id)
-        return Template('templates/menuform.html', form_title=u'Edit Menu', action='do_edit_menu', menus=_prepare_menus(), **menu)
+        return Template('templates/menuform.html', form_title=_('Edit Menu'), action='do_edit_menu', menus=_prepare_menus(), **menu)
     if i.action=='add':
-        return Template('templates/menuform.html', form_title=u'Add Menu', action='do_add_menu', menus=_prepare_menus())
+        return Template('templates/menuform.html', form_title=_('Add Menu'), action='do_add_menu', menus=_prepare_menus())
     return Template('templates/menus.html', menus=util.get_menus())
 
-def order_menus(user, request, response):
-    orders = request.gets('order')
+def order_menus():
+    orders = ctx.request.gets('order')
     menus = util.get_menus()
     l = len(menus)
     if l!=len(orders):
@@ -502,8 +501,8 @@ def order_menus(user, request, response):
     raise seeother('menus')
 
 @jsonresult
-def do_add_menu(user, request, response):
-    i = request.input(ref='')
+def do_add_menu():
+    i = ctx.request.input(ref='')
     name = i.name.strip()
     if not name:
         return dict(error=u'Name cannot be empty', error_field='name')
@@ -518,8 +517,8 @@ def do_add_menu(user, request, response):
     return dict(redirect='menus')
 
 @jsonresult
-def do_edit_menu(user, request, response):
-    i = request.input(ref='')
+def do_edit_menu():
+    i = ctx.request.input(ref='')
     menu = db.select_one('select * from menus where id=?', i.id)
     kw = dict()
     name = i.name.strip()
@@ -540,17 +539,17 @@ def do_edit_menu(user, request, response):
     db.update_kw('menus', 'id=?', i.id, **kw)
     return dict(redirect='menus')
 
-def do_delete_menu(user, request, response):
+def do_delete_menu():
     menu = db.select_one('select id, url from menus where id=?', request.input().id)
     db.update('delete from menus where id=?', menu.id)
     raise seeother('menus')
 
-def media(user, request, response):
+def media():
     media = db.select('select * from media order by creation_time desc')
     return Template('templates/media.html', media=media)
 
-def add_media(user, request, response):
-    return Template('templates/mediaform.html', form_title=u'Add Media', action='do_add_media')
+def add_media():
+    return Template('templates/mediaform.html', form_title=_('Add Media'), action='do_add_media')
 
 _MIME_ALIAS = {
     '.jpeg': '.jpg',
@@ -612,8 +611,8 @@ def _guess_mime(fname):
     return _MIME.get(ext, ('binary', 'application/octet-stream'))
 
 @jsonresult
-def do_add_media(user, request, response):
-    i = request.input(name='', description='')
+def do_add_media():
+    i = ctx.request.input(name='', description='')
     description = i.description.strip()
     f = i.file
     fname = f.filename
@@ -639,7 +638,7 @@ def do_add_media(user, request, response):
             modified_time = current, \
             version = 0 \
     )
-    uname, uprovider = upload.get_selected_upload()
+    uname, uprovider = upload.get_enabled_upload()
     if uname is None:
         return dict(error=_('No uploader selected'))
     uploader = util.create_upload_provider(uname)
@@ -650,8 +649,8 @@ def do_add_media(user, request, response):
     db.insert('media', **m)
     return dict(redirect='media', filelink=r['url'])
 
-def do_delete_media(user, request, response):
-    mid = request['id']
+def do_delete_media():
+    mid = ctx.request['id']
     m = db.select_one('select * from media where id=?', mid)
     from apps.manage.uploader import localuploader
     uploader = localuploader.Uploader(document_root=ctx.document_root)
@@ -660,8 +659,8 @@ def do_delete_media(user, request, response):
     raise seeother('media')
 
 @jsonresult
-def do_get_media(user, request, response):
-    i = request.input(type='', page_index='1', page_size='20')
+def do_get_media():
+    i = ctx.request.input(type='', page_index='1', page_size='20')
 
 if __name__=='__main__':
     import doctest

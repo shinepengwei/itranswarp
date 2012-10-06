@@ -114,7 +114,7 @@ def index():
     raise seeother('/admin/manage/dashboard')
 
 @route('/admin/<mod>/<handler>')
-def menu_item(mod, handler):
+def admin_menu_item(mod, handler):
     # check cookie:
     if ctx.user is None or ctx.user.role==const.ROLE_GUEST:
         raise seeother('/signin?redirect=/admin/%s/%s' % (mod, handler))
@@ -126,7 +126,7 @@ def menu_item(mod, handler):
     f = getattr(m, handler, None)
     if f is None:
         raise notfound()
-    r = f(ctx.user, ctx.request, ctx.response)
+    r = f()
     if isinstance(r, Template):
         include = 'apps/%s/%s' % (mod, r.template_name)
         logging.warn('set include: %s' % include)

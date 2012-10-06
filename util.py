@@ -67,10 +67,13 @@ def _load_plugin_settings(plugin_type, provider_name, provider_cls):
 
 def save_plugin_settings(plugin_type, name, enabled, settings):
     provider = load_module('plugin.%s.%s' % (plugin_type, name)).Provider
-    set_setting(name='%s.%s_enabled' % (plugin_type, name), value='True' if enabled else '')
+    save_plugin_setting_enabled(plugin_type, name, enabled)
     for setting in provider.get_settings():
         key = setting['key']
         set_setting(name='%s.%s_%s' % (plugin_type, name, key), value=settings.get(key, ''))
+
+def save_plugin_setting_enabled(plugin_type, name, enabled):
+    set_setting(name='%s.%s_enabled' % (plugin_type, name), value='True' if enabled else '')
 
 def create_signin_provider(name):
     provider = load_module('plugin.signin.%s' % name)
