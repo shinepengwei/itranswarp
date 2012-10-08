@@ -113,6 +113,19 @@ def get_plugin_providers(plugin_type, names_only=False):
         providers.append(provider)
     return sorted(providers, key=lambda p: p['order'])
 
+def get_enabled_upload():
+    '''
+    Get selected upload plugin and return (name, Provider class), or (None, None) if no such setting.
+    '''
+    providers = [p for p in get_plugin_providers('upload') if p['enabled']]
+    if providers:
+        pid = providers[0]['id']
+        try:
+            return pid, load_module('plugin.upload.%s' % pid).Provider
+        except ImportError:
+            pass
+    return None, None
+
 def make_session_cookie(provider, uid, passwd, expires):
     '''
     Generate a secure client session cookie by constructing: 

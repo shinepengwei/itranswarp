@@ -148,7 +148,6 @@ import admin
 from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest, UTC
 from itranswarp import db
 
-from plugin import upload
 import util
 
 PAGE_SIZE = 5
@@ -171,7 +170,7 @@ def register_admin_menus():
     return [
         dict(order=0, title=u'Dashboard', items=[
             dict(title=u'Dashboard', role=0, handler='dashboard'),
-            dict(title=u'Updates', role=0, handler='dashboard'),
+#            dict(title=u'Updates', role=0, handler='dashboard'),
         ]),
         dict(order=400, title=u'Media', items=[
             dict(title=u'Media Library', role=0, handler='media'),
@@ -195,7 +194,13 @@ def register_admin_menus():
     ]
 
 def dashboard():
-    return Template('templates/dashboard.html')
+    d = dict(
+        articles = db.select_int('select count(id) from articles'),
+        pages = db.select_int('select count(id) from pages'),
+        media = db.select_int('select count(id) from media'),
+        users = db.select_int('select count(id) from users')
+    )
+    return Template('templates/dashboard.html', **d)
 
 def signins():
     i = ctx.request.input(action='')
@@ -638,7 +643,7 @@ def do_add_media():
             modified_time = current, \
             version = 0 \
     )
-    uname, uprovider = upload.get_enabled_upload()
+    uname, uprovider = util.get_enabled_upload()
     if uname is None:
         return dict(error=_('No uploader selected'))
     uploader = util.create_upload_provider(uname)
