@@ -4,9 +4,10 @@
 __author__ = 'Michael Liao'
 
 import os, re, time, json, uuid, base64, hashlib, logging
+from datetime import datetime
 
-from itranswarp.web import ctx, view, get, post, route, jsonrpc, jsonresult, Dict, Template, seeother, notfound, badrequest
-from itranswarp import db, i18n
+from itranswarp.web import ctx, view, get, post, route, jsonrpc, jsonresult, Dict, UTC, Template, seeother, notfound, badrequest
+from itranswarp import db, i18n, cache
 
 import const, util
 
@@ -267,6 +268,14 @@ def do_bind():
         ctx.response.delete_cookie(_COOKIE_SIGNIN_REDIRECT)
         return dict(redirect=ctx.request.cookie(_COOKIE_SIGNIN_REDIRECT, '/'))
     return dict(error='bad request')
+
+@get('/track.js')
+def track_js():
+    ctx.response.content_type = 'application/x-javascript'
+    ctx.response.set_header('Cache-Control', 'private, no-cache, no-cache=Set-Cookie, proxy-revalidate')
+    key = '_TR_%d' % (int(time.time()) // 3600)
+    cache.client.incr(key)
+    return r'var __track_ok__ = true;'
 
 if __name__=='__main__':
     import doctest

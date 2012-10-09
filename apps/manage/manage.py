@@ -145,8 +145,8 @@ from datetime import datetime
 
 import admin
 
-from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest, UTC
-from itranswarp import db
+from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, UTC, Dict, Page, badrequest, UTC
+from itranswarp import db, cache
 
 import util
 
@@ -194,11 +194,21 @@ def register_admin_menus():
     ]
 
 def dashboard():
+    # find timestamp at today's 00:00
+    site_timezone = util.get_setting('site_timezone', '+00:00')
+    utc = datetime.utcfromtimestamp(time.time()).replace(tzinfo=UTC('+00:00'))
+    now = utc.astimezone(UTC(site_timezone))
+    h_end = int(time.mktime(now.replace(hour=0).timetuple())) // 3600
+    keys = map(lambda x: '_TR_%d' % x, range(h_end - 336, h_end))
+    results = map(lambda x: 0 if x is None else int(x), cache.client.gets(*keys))
+    rs = [(24 * n, 24 * n + 24) for n in range(14)]
+    days = [sum(results[l:h]) for l, h in rs]
     d = dict(
         articles = db.select_int('select count(id) from articles'),
         pages = db.select_int('select count(id) from pages'),
         media = db.select_int('select count(id) from media'),
-        users = db.select_int('select count(id) from users')
+        users = db.select_int('select count(id) from users'),
+        two_weeks = str(days),
     )
     return Template('templates/dashboard.html', **d)
 

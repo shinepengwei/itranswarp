@@ -95,13 +95,13 @@
                 <div id="div-site_name" class="control-group">
                     <label class="control-label">{{ _('Site Name') }}:</label>
                     <div class="controls">
-                        <input id="site_name" name="site_name" type="text" value="{{ site_name }}" class="input-xlarge" />
+                        <input id="site_name" name="site_name" type="text" value="{{ site_name|e }}" class="input-xlarge" />
                     </div>
                 </div>
                 <div id="div-site_description" class="control-group">
                     <label class="control-label">{{ _('Site Description') }}:</label>
                     <div class="controls">
-                        <input id="site_description" name="site_description" type="text" value="{{ site_description }}" class="input-xlarge" />
+                        <input id="site_description" name="site_description" type="text" value="{{ site_description|e }}" class="input-xlarge" />
                     </div>
                 </div>
                 <div id="div-site_domain" class="control-group">
@@ -109,6 +109,12 @@
                     <div class="controls">
                         <input id="site_domain" name="site_domain" type="text" value="{{ site_domain }}" class="input-xlarge" />
                         <span class="help-inline">Auto detect if empty</span>
+                    </div>
+                </div>
+                <div id="div-site_copyright" class="control-group">
+                    <label class="control-label">{{ _('Site Copyright') }}:</label>
+                    <div class="controls">
+                        <input id="site_copyright" name="site_copyright" type="text" value="{{ site_copyright|e }}" class="input-xlarge" />
                     </div>
                 </div>
                 <div id="div-date_now" class="control-group">
