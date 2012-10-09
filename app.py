@@ -28,8 +28,8 @@ import sys
 sys.path.append(os.path.abspath('.'))
 
 from itranswarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
-from itranswarp import web
-from itranswarp import db
+from itranswarp import cache; cache.client = cache.RedisClient('localhost')
+from itranswarp import web, db
 
 from plugin.filters import load_user, load_i18n
 
