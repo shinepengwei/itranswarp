@@ -1121,6 +1121,11 @@ class UTC(datetime.tzinfo):
     def tzname(self, dt):
         return self._tzname
 
+    def __str__(self):
+        return 'UTC tzinfo object (%s)' % self._tzname
+
+    __repr__ = __str__
+
 _UTC_0 = UTC('+00:00')
 
 class Response(object):
