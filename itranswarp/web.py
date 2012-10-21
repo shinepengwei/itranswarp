@@ -222,7 +222,7 @@ class HttpError(StandardError):
     def headers(self):
         if hasattr(self, '_headers'):
             return self._headers
-        return ()
+        return []
 
     def __str__(self):
         return self.status
@@ -1744,7 +1744,7 @@ def _default_error_handler(e, start_response, is_debug):
         start_response(e.status, e.headers)
         return ('<html><body><h1>%s</h1></body></html>' % e.status)
     logging.exception('Exception:')
-    start_response('500 Internal Server Error', ())
+    start_response('500 Internal Server Error', [])
     if is_debug:
         return _debug()
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
