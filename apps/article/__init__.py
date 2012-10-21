@@ -3,10 +3,10 @@
 
 __author__ = 'Michael Liao'
 
-from itranswarp.web import ctx, get, post, route, jsonrpc, Template, Page
+from itranswarp.web import ctx, get, post, route, jsonrpc, seeother, jsonresult, Template, Page
 from itranswarp import db
 
-from util import theme
+from util import theme, make_comment, get_comments
 
 @route('/latest')
 @theme('articles.html')
@@ -15,7 +15,7 @@ def latest():
     page_size = 20
     page_total = db.select_int('select count(id) from articles')
     p = Page(int(i.page), page_size, page_total)
-    articles = db.select('select * from articles order by creation_time desc, name limit ?,?', p.offset, p.limit)
+    articles = db.select('select * from articles order by creation_time desc limit ?,?', p.offset, p.limit)
     return dict(articles=articles, page=p, __active_menu__='latest_articles')
 
 @route('/category/<cat_id>')
@@ -32,7 +32,22 @@ def category(cat_id):
 @theme('article.html')
 def article(art_id):
     a = db.select_one('select * from articles where id=?', art_id)
-    return dict(article=a, __title__=a.name, __active_menu__='category%s' % a.category_id)
+    cs, has_next = get_comments(art_id, 1)
+    return dict(article=a, comments=cs, next_page=2 if has_next else 0, __title__=a.name, __active_menu__='category%s' % a.category_id)
+
+@post('/article/comment')
+def comment():
+    user = ctx.user
+    if user is None:
+        return dict(error='Please sign in first')
+    i = ctx.request.input(content='')
+    c = i.content.strip()
+    if not c:
+        return dict(error='Comment cannot be empty')
+    a = db.select_one('select id from articles where id=?', i.article_id)
+    L = [u'<p>%s</p>' % p.replace(u'\r', u'').replace(u'&', u'&amp;').replace(u' ', u'&nbsp;').replace(u'<', u'&lt;').replace(u'>', u'&gt;') for p in c.split(u'\n')]
+    c = make_comment(a.id, user, u''.join(L))
+    raise seeother('/article/%s#comments' % i.article_id)
 
 @route('/page/<page_id>')
 @theme('page.html')

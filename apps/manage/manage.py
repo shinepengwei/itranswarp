@@ -101,11 +101,8 @@ __author__ = 'Michael Liao'
 
 '''
 
-import os
-import re
-import time
-import logging
-import hashlib
+import os, re, time, logging, hashlib, mimetypes
+
 from datetime import datetime
 from StringIO import StringIO
 

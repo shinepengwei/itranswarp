@@ -274,6 +274,44 @@ class ThemeTemplate(Template):
         templ_path, m = _init_theme(path, r)
         super(ThemeTemplate, self).__init__(templ_path, m, **kw)
 
+def make_comment(ref_id, user, content):
+    '''
+    Make a comment.
+
+    Args:
+        ref_id: the ref id, e.g., article id.
+        user: current user.
+        content: comment content.
+    Returns:
+        the comment object as dict.
+    '''
+    cid = db.next_str()
+    kw = dict(id=cid, ref_id=ref_id, user_id=user.id, image_url=user.image_url, name=user.name, content=content, creation_time=time.time(), version=0)
+    db.insert('comments', **kw)
+    return kw
+
+def get_comments(ref_id, page_index=1, page_size=20):
+    '''
+    Get comments by page.
+
+    Args:
+        page_index: page index from 1.
+        page_size: page size.
+    Returns:
+        comments as list, has_next as bool.
+    '''
+    if page_index < 1:
+        raise ValueError('bad page_index')
+    if page_size < 1 or page_size > 100:
+        raise ValueError('bad page_size')
+    offset = (page_index - 1) * page_size
+    logging.warn('offset=%s, page_size=%s' % (offset, page_size))
+    cs = db.select('select * from comments where ref_id=? order by creation_time desc limit ?,?', ref_id, offset, page_size + 1)
+    logging.warn('len()=%s' % len(cs))
+    if len(cs) > page_size:
+        return cs[:page_size], True
+    return cs, False
+
 def validate_email(email):
     '''
     Validate email address. Make sure email is lowercase.
