@@ -110,7 +110,7 @@ def get_navigation_menu(mtype):
             return m
     raise badrequest()
 
-@route('/')
+@get('/')
 def index():
     raise seeother(util.get_menus()[0].url)
 
