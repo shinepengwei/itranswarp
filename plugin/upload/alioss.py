@@ -43,8 +43,6 @@ class Provider(object):
                 dict(key='access_key_secret', name='Access Key Secret', description='Access key secret'))
 
     def delete(self, ref):
-        if ref.startswith('alioss:'):
-            ref = ref[7:]
         bucket, obj = self._client.names_from_url(ref)
         if obj:
             self._client.delete_object(obj, bucket=bucket)
@@ -63,7 +61,7 @@ class Provider(object):
         ppath = os.path.join(path, pname)
         logging.info('saving uploaded file to oss %s...' % fpath)
         url = self._client.put_object(fpath, fcontent)
-        r = dict(url=url, ref='alioss:%s' % url)
+        r = dict(url=url, ref=url)
         if fthumbnail:
             logging.info('saving thumbnail file to oss %s...' % ppath)
             r['thumbnail'] = self._client.put_object(ppath, fthumbnail)

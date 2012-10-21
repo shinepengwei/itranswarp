@@ -33,25 +33,9 @@ class Provider(object):
     def get_description():
         return 'Upload files to local directory'
 
-    def can_handle(fname, ftype):
-        return True
-
     @staticmethod
     def get_settings():
         return (dict(key='domain', name='Domain', description='Website domain'),)
-
-    def _get_metadata(self, fpath, ppath, d):
-        im = Image.open(fpath)
-        w, h = im.size[0], im.size[1]
-        d['width'], d['height'] = w, h
-        d['metadata'] = 'format=%s&mode=%s' % (im.format, im.mode)
-        if w>90 and h>90:
-            tw, th = min(w, 90), min(h, 90)
-            im.thumbnail((tw, th), Image.ANTIALIAS)
-        if ppath:
-            if im.mode != 'RGB':
-                im = im.convert('RGB')
-            im.save(ppath, 'JPEG')
 
     def delete(self, ref):
         fpath = '%s%s' % (self._document_root, ref)
@@ -59,7 +43,7 @@ class Provider(object):
         if os.path.isfile(fpath):
             os.remove(fpath)
 
-    def upload(self, fname, ftype, fp):
+    def upload(self, fname, ftype, fcontent, fthumbnail):
         dt = datetime.now()
         dirs = (str(dt.year), str(dt.month), str(dt.day))
         p = os.path.join(self._upload_dir, *dirs)
@@ -73,13 +57,11 @@ class Provider(object):
         ppath = os.path.join(p, pname)
         logging.info('saving uploaded file to %s...' % fpath)
         with open(fpath, 'w') as fo:
-            shutil.copyfileobj(fp, fo)
-        ref = '/static/upload/%s/%s' % ('/'.join(dirs), iname)
-        r = dict(size=os.path.getsize(fpath))
-        if ftype=='image':
-            self._get_metadata(fpath, ppath, r)
+            fo.write(fcontent)
+        url = '/static/upload/%s/%s' % ('/'.join(dirs), iname)
+        r = dict(url=url, ref=url)
+        if fthumbnail:
+            with open(ppath, 'w') as fo:
+                fo.write(fthumbnail)
             r['thumbnail'] = '/static/upload/%s/%s' % ('/'.join(dirs), pname)
-
-        r['url'] = ref
-        r['ref'] = ref
         return r

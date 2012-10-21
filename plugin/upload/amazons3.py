@@ -41,8 +41,6 @@ class Provider(object):
                 dict(key='access_key_secret', name='Access Key Secret', description='Access key secret'))
 
     def delete(self, ref):
-        if ref.startswith('s3:'):
-            ref = ref[3:]
         bucket, obj = self._client.names_from_url(ref)
         if obj:
             self._client.delete_object(obj, bucket=bucket)
@@ -61,7 +59,7 @@ class Provider(object):
         ppath = os.path.join(path, pname)
         logging.info('saving uploaded file to s3 %s...' % fpath)
         url = self._client.put_object(fpath, fcontent)
-        r = dict(url=url, ref='s3:%s' % url)
+        r = dict(url=url, ref=url)
         if fthumbnail:
             logging.info('saving thumbnail file to s3 %s...' % ppath)
             r['thumbnail'] = self._client.put_object(ppath, fthumbnail)

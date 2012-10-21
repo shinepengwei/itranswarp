@@ -72,41 +72,6 @@ __author__ = 'Michael Liao'
         primary key(id)
     );
 
-    create table menus (
-        id varchar(50) not null,
-        name varchar(50) not null,
-        description varchar(100) not null,
-        type varchar(50) not null,
-        display_order int not null,
-        ref varchar(1000) not null,
-        url varchar(1000) not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        index idx_creation_time(creation_time)
-    );
-
-    create table media (
-        id varchar(50) not null,
-        name varchar(50) not null,
-        description varchar(100) not null,
-        width int not null,
-        height int not null,
-        size bigint not null,
-        type varchar(50) not null,
-        mime varchar(50) not null,
-        metadata varchar(1000) not null,
-        ref varchar(1000) not null,
-        url varchar(1000) not null,
-        thumbnail varchar(1000) not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        index idx_creation_time(creation_time)
-    );
-
     create table settings (
         id varchar(50) not null,
         kind varchar(50) not null,
@@ -142,6 +107,12 @@ import time
 import logging
 import hashlib
 from datetime import datetime
+from StringIO import StringIO
+
+try:
+    import Image
+except ImportError:
+    from PIL import Image
 
 import admin
 
@@ -560,70 +531,36 @@ def do_delete_menu():
     raise seeother('menus')
 
 def media():
-    media = db.select('select * from media order by creation_time desc')
-    return Template('templates/media.html', media=media)
+    i = ctx.request.input(page='1')
+    total = db.select_int('select count(id) from media')
+    page = Page(int(i.page), PAGE_SIZE, total)
+    media = db.select('select * from media order by creation_time desc limit ?,?', page.offset, page.limit)
+    return Template('templates/media.html', media=media, page=page)
 
 def add_media():
     return Template('templates/mediaform.html', form_title=_('Add Media'), action='do_add_media')
 
-_MIME_ALIAS = {
-    '.jpeg': '.jpg',
-    '.jpe': '.jpg',
-    '.html': '.htm',
-    '.mpa': '.mp3',
-    '.mp2': '.mp3',
-    '.dot': '.doc',
-    '.xlt': '.xls',
-    '.xla': '.xls',
-    '.pot': '.ppt',
-    '.pps': '.ppt',
-    '.ppa': '.ppt',
-    '.dotx': '.docx',
-    '.xlsx': '.docx',
-    '.xltx': '.docx',
-    '.pptx': '.docx',
-    '.potx': '.docx',
-    '.ppsx': '.docx',
-}
-
-_MIME = {
-    '.png': ('image', 'image/png'),
-    '.gif': ('image', 'image/gif'),
-    '.jpg': ('image', 'image/jpeg'),
-    '.ico': ('image', 'image/x-icon'),
-
-    '.mp3': ('audio', 'audio/mpeg'),
-    '.aac': ('audio', 'audio/aac'),
-
-    '.flv': ('video', 'video/x-flv'),
-    '.mp4': ('video', 'video/mp4'),
-
-    '.txt': ('text', 'text/plain'),
-    '.htm': ('text', 'text/html'),
-    '.xml': ('text', 'text/xml'),
-
-    '.gz': ('application', 'application/x-gzip'),
-    '.tar': ('application', 'application/x-tar'),
-    '.pdf': ('application', 'application/pdf'),
-    '.zip': ('application', 'application/zip'),
-    '.rar': ('application', 'application/x-rar-compressed'),
-    '.swf': ('application', 'application/x-shockwave-flash'),
-
-    '.doc': ('application', 'application/msword'),
-    '.xls': ('application', 'application/vnd.ms-excel'),
-    '.ppt': ('application', 'application/vnd.ms-powerpoint'),
-
-    '.docx': ('application', 'application/vnd.openxmlformats'),
-
-    '.key': ('application', 'application/vnd.apple.keynote'),
-    '.pages': ('application', 'application/vnd.apple.pages'),
-    '.numbers': ('application', 'application/vnd.apple.numbers'),
-}
-
 def _guess_mime(fname):
     ext = os.path.splitext(fname)[1].lower()
-    ext = _MIME_ALIAS.get(ext, ext)
-    return _MIME.get(ext, ('binary', 'application/octet-stream'))
+    mime = mimetypes.types_map.get(ext, 'application/octet-stream')
+    ftype = mime
+    n = mime.find('/')
+    if n!=(-1):
+        ftype = mime[:n]
+    return ftype, mime
+
+def _create_thumbnail(fcontent):
+    ' return thumbnail JPEG as str and dict contains width, height, metadata. '
+    im = Image.open(StringIO(fcontent))
+    w, h = im.size[0], im.size[1]
+    d = dict(width=w, height=h)
+    d['metadata'] = 'format=%s&mode=%s' % (im.format, im.mode)
+    if w>90 and h>90:
+        tw, th = min(w, 90), min(h, 90)
+        im.thumbnail((tw, th), Image.ANTIALIAS)
+    if im.mode != 'RGB':
+        im = im.convert('RGB')
+    return im.tostring('jpeg', 'RGB'), d
 
 @jsonresult
 def do_add_media():
@@ -656,8 +593,15 @@ def do_add_media():
     uname, uprovider = util.get_enabled_upload()
     if uname is None:
         return dict(error=_('No uploader selected'))
+    fcontent = f.file.read()
+    fthumbnail = None
+    m['uploader'] = uname
+    m['size'] = len(fcontent)
+    if ftype=='image':
+        fthumbnail, additional = _create_thumbnail(fcontent)
+        m.update(additional)
     uploader = util.create_upload_provider(uname)
-    r = uploader.upload(fname, ftype, f.file)
+    r = uploader.upload(fname, ftype, fcontent, fthumbnail)
     for k in r:
         if k in m:
             m[k] = r[k]
@@ -667,8 +611,7 @@ def do_add_media():
 def do_delete_media():
     mid = ctx.request['id']
     m = db.select_one('select * from media where id=?', mid)
-    from apps.manage.uploader import localuploader
-    uploader = localuploader.Uploader(document_root=ctx.document_root)
+    uploader = util.create_upload_provider(m.uploader)
     uploader.delete(m.ref)
     db.update('delete from media where id=?', mid)
     raise seeother('media')
