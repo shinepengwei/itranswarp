@@ -11,7 +11,6 @@ import os
 import uuid
 import shutil
 import logging
-import Image
 from datetime import datetime
 
 from itranswarp.web import ctx
