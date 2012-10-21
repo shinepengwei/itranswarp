@@ -7,7 +7,7 @@ __author__ = 'Michael Liao'
 
 import os, re, time, logging, hashlib, mimetypes
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from StringIO import StringIO
 
 try:
@@ -70,6 +70,9 @@ def dashboard():
     site_timezone = util.get_setting('site_timezone', '+00:00')
     utc = datetime.utcfromtimestamp(time.time()).replace(tzinfo=UTC('+00:00'))
     now = utc.astimezone(UTC(site_timezone))
+    site_dateformat = util.get_setting('site_dateformat', '%B %d, %Y')
+    start_date = now - timedelta(days=15)
+    end_date = now - timedelta(days=1)
     h_end = int(time.mktime(now.replace(hour=0).timetuple())) // 3600
     keys = map(lambda x: '_TR_%d' % x, range(h_end - 336, h_end))
     results = map(lambda x: 0 if x is None else int(x), cache.client.gets(*keys))
@@ -81,6 +84,8 @@ def dashboard():
         media = db.select_int('select count(id) from media'),
         users = db.select_int('select count(id) from users'),
         two_weeks = str(days),
+        start_date = start_date.strftime(site_dateformat),
+        end_date = end_date.strftime(site_dateformat),
     )
     return Template('templates/dashboard.html', **d)
 

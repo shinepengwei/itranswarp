@@ -90,7 +90,7 @@ def add_article():
     return Template('templates/articleform.html', static=False, categories=_get_categories(), form_title=_('Add New Article'), action='do_add_article')
 
 def add_page():
-    return Template('templates/articleform.html', static=True, form_title=u'Add New Page', action='do_add_page')
+    return Template('templates/articleform.html', static=True, form_title=_('Add New Page'), action='do_add_page')
 
 @jsonresult
 def do_edit_article():
