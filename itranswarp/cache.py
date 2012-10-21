@@ -11,22 +11,22 @@ import os, time, datetime, functools, logging
 
 class DummyClient(object):
 
-    def set(key, value, expires=0):
+    def set(self, key, value, expires=0):
         pass
 
-    def get(key, default=None):
+    def get(self, key, default=None):
         return default
 
-    def gets(*keys):
+    def gets(self, *keys):
         return [None] * len(keys)
 
-    def delete(key):
+    def delete(self, key):
         pass
 
-    def incr(key):
+    def incr(self, key):
         pass
 
-    def decr(key):
+    def decr(self, key):
         pass
 
 class MemcacheClient(object):
