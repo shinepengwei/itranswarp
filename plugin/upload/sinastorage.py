@@ -11,7 +11,6 @@ import os
 import uuid
 import shutil
 import logging
-import Image
 from datetime import datetime
 
 try:
@@ -29,7 +28,7 @@ class Provider(object):
         self._domain = kw.pop('domain', '')
         if not self._domain:
             raise ValueError('Missing param: domain.')
-        self._client = storage.Client()
+        self._client = storage.Client(accesskey=ACCESS_KEY, secretkey=SECRET_KEY, prefix=APP_NAME)
 
     @staticmethod
     def get_name():
@@ -41,13 +40,11 @@ class Provider(object):
 
     @staticmethod
     def get_settings():
-        return (dict(key='domain', name='Domain', description='Website domain'),
-                dict(key='app_name', name='App Name', description='App name'),
-                dict(key='access_key', name='Access Key', description='Access key'),
-                dict(key='secret_key', name='Secret Key', description='Secret key'))
+        return (dict(key='domain', name='Domain', description='Website domain'),)
 
     def delete(self, ref):
-        self._client.delete(self._domain, ref)
+        domain, key = ref.split(':', 1)
+        self._client.delete(domain, key)
 
     def upload(self, fname, ftype, fcontent, fthumbnail):
         dt = datetime.now()
@@ -56,13 +53,13 @@ class Provider(object):
         name = uuid.uuid4().hex
         iname = '%s%s' % (name, ext)
         pname = '%s.thumbnail.jpg' % (name)
-        fpath = os.path.join(p, iname)
-        ppath = os.path.join(p, pname)
+        path = os.path.join(*dirs)
+        fpath = os.path.join(path, iname)
+        ppath = os.path.join(path, pname)
         logging.info('saving uploaded file to sae %s...' % fpath)
-        url = self._client.put(self._domain, fpath, fcontent)
-        ref = '/static/upload/%s/%s' % ('/'.join(dirs), iname)
-        r = dict(url=url, ref=ref)
+        url = self._client.put(self._domain,  fpath, storage.Object(fcontent))
+        r = dict(url=url, ref='%s:%s' % (self._domain, fpath))
         if fthumbnail:
             logging.info('saving thumbnail file to sae %s...' % ppath)
-            r['thumbnail'] = self._client.put(self._domain, ppath, fcontent)
+            r['thumbnail'] = self._client.put(self._domain,  ppath, storage.Object(fthumbnail))
         return r
