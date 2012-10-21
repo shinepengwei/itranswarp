@@ -110,12 +110,12 @@ def get_navigation_menu(mtype):
             return m
     raise badrequest()
 
-@get('/')
-def index():
+@route('/')
+def website_index():
     raise seeother(util.get_menus()[0].url)
 
 @route('/admin/')
-def index():
+def admin_index():
     raise seeother('/admin/manage/dashboard')
 
 @route('/admin/<mod>/<handler>')
