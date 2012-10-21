@@ -56,8 +56,6 @@ def register_admin_menus():
         dict(order=1000, title=u'Settings', items=[
             dict(title=u'General', role=0, handler='general'),
             dict(title=u'Menus', role=0, handler='menus'),
-            dict(title=u'Widgets', role=0, handler='widgets'),
-            dict(title=u'Layout', role=0, handler='menus'),
         ]),
         dict(order=1100, title=u'Plugins', items=[
             dict(title='Signins', role=0, handler='signins'),

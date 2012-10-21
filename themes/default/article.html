@@ -20,7 +20,7 @@
 {% if ctx.user %}
                 <div class="row sep">
                     <div class="span9">
-                        <h3>Make a comment</h3>
+                        <h3>{{ _('Make a comment') }}</h3>
                     </div>
                 </div>
                 <div class="row sep">
@@ -43,7 +43,7 @@
                     <div class="span7">
                         <textarea name="content" class="span7" style="height:84px" placeholder="Say something..."></textarea>
                         <input type="hidden" name="article_id" value="{{ article.id }}" />
-                        <button type="submit" class="btn">Submit</button>
+                        <button type="submit" class="btn">{{ _('Submit') }}</button>
                     </div>
                     </form>
                 </div>
@@ -51,7 +51,7 @@
                 <div class="row sep">
                     <div class="span9">
                         <a name="comments"></a>
-                        <h3>Comments</h3>
+                        <h3>{{ _('Comments') }}</h3>
                     </div>
                 </div>
 {% for c in comments %}

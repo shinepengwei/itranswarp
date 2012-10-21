@@ -154,7 +154,7 @@ def signin():
         redirect = '/'
     ctx.response.set_cookie(_COOKIE_SIGNIN_REDIRECT, redirect)
     providers = [p for p in util.get_plugin_providers('signin') if p['enabled']]
-    return dict(providers=providers)
+    return dict(providers=providers, __site_name__=util.get_setting_site_name())
 
 @post('/signin')
 def do_signin():

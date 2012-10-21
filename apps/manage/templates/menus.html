@@ -40,21 +40,21 @@
         <p>This operation is unrecoverable!</p>
     </div>
     <div class="modal-footer">
-        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">Delete</a>
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
         <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
     </div>
 </div>
 
 <div class="row sep">
     <div class="span10">
-        <h3>Menus</h3>
+        <h3>{{ _('Menus') }}</h3>
     </div>
 </div>
 
 <div class="row">
     <div class="span10">
         <ul id="ul-preview" class="nav nav-pills">
-            <li><a href="javascript:void(0)" style="color:#333;cursor:text;background-color:transparent;">Navigation Preview:</a></li>
+            <li><a href="javascript:void(0)" style="color:#333;cursor:text;background-color:transparent;">{{ _('Navigation Preview') }}:</a></li>
 {% for m in menus %}
             <li class="preview"><a href="{{ m.url }}" target="_blank" title="{{ m.description|e }}">{{ m.name|e }}</a></li>
 {% endfor %}

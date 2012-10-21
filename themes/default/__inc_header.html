@@ -21,11 +21,11 @@
             </div>
             <div class="span4">
 {% if ctx.user %}
-                        <span class="pull-right" style="padding-right:8px"><a href="/signout">Sign Out</a></span>
+                        <span class="pull-right" style="padding-right:8px"><a href="/signout">{{ _('Sign Out') }}</a></span>
                         <span class="pull-right" style="padding-right:8px"> | </span>
                         <span class="pull-right" style="padding-right:8px"><a href="/profile">{{ ctx.user.name }}</a></span>
 {% else %}
-                        <span class="pull-right" style="padding-right:8px"><a href="/signin">Sign In</a></span>
+                        <span class="pull-right" style="padding-right:8px"><a href="/signin">{{ _('Sign In') }}</a></span>
 {% endif %}
             </div>
         </div>

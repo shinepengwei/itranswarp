@@ -44,7 +44,7 @@ function check(form) {
                 <img src="/static/img/logo.png" width="64" height="64" />
             </div>
             <div class="span3" style="padding-top:16px;">
-                <h1>iTranswarp</h1>
+                <h1>{{ __site_name__ }}</h1>
             </div>
         </div>
 
@@ -55,7 +55,9 @@ function check(form) {
                 <ul id="ul-tab" class="nav nav-tabs">
                     <li><span style="display:block;width:80px;height:10px;"></span></li>
                     <li class="active"><a id="a-tab-form" href="javascript:showtab('tab-form')">{{ _('Sign In') }}</a></li>
+{% if providers %}
                     <li><a id="a-tab-3rdpart" href="javascript:showtab('tab-3rdpart')">{{ _('3rd-part Sign In') }}</a></li>
+{% endif %}
                 </ul>
             </div>
         </div>
@@ -97,6 +99,7 @@ function check(form) {
             </div>
         </div>
 
+{% if providers %}
         <div id="div-tab-3rdpart" class="div-tab row hide">
             <div class="span4 offset4">
 {% for p in providers %}
@@ -104,6 +107,7 @@ function check(form) {
 {% endfor %}
             </div>
         </div>
+{% endif %}
 
     </div>
 </body>

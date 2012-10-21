@@ -18,7 +18,7 @@
             </div>
             <div class="span3">
                 <div class="box">
-                    <h4>Categories</h4>
+                    <h4>{{ _('Categories') }}</h4>
 {% for c in __layout_categories__ %}
                     <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
 {% endfor %}
