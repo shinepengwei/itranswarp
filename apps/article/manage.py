@@ -3,51 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-'''
-    SQL:
-
-    create table categories (
-        id varchar(50) not null,
-        locked bool not null,
-        display_order int not null,
-        name varchar(50) not null,
-        description varchar(100) not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        index idx_display_order(display_order)
-    );
-
-    create table articles (
-        id varchar(50) not null,
-        visible bool not null,
-        name varchar(50) not null,
-        tags varchar(1000) not null,
-        category_id varchar(50) not null,
-        content mediumtext not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        index idx_category_id(category_id),
-        index idx_creation_time(creation_time)
-    );
-
-    create table pages (
-        id varchar(50) not null,
-        visible bool not null,
-        name varchar(50) not null,
-        tags varchar(1000) not null,
-        content mediumtext not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        index idx_creation_time(creation_time)
-    );
-
-'''
+' Management of articles, pages. '
 
 import time
 import logging

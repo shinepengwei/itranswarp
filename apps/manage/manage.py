@@ -3,103 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-'''
-    SQL:
-
-    create table users (
-        id varchar(50) not null,
-        locked bool not null,
-        name varchar(50) not null,
-        role int not null,
-        email varchar(50) not null,
-        verified bool not null,
-        passwd varchar(32) not null,
-        image_url varchar(1000) not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        unique key uk_email(email),
-        index idx_creation_time(creation_time)
-    );
-
-    create table auth_users (
-        id varchar(200) not null,
-        user_id varchar(50) not null,
-        provider varchar(50) not null,
-        name varchar(50) not null,
-        image_url varchar(1000) not null,
-        auth_token varchar(2000) not null,
-        expired_time real not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        unique key uk_user_id(user_id)
-    );
-
-    create table auth_emails (
-        id varchar(50) not null,
-        user_id varchar(50) not null,
-        email varchar(50) not null,
-        auth_token varchar(50) not null,
-        expired_time real not null,
-        creation_time real not null,
-        primary key(id),
-        index idx_user_id(user_id),
-        index idx_creation_time(creation_time)
-    );
-
-    create table auth_passwd (
-        id varchar(50) not null,
-        user_id varchar(50) not null,
-        auth_token varchar(50) not null,
-        expired_time real not null,
-        creation_time real not null,
-        primary key(id),
-        index idx_user_id(user_id),
-        index idx_creation_time(creation_time)
-    );
-
-    create table roles (
-        id int not null,
-        locked bool not null,
-        name varchar(50) not null,
-        privileges varchar(1000) not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id)
-    );
-
-    create table settings (
-        id varchar(50) not null,
-        kind varchar(50) not null,
-        name varchar(50) not null,
-        value varchar(1000) not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        unique key uk_name(name),
-        index idx_kind(kind)
-    );
-
-    create table comments (
-        id varchar(50) not null,
-        ref_id varchar(50) not null,
-        user_id varchar(50) not null,
-        image_url varchar(1000) not null,
-        name varchar(50) not null,
-        content text not null,
-        creation_time real not null,
-        version bigint not null,
-        primary key(id),
-        index idx_user_id(user_id),
-        index idx_creation_time(creation_time)
-    );
-
-'''
+' Management of users, menus, media, etc. '
 
 import os, re, time, logging, hashlib, mimetypes
 
@@ -118,7 +22,7 @@ from itranswarp import db, cache
 
 import util
 
-PAGE_SIZE = 5
+PAGE_SIZE = 20
 
 def _get_custom_url(menu):
     url = menu.ref
