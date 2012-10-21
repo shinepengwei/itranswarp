@@ -356,6 +356,13 @@ def seeother(location):
     '''
     return _redirect(303, location)
 
+def _safe_str(s):
+    if isinstance(s, str):
+        return s
+    if isinstance(s, unicode):
+        return s.encode('utf-8')
+    return str(s)
+
 def _unicode(s, encoding='utf-8'):
     return s.decode('utf-8')
 
@@ -1201,7 +1208,7 @@ class Response(object):
         key = name.upper()
         if not key in _RESPONSE_HEADER_DICT:
             key = name
-        self._headers[key] = value
+        self._headers[key] = _safe_str(value)
 
     @property
     def content_type(self):
