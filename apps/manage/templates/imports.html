@@ -1,0 +1,75 @@
+<script type="text/JavaScript">
+    function delete_x(id, name) {
+        $('#span-delete-x-name').text(name);
+        $('#a-delete-x').attr('href', 'do_delete_task?id='+id);
+        $('#delete-modal').modal('show');
+    }
+</script>
+
+<div id="delete-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Deletion Confirm</h3>
+    </div>
+    <div class="modal-body">
+        <p>Are you sure you want to delete the task "<strong><span id="span-delete-x-name"></span></strong>"?</p>
+        <p>The operation is unrecoverable!</p>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Importing Tasks') }}</h3>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <a href="imports?action=upload" class="btn btn-primary pull-right">Import</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('URL') }}</th>
+                    <th>{{ _('Status') }}</th>
+                    <th>{{ _('Operations') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for t in tasks %}
+                <tr>
+                    <td>{{ t.name|e }}</td>
+                    <td><a href="{{ t.task_data.url }}" target="_blank">{{ t.task_data.url|elli }}</a></td>
+                    <td>{{ t.status }}</td>
+                    <td>
+                        <a href="javascript:delete_x('{{ t.id }}', '{{ t.name|jsstr }}')">{{ _('Delete') }}</a>
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <div class="btn-group">
+{% for i in page.nearby() %}
+    {% if i==page.index %}
+            <button class="btn disabled">{{ i }}</button>
+    {% else %}
+            <button class="btn" onclick="location.assign('?page={{ i }}')">{{ i }}</button>
+    {% endif %}
+{% endfor %}
+        </div>
+    </div>
+</div>
