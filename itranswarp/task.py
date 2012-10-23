@@ -6,8 +6,14 @@ __author__ = 'Michael Liao'
 '''
 Task queue module for distributed async task.
 
-SQL:
+A task statuses:
 
+pending -> executing -> done -+-> notify
+   |            |             |
+   +-------- retry ? -> error +
+'''
+
+__SQL__ = '''
 create table tasks (
     id varchar(50) not null,
     queue varchar(50) not null,
@@ -28,17 +34,12 @@ create table tasks (
     primary key(id),
     index(execution_time)
 );
-
-A task statuses:
-
-pending -> executing -> done -+-> notify
-   |            |             |
-   +-------- retry ? -> error +
 '''
 
 import os, sys, time, uuid, random, datetime, functools, threading, logging, collections
-from itranswarp.web import Dict
-from itranswarp import db
+
+from web import Dict
+import db
 
 logging.basicConfig(level=logging.INFO)
 
@@ -49,7 +50,53 @@ _EXECUTING = 'executing'
 _ERROR = 'error'
 _DONE = 'done'
 
-def create_task(queue, name, callback, task_data=None, max_retry=3, execution_time=None, timeout=60):
+class ConflictError(StandardError):
+    pass
+
+def _log(s):
+    logging.info(s)
+
+def cleanup(queue=None):
+    '''
+    Remove tasks that already done.
+    '''
+    pass
+
+def get_tasks(queue, status=None, offset=0, limit=100):
+    '''
+    Get tasks by queue and status.
+
+    >>> tid1 = create_task('the_queue', 'task1', task_data='data1')
+    >>> time.sleep(0.1)
+    >>> tid2 = create_task('the_queue', 'task2', task_data='data2')
+    >>> ts = get_tasks('the_queue')
+    >>> ts[0].name
+    u'task1'
+    >>> ts[1].name
+    u'task2'
+    '''
+    if offset<0:
+        raise ValueError('offset must >=0')
+    if limit<1 or limit>100:
+        raise ValueError('limit must be 1 - 100')
+    if status:
+        return db.select('select * from tasks where queue=? and status=? order by execution_time limit ?,?', queue, status, offset, limit)
+    return db.select('select * from tasks where queue=? order by execution_time limit ?,?', queue, offset, limit)
+
+def create_task(queue, name, task_data=None, callback=None, max_retry=3, execution_time=None, timeout=60):
+    '''
+    Create a task.
+
+    >>> tid = create_task('sample_queue', 'sample_task', 'task data')
+    >>> f = fetch_task('sample_queue')
+    >>> f.id==tid
+    True
+    >>> f.task_data
+    u'task data'
+    >>> f2 = fetch_task('sample_queue')
+    >>> f2 is None
+    True
+    '''
     if not queue:
         queue = _DEFAULT_QUEUE
     if not name:
@@ -67,8 +114,8 @@ def create_task(queue, name, callback, task_data=None, max_retry=3, execution_ti
     current = time.time()
     if execution_time is None:
         execution_time = current
-    task = Dict( \
-        id=db.next_id(), \
+    task = dict( \
+        id=db.next_str(), \
         queue=queue, \
         name=name, \
         callback=callback, \
@@ -85,6 +132,7 @@ def create_task(queue, name, callback, task_data=None, max_retry=3, execution_ti
         task_result='',
         version=0)
     db.insert('tasks', **task)
+    return task['id']
 
 def _do_fetch_task(queue):
     task = None
@@ -97,9 +145,9 @@ def _do_fetch_task(queue):
         return None
     expires = current + task.timeout
     with db.transaction():
-        if 0==db.update('update tasks set status=?, execution_start_time=?, execution_expired_time=?, version=version+1, where id=? and version=?', _EXECUTING, current, expires, task.id, task.version)
+        if 0==db.update('update tasks set status=?, execution_start_time=?, execution_expired_time=?, version=version+1 where id=? and version=?', _EXECUTING, current, expires, task.id, task.version):
             raise ConflictError()
-    return dict(id=task.id, data=task.task_data, version=task.version+1)
+    return Dict(id=task.id, queue=task.queue, name=task.name, task_data=task.task_data, version=task.version+1)
 
 def fetch_task(queue):
     if not queue:
@@ -129,8 +177,8 @@ if __name__=='__main__':
     _log(dbpath)
     if os.path.isfile(dbpath):
         os.remove(dbpath)
-    init('sqlite3', dbpath)
-    update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
+    db.init('sqlite3', dbpath, '')
+    db.update('create table tasks (id text not null, queue text not null, name text not null, callback text not null, timeout integer not null, status text not null, max_retry integer not null, retried integer not null, creation_time real not null, execution_time real not null, execution_start_time real not null, execution_end_time real not null, execution_expired_time real not null, version integer not null, task_data text not null, task_result text not null);')
     import doctest
     doctest.testmod()
     os.remove(dbpath)
