@@ -11,6 +11,11 @@ from datetime import datetime, timedelta
 from StringIO import StringIO
 
 try:
+    import json
+except ImportError:
+    import simplejson as json
+
+try:
     import Image
 except ImportError:
     from PIL import Image
@@ -18,7 +23,7 @@ except ImportError:
 import admin
 
 from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, UTC, Dict, Page, badrequest, UTC
-from itranswarp import db, cache
+from itranswarp import db, cache, task
 
 import util
 
@@ -60,6 +65,8 @@ def register_admin_menus():
         dict(order=1100, title=u'Plugins', items=[
             dict(title='Signins', role=0, handler='signins'),
             dict(title='Uploads', role=0, handler='uploads'),
+            dict(title='Import', role=0, handler='imports'),
+            dict(title='Export', role=0, handler='exports'),
         ]),
     ]
 
@@ -520,9 +527,32 @@ def do_delete_media():
     db.update('delete from media where id=?', mid)
     raise seeother('media')
 
+def imports():
+    i = ctx.request.input(action='', page='1')
+    if i.action=='upload':
+        return Template('templates/importsform.html')
+    total = db.select_int('select count(id) from tasks where queue=?', 'import_post')
+    page = Page(int(i.page), PAGE_SIZE, total)
+    tasks = [] if total==0 else task.get_tasks('import_post', offset=page.offset, limit=page.limit)
+    for t in tasks:
+        t.task_data = json.loads(t.task_data)
+    return Template('templates/imports.html', tasks=tasks, page=page)
+
 @jsonresult
-def do_get_media():
-    i = ctx.request.input(type='', page_index='1', page_size='20')
+def do_imports():
+    i = ctx.request.input(type='')
+    f = i.file
+    if i.type=='wordpress':
+        from plugin import importwp
+        importwp.import_wp(f.file)
+        return dict(redirect='imports')
+    return dict(error='Import failed')
+
+def exports():
+    pass
+
+def do_exports():
+    return None
 
 if __name__=='__main__':
     import doctest

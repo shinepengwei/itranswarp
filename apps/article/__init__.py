@@ -3,10 +3,42 @@
 
 __author__ = 'Michael Liao'
 
+import time
+
 from itranswarp.web import ctx, get, post, route, jsonrpc, seeother, jsonresult, Template, Page
 from itranswarp import db
 
 from util import theme, make_comment, get_comments
+
+def is_category_exist(category_id):
+    cats = db.select('select id from categories where id=?', category_id)
+    return len(cats) > 0
+
+def internal_add_article(name, tags, category_id, content):
+    name = name.strip()
+    tags = tags.strip()
+    content = content.strip()
+    if not name:
+        return dict(error=u'Name cannot be empty', error_field='name')
+    if not content:
+        return dict(error=u'Content cannot be empty', error_field='content')
+    if not is_category_exist(category_id):
+        return dict(error=u'Invalid category', error_field='category_id')
+    current = time.time()
+    article = dict(id=db.next_str(), visible=True, name=name, tags=tags, category_id=category_id, content=content, creation_time=current, modified_time=current, version=0)
+    db.insert('articles', **article)
+    return dict(article=article)
+
+@jsonresult
+@post('/api/article')
+def api_add_article():
+    auth = ctx.request.header['Authorization']
+    # check auth...
+    i = ctx.request.input(name='', tags='', category_id='', content='')
+    r = internal_add_article(i.name, i.tags, i.category_id, i.content)
+    if 'error' in r:
+        return r
+    return r
 
 @route('/latest')
 @theme('articles.html')

@@ -11,6 +11,8 @@ import logging
 from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest
 from itranswarp import db
 
+from apps.article import internal_add_article, is_category_exist
+
 PAGE_SIZE = 5
 
 def _get_latest_url(menu):
@@ -103,7 +105,7 @@ def do_edit_article():
         return dict(error=u'Name cannot be empty', error_field='name')
     if not content:
         return dict(error=u'Content cannot be empty', error_field='')
-    if not _is_category_exist(category_id):
+    if not is_category_exist(category_id):
         return dict(error=u'Invalid category', error_field='category_id')
     ar = db.select_one('select version from articles where id=?', i.id)
     db.update_kw('articles', 'id=?', i.id, category_id=category_id, name=name, tags=tags, content=content, modified_time=time.time(), version=ar.version+1)
@@ -126,19 +128,9 @@ def do_edit_page():
 @jsonresult
 def do_add_article():
     i = ctx.request.input()
-    name = i.name.strip()
-    tags = i.tags.strip()
-    content = i.content.strip()
-    category_id = i.category_id
-    if not name:
-        return dict(error=u'Name cannot be empty', error_field='name')
-    if not content:
-        return dict(error=u'Content cannot be empty', error_field='')
-    if not _is_category_exist(category_id):
-        return dict(error=u'Invalid category', error_field='category_id')
-    current = time.time()
-    article = dict(id=db.next_str(), visible=True, name=name, tags=tags, category_id=category_id, content=content, creation_time=current, modified_time=current, version=0)
-    db.insert('articles', **article)
+    r = internal_add_article(i.name, i.tags, i.category_id, i.content)
+    if 'error' in r:
+        return r
     return dict(redirect='articles')
 
 @jsonresult
@@ -155,10 +147,6 @@ def do_add_page():
     page = dict(id=db.next_str(), visible=True, name=name, tags=tags, content=content, creation_time=current, modified_time=current, version=0)
     db.insert('pages', **page)
     return dict(redirect='pages')
-
-def _is_category_exist(category_id):
-    cats = db.select('select id from categories where id=?', category_id)
-    return len(cats) > 0
 
 def _get_categories():
     cats = db.select('select * from categories order by display_order, name')
