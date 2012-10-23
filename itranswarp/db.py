@@ -518,7 +518,7 @@ if __name__=='__main__':
     _log(dbpath)
     if os.path.isfile(dbpath):
         os.remove(dbpath)
-    init('sqlite3', dbpath)
+    init('sqlite3', dbpath, '')
     update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
     import doctest
     doctest.testmod()
