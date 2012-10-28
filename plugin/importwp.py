@@ -3,6 +3,7 @@
 
 __author__ = 'Michael Liao'
 
+import urlparse
 from xml.dom import minidom
 try:
     import json
@@ -26,12 +27,13 @@ def parse_wp(f):
         link = value_of_xpath(doc, 'rss/channel/link')
     if not link:
         raise ValueError('Could not find link.')
+    site = urlparse.urlparse(link).netloc
     L = []
     cs = nodes_of_xpath(doc, 'rss/channel/item')
     for c in cs:
         L.append(dict(
             source = 'wordpress',
-            site = link,
+            site = site,
             title = value_of_xpath(c, 'title'),
             url = value_of_xpath(c, 'link'),
             pubDate = value_of_xpath(c, 'pubDate'),
