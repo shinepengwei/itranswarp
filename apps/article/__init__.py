@@ -14,7 +14,7 @@ def is_category_exist(category_id):
     cats = db.select('select id from categories where id=?', category_id)
     return len(cats) > 0
 
-def internal_add_article(name, tags, category_id, content):
+def internal_add_article(name, tags, category_id, content, creation_time=None):
     name = name.strip()
     tags = tags.strip()
     content = content.strip()
@@ -24,7 +24,7 @@ def internal_add_article(name, tags, category_id, content):
         return dict(error=u'Content cannot be empty', error_field='content')
     if not is_category_exist(category_id):
         return dict(error=u'Invalid category', error_field='category_id')
-    current = time.time()
+    current = float(creation_time) if creation_time else time.time()
     article = dict(id=db.next_str(), visible=True, name=name, tags=tags, category_id=category_id, content=content, creation_time=current, modified_time=current, version=0)
     db.insert('articles', **article)
     return dict(article=article)
