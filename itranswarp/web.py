@@ -1133,7 +1133,7 @@ class UTC(datetime.tzinfo):
 
     __repr__ = __str__
 
-_UTC_0 = UTC('+00:00')
+UTC_0 = UTC('+00:00')
 
 class Response(object):
 
@@ -1298,9 +1298,9 @@ class Response(object):
         L = ['%s=%s' % (_quote(name), _quote(value))]
         if expires is not None:
             if isinstance(expires, (float, int, long)):
-                L.append('Expires=%s' % datetime.datetime.fromtimestamp(expires, _UTC_0).strftime('%a, %d-%b-%Y %H:%M:%S GMT'))
+                L.append('Expires=%s' % datetime.datetime.fromtimestamp(expires, UTC_0).strftime('%a, %d-%b-%Y %H:%M:%S GMT'))
             if isinstance(expires, (datetime.date, datetime.datetime)):
-                L.append('Expires=%s' % expires.astimezone(_UTC_0).strftime('%a, %d-%b-%Y %H:%M:%S GMT'))
+                L.append('Expires=%s' % expires.astimezone(UTC_0).strftime('%a, %d-%b-%Y %H:%M:%S GMT'))
         elif isinstance(max_age, (int, long)):
             L.append('Max-Age=%d' % max_age)
         L.append('Path=%s' % path)
