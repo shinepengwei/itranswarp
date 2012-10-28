@@ -17,8 +17,6 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 
-logging.basicConfig(level=logging.INFO)
-
 def smtp(host, port=25, username=None, passwd=None, use_tls=False):
     '''
     Generate a tuple that contains smtp info:
