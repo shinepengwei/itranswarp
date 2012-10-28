@@ -22,7 +22,7 @@ except ImportError:
 
 import admin
 
-from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, UTC, Dict, Page, badrequest, UTC
+from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, UTC, Dict, Page, badrequest, UTC, UTC_0
 from itranswarp import db, cache, task
 
 import util
@@ -73,7 +73,7 @@ def register_admin_menus():
 def dashboard():
     # find timestamp at today's 00:00
     site_timezone = util.get_setting('site_timezone', '+00:00')
-    utc = datetime.utcfromtimestamp(time.time()).replace(tzinfo=UTC('+00:00'))
+    utc = datetime.utcfromtimestamp(time.time()).replace(tzinfo=UTC_0)
     now = utc.astimezone(UTC(site_timezone))
     site_dateformat = util.get_setting('site_dateformat', '%B %d, %Y')
     start_date = now - timedelta(days=15)
