@@ -36,16 +36,30 @@ def internal_add_article(name, tags, category_id, user_id, content, creation_tim
     db.insert('articles', **article)
     return dict(article=article)
 
-#@jsonresult
-#@post('/api/article')
+@get('/api/categories')
+@jsonresult
+def api_get_categories():
+    if ctx.user is None:
+        return dict(error='bad authentication')
+    return do_get_categories()
+
+def do_get_categories():
+    cats = db.select('select * from categories order by display_order, name')
+    if not cats:
+        logging.info('create default uncategorized...')
+        current = time.time()
+        uncategorized = Dict(id=db.next_str(), name='Uncategorized', description='', locked=True, display_order=0, creation_time=current, modified_time=current, version=0)
+        db.insert('categories', **uncategorized)
+        cats = [uncategorized]
+    return cats
+
+@post('/api/article/create')
+@jsonresult
 def api_add_article():
-    auth = ctx.request.header['Authorization']
-    # check auth...
-    i = ctx.request.input(name='', tags='', category_id='', user_id='', content='')
-    r = internal_add_article(i.name, i.tags, i.category_id, i.user_id, i.content)
-    if 'error' in r:
-        return r
-    return r
+    if ctx.user is None:
+        return dict(error='bad authentication')
+    i = ctx.request.input(name='', tags='', category_id='', content='', creation_time=None)
+    return internal_add_article(i.name, i.tags, i.category_id, ctx.user.id, i.content, i.creation_time)
 
 @route('/latest')
 @theme('articles.html')

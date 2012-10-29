@@ -11,7 +11,7 @@ import logging
 from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest
 from itranswarp import db
 
-from apps.article import internal_add_article, is_category_exist
+from apps.article import internal_add_article, is_category_exist, do_get_categories
 
 PAGE_SIZE = 5
 
@@ -25,7 +25,7 @@ def _get_page_url(menu):
     return '/page/%s' % menu.ref
 
 def _nav_category_supplies():
-    return [(c.id, c.name) for c in _get_categories()]
+    return [(c.id, c.name) for c in do_get_categories()]
 
 def _nav_page_supplies():
     return [(p.id, p.name) for p in _get_pages()]
@@ -54,7 +54,7 @@ def articles():
     i = ctx.request.input(action='', page='1', category='')
     if i.action=='edit':
         kw = db.select_one('select * from articles where id=?', i.id)
-        return Template('templates/articleform.html', categories=_get_categories(), form_title=_('Edit Article'), action='do_edit_article', **kw)
+        return Template('templates/articleform.html', categories=do_get_categories(), form_title=_('Edit Article'), action='do_edit_article', **kw)
     category = ''
     if i.category:
         category = db.select_one('select id from categories where id=?', i.category).id
@@ -66,7 +66,7 @@ def articles():
         al = db.select('select %s from articles where category_id=? order by creation_time desc limit ?,?' % selects, category, page.offset, page.limit)
     else:
         al = db.select('select %s from articles order by creation_time desc limit ?,?' % selects, page.offset, page.limit)
-    return Template('templates/articles.html', articles=al, page=page, category=category, categories=_get_categories())
+    return Template('templates/articles.html', articles=al, page=page, category=category, categories=do_get_categories())
 
 def _get_pages(selects='id, name'):
     return db.select('select %s from pages order by creation_time desc' % selects)
@@ -89,7 +89,7 @@ def do_delete_page():
     raise seeother('pages')
 
 def add_article():
-    return Template('templates/articleform.html', static=False, categories=_get_categories(), form_title=_('Add New Article'), action='do_add_article')
+    return Template('templates/articleform.html', static=False, categories=do_get_categories(), form_title=_('Add New Article'), action='do_add_article')
 
 def add_page():
     return Template('templates/articleform.html', static=True, form_title=_('Add New Page'), action='do_add_page')
@@ -148,16 +148,6 @@ def do_add_page():
     db.insert('pages', **page)
     return dict(redirect='pages')
 
-def _get_categories():
-    cats = db.select('select * from categories order by display_order, name')
-    if not cats:
-        logging.info('create default uncategorized...')
-        current = time.time()
-        uncategorized = Dict(id=db.next_str(), name='Uncategorized', description='', locked=True, display_order=0, creation_time=current, modified_time=current, version=0)
-        db.insert('categories', **uncategorized)
-        cats = [uncategorized]
-    return cats
-
 def categories():
     i = ctx.request.input(action='')
     if i.action=='add':
@@ -165,7 +155,7 @@ def categories():
     if i.action=='edit':
         cat = db.select_one('select * from categories where id=?', i.id)
         return Template('templates/categoryform.html', form_title=_('Edit Category'), action='do_edit_category', **cat)
-    return Template('templates/categories.html', categories=_get_categories())
+    return Template('templates/categories.html', categories=do_get_categories())
 
 @jsonresult
 def do_add_category():
@@ -205,7 +195,7 @@ def do_delete_category():
 
 def order_categories():
     orders = ctx.request.gets('order')
-    cats = _get_categories()
+    cats = do_get_categories()
     l = len(cats)
     if l!=len(orders):
         raise badrequest()

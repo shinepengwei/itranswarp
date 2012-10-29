@@ -473,10 +473,14 @@ def imports():
 @jsonresult
 def do_imports():
     i = ctx.request.input(type='')
+    # check email and passwd:
+    users = db.select('select id from users where email=? and passwd=?', i.email, hashlib.md5(str(i.passwd)).hexdigest())
+    if not users:
+        return dict(error='Bad email or password', error_field='email')
     f = i.file
     if i.type=='wordpress':
         from plugin import importwp
-        importwp.import_wp(f.file, 'Basic: %s' % (base64.b64encode('%s:%s' % (i.email, i.passwd))))
+        importwp.import_wp(f.file, 'Basic %s' % (base64.b64encode('%s:%s' % (i.email, i.passwd))))
         return dict(redirect='imports')
     return dict(error='Import failed')
 

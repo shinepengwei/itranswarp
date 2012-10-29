@@ -36,6 +36,8 @@ def make_comment():
 @post('/api/media/upload')
 @jsonresult
 def api_media_upload():
+    if ctx.user is None:
+        return dict(error='bad authentication')
     i = ctx.request.input(name='', description='')
     f = i.file
     return upload_media(i.name.strip(), i.description.strip(), f.filename, f.file)
