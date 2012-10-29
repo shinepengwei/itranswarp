@@ -3,22 +3,18 @@
 
 __author__ = 'Michael Liao'
 
-import urlparse
+import json, urlparse
 from xml.dom import minidom
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 from itranswarp import db, task
 
-def import_wp(f):
-    items = parse_wp(f)
+def import_wp(f, auth):
+    items = parse_wp(f, auth)
     for item in items:
         task.create_task('import_post', item['title'], json.dumps(item))
     return len(items)
 
-def parse_wp(f):
+def parse_wp(f, auth):
     doc = minidom.parse(f)
     link = value_of_xpath(doc, 'rss/channel/wp:base_site_url')
     if not link:
@@ -32,6 +28,7 @@ def parse_wp(f):
     cs = nodes_of_xpath(doc, 'rss/channel/item')
     for c in cs:
         L.append(dict(
+            authorization = auth,
             source = 'wordpress',
             site = site,
             title = value_of_xpath(c, 'title'),
