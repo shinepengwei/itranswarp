@@ -14,7 +14,7 @@ def is_category_exist(category_id):
     cats = db.select('select id from categories where id=?', category_id)
     return len(cats) > 0
 
-def internal_add_article(name, tags, category_id, content, creation_time=None):
+def internal_add_article(name, tags, category_id, user_id, content, creation_time=None):
     name = name.strip()
     tags = tags.strip()
     content = content.strip()
@@ -22,20 +22,27 @@ def internal_add_article(name, tags, category_id, content, creation_time=None):
         return dict(error=u'Name cannot be empty', error_field='name')
     if not content:
         return dict(error=u'Content cannot be empty', error_field='content')
+    if not user_id:
+        return dict(errur=u'Missing user_id', error_field='user_id')
     if not is_category_exist(category_id):
         return dict(error=u'Invalid category', error_field='category_id')
+    u = db.select_one('select * from users where id=?', user_id)
+    if u.role!=0:
+        return dict(error=u'User cannot post article')
+    user_name = u.name
+    description = 'a short description...'
     current = float(creation_time) if creation_time else time.time()
-    article = dict(id=db.next_str(), visible=True, name=name, tags=tags, category_id=category_id, content=content, creation_time=current, modified_time=current, version=0)
+    article = dict(id=db.next_str(), visible=True, name=name, tags=tags, category_id=category_id, user_id=user_id, user_name=user_name, description=description, content=content, creation_time=current, modified_time=current, version=0)
     db.insert('articles', **article)
     return dict(article=article)
 
-@jsonresult
-@post('/api/article')
+#@jsonresult
+#@post('/api/article')
 def api_add_article():
     auth = ctx.request.header['Authorization']
     # check auth...
-    i = ctx.request.input(name='', tags='', category_id='', content='')
-    r = internal_add_article(i.name, i.tags, i.category_id, i.content)
+    i = ctx.request.input(name='', tags='', category_id='', user_id='', content='')
+    r = internal_add_article(i.name, i.tags, i.category_id, i.user_id, i.content)
     if 'error' in r:
         return r
     return r

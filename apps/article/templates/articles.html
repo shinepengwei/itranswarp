@@ -59,7 +59,7 @@ $('#category-filter').val('{{ category }}');
                 <tr>
                     <th>{{ _('Name') }}</th>
                     <th>{{ _('Category') }}</th>
-                    <th>{{ _('Tags') }}</th>
+                    <th>{{ _('Author') }}</th>
                     <th>{{ _('Creation Date') }}</th>
                     <th>{{ _('Operations') }}</th>
                 </tr>
@@ -69,7 +69,7 @@ $('#category-filter').val('{{ category }}');
                 <tr id="tr-{{ a.id }}">
                     <td class="name"><a href="/article/{{ a.id }}" target="_blank">{{ a.name|e }}</a></td>
                     <td><script type="text/javascript"> document.write(CATEGORIES['{{ a.category_id }}']); </script></td>
-                    <td>{{ a.tags|e }}</td>
+                    <td>{{ a.user_name|e }}</td>
                     <td>{{ a.creation_time|dt }}</td>
                     <td>
                         <a href="?action=edit&id={{ a.id }}">{{ _('Edit') }}</a> | <a href="javascript:delete_x('{{ a.id }}')">{{ _('Delete') }}</a>

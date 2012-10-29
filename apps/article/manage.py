@@ -60,7 +60,7 @@ def articles():
         category = db.select_one('select id from categories where id=?', i.category).id
     total = db.select_int('select count(id) from articles where category_id=?', i.category) if i.category else db.select_int('select count(id) from articles')
     page = Page(int(i.page), PAGE_SIZE, total)
-    selects = 'id,name,category_id,visible,tags,creation_time,modified_time,version'
+    selects = 'id,name,category_id,visible,user_id,user_name,creation_time,modified_time,version'
     al = None
     if category:
         al = db.select('select %s from articles where category_id=? order by creation_time desc limit ?,?' % selects, category, page.offset, page.limit)
@@ -128,7 +128,7 @@ def do_edit_page():
 @jsonresult
 def do_add_article():
     i = ctx.request.input()
-    r = internal_add_article(i.name, i.tags, i.category_id, i.content)
+    r = internal_add_article(i.name, i.tags, i.category_id, ctx.user.id, i.content)
     if 'error' in r:
         return r
     return dict(redirect='articles')
