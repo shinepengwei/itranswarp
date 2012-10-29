@@ -9,7 +9,7 @@
                 </div>
                 <div class="row sep">
                     <div class="span9">
-                        <p>Posted at {{ article.creation_time|dt }}</p>
+                        <p><a href="/user/{{ article.user_id }}/profile">{{ article.user_name|e }}</a> Posted at {{ article.creation_time|dt }}</p>
                     </div>
                 </div>
                 <div class="row sep">
