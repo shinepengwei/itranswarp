@@ -18,6 +18,18 @@ _SESSION_COOKIE_NAME = '_auth_session_cookie'
 _SESSION_COOKIE_KEY = '_SECURE_keyabc123xyz_BIND_'
 _SESSION_COOKIE_EXPIRES = 31536000.0
 
+def http_basic_auth(auth):
+    try:
+        s = base64.b64decode(auth)
+        u, p = s.split(':', 1)
+        user = db.select_one('select * from users where email=?' % u)
+        if user.passwd==hashlib.md5(p).hexdigest():
+            logging.info('Basic auth ok: %s' % u)
+            return user
+        return None
+    except BaseException:
+        return None
+
 def load_module(module_name):
     '''
     Load a module and return the module reference.

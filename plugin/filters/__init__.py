@@ -19,6 +19,10 @@ def load_user(func):
             users = db.select('select * from users where id=?', uid)
             if users:
                 user = users[0]
+        if user is None:
+            auth = ctx.request.header('Authorization')
+            if auth and auth.startswith('Basic '):
+                user = util.http_basic_auth(auth[6:])
         ctx.user = user
         try:
             return func(*args, **kw)
