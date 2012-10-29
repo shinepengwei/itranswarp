@@ -21,13 +21,15 @@ _SESSION_COOKIE_EXPIRES = 31536000.0
 def http_basic_auth(auth):
     try:
         s = base64.b64decode(auth)
+        logging.warn(s)
         u, p = s.split(':', 1)
-        user = db.select_one('select * from users where email=?' % u)
+        user = db.select_one('select * from users where email=?', u)
         if user.passwd==hashlib.md5(p).hexdigest():
             logging.info('Basic auth ok: %s' % u)
             return user
         return None
-    except BaseException:
+    except BaseException, e:
+        logging.exception('auth failed.')
         return None
 
 def load_module(module_name):
