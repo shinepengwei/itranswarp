@@ -159,8 +159,17 @@ def fetch_task(queue):
             sleep(random.random() / 4)
     return None
 
-def set_task_result(task_id, success, task_result=None):
-    pass
+def set_task_result(task_id, success, task_result=''):
+    task = db.select_one('select id, status, max_retry, retried from tasks where id=?', task_id)
+    kw = dict()
+    if success:
+        kw['status'] = _DONE
+        kw['task_result'] = task_result
+    else:
+        retried = task.retried + 1
+        kw['retried'] = retried
+        kw['status'] = _ERROR if task.retried >= task.max_retry else _PENDING
+    db.update_kw('tasks', 'id=?', task_id, **kw)
 
 def set_task_timeout(task_id):
     pass
