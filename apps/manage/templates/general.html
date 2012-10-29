@@ -152,21 +152,36 @@
 {% for k, v in date_examples %}
                         <label class="radio"><input type="radio" name="site_dateformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
 {% endfor %}
+<!--
                         <label class="radio"><input type="radio" name="site_dateformat" value="custom" /> custom</label>
                         <label><input type="text" name="site_dateformat" disabled="disabled" class="input-small" /> 2012-2-2</label>
                         <input type="hidden" name="site_dateformat" value="{{ site_dateformat }}" />
+-->
                     </div>
                 </div>
+
+<script type="text/javascript">
+$('#div-site_dateformat :radio[value="{{ site_dateformat|jsstr }}"]').attr('checked', 'checked');
+</script>
+
                 <div id="div-site_timeformat" class="control-group">
                     <label class="control-label">{{ _('Time Format') }}:</label>
                     <div class="controls">
 {% for k, v in time_examples %}
                         <label class="radio"><input type="radio" name="site_timeformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
 {% endfor %}
+<!--
                         <label class="radio"><input type="radio" name="site_timeformat" value="custom" /> custom</label>
                         <label><input type="text" name="site_timeformat" disabled="disabled" class="input-small" /> 4:34 pm</label>
+-->
                     </div>
                 </div>
+
+<script type="text/javascript">
+$('#div-site_timeformat :radio[value="{{ site_timeformat }}"]').attr('checked', 'checked');
+</script>
+
+<!--
                 <div id="div-category_pagesize" class="control-group">
                     <label class="control-label">Display Articles:</label>
                     <div class="controls">
@@ -197,6 +212,7 @@
                         </select>
                     </div>
                 </div>
+-->
                 <div id="div-search_provider" class="control-group">
                     <label class="control-label">Search Engine Provider:</label>
                     <div class="controls">
