@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-import functools
+import functools, logging
 
 from itranswarp.web import ctx
 from itranswarp import db, i18n
@@ -19,8 +19,10 @@ def load_user(func):
             users = db.select('select * from users where id=?', uid)
             if users:
                 user = users[0]
+                logging.info('load user ok from cookie.')
         if user is None:
-            auth = ctx.request.header('Authorization')
+            auth = ctx.request.header('AUTHORIZATION')
+            logging.warn(auth)
             if auth and auth.startswith('Basic '):
                 user = util.http_basic_auth(auth[6:])
         ctx.user = user
