@@ -68,7 +68,7 @@ $('#role-filter').val('{{ role }}');
 {% for u in users %}
                 <tr id="tr-{{ u.id }}">
                     <td class="name">{{ u.name|e }}</td>
-                    <td>{{ u.email }}{% if not u.verified %} <i class="icon icon-question-sign"></i>{% endif %}</td>
+                    <td>{{ u.email }}{% if not u.verified %} <i class="icon icon-question-sign" title="Email is not verified"></i>{% endif %}</td>
                     <td><script type="text/javascript">document.write(ROLES['{{ u.role }}']);</script></td>
                     <td>{{ u.creation_time|dt }}</td>
                     <td><a href="?action=edit&id={{ u.id }}">{{ _('Edit') }}</a>
