@@ -114,6 +114,13 @@ def get_navigation_menu(mtype):
 def website_index():
     raise seeother(util.get_menus()[0].url)
 
+@get('/profile')
+@util.theme('profile.html')
+def get_profile():
+    if ctx.user is None:
+        raise seeother('/signin?redirect=/profile')
+    return dict()
+
 @route('/admin/')
 def admin_index():
     raise seeother('/admin/manage/dashboard')
