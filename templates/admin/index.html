@@ -35,9 +35,9 @@
                 <a class="brand" style="color:#fff" href="/" target="_blank" title="{{ __site_description__|e }}">{{ __site_name__ }}</a>
                 <div class="nav-collapse">
                     <ul class="nav">
-                        <li><a href="/" target="_blank">Visit Site</a></li>
-                        <li><a href="#" target="_blank">Documentation</a></li>
-                        <li><a href="#" target="_blank">Feedback</a></li>
+                        <li><a href="/" target="_blank">{{ _('Visit Site') }}</a></li>
+                        <li><a href="http://michaelliao.github.com/transwarpdrive/" target="_blank">{{ _('Documentation') }}</a></li>
+                        <li><a href="https://github.com/michaelliao/transwarpdrive/issues" target="_blank">{{ _('Feedback') }}</a></li>
                     </ul>
 <!--
                     <form class="navbar-search pull-left" action="/" method="post">
@@ -48,14 +48,17 @@
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" style="color:#fff">
                                 {{ __user__.name }}
+<!--
                                 <span class="badge badge-warning">3</span>
+-->
                                 <b class="caret" style="opacity:1.0"></b>
                             </a>
                             <ul class="dropdown-menu">
+<!--
                                 <li><a href="/">Comments <span class="badge badge-warning pull-right">3</span></a></li>
                                 <li><a href="/">My Connect <span class="badge badge-warning pull-right">3</span></a></li>
-                                <li><a href="/">My Profile</a></li>
-                                <li><a href="/">My Connect</a></li>
+-->
+                                <li><a href="/profile" target="_blank">{{ _('My Profile') }}</a></li>
                                 <li class="divider"></li>
                                 <li><a href="/signout?redirect=/">{{ _('Sign Out') }}</a></li>
                             </ul>
@@ -78,7 +81,7 @@
     {% endfor %}
 {% endfor %}
                         <li class="divider"></li>
-                        <li><a href="http://www.itranswarp.com/help" target="_blank">{{ _('Help') }}</a></li>
+                        <li><a href="http://michaelliao.github.com/transwarpdrive/" target="_blank">{{ _('Help') }}</a></li>
                     </ul>
                 </div>
             </div>
