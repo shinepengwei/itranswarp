@@ -24,7 +24,8 @@ class Provider(object):
             raise ValueError('missing param: access_key_id')
         if not access_key_secret:
             raise ValueError('missing param: access_key_secret')
-        self._client = Client(str(access_key_id), str(access_key_secret), str(bucket))
+        cname = kw.get('cname')
+        self._client = Client(str(access_key_id), str(access_key_secret), str(bucket), bool(cname))
 
     @staticmethod
     def get_name():
@@ -38,7 +39,8 @@ class Provider(object):
     def get_settings():
         return (dict(key='bucket', name='Bucket', description='Bucket'),
                 dict(key='access_key_id', name='Access Key ID', description='Access key id'),
-                dict(key='access_key_secret', name='Access Key Secret', description='Access key secret'))
+                dict(key='access_key_secret', name='Access Key Secret', description='Access key secret'),
+                dict(key='cname', name='Use CNAME', description='Use CNAME', input='checkbox'))
 
     def delete(self, ref):
         bucket, obj = self._client.names_from_url(ref)

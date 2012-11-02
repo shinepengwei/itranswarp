@@ -81,6 +81,7 @@ def _load_plugin_settings(plugin_type, provider_name, provider_cls):
 
 def save_plugin_settings(plugin_type, name, enabled, settings):
     provider = load_module('plugin.%s.%s' % (plugin_type, name)).Provider
+    delete_settings('plugin.%s.%s' % (plugin_type, name))
     save_plugin_setting_enabled(plugin_type, name, enabled)
     for setting in provider.get_settings():
         key = setting['key']
@@ -207,6 +208,9 @@ def get_menus():
     menu = Dict(id=db.next_str(), name=u'Home', description=u'', type='latest_articles', display_order=0, ref='', url='/latest', creation_time=current, modified_time=current, version=0)
     db.insert('menus', **menu)
     return [menu]
+
+def delete_settings(kind):
+    db.update('delete from settings where kind=?', kind)
 
 def get_settings(kind=None, remove_prefix=False):
     '''
