@@ -13,6 +13,9 @@ sdist
 develop-eggs
 .installed.cfg
 
+*.tar
+*.tar.gz
+
 # Installer logs
 pip-log.txt
 
