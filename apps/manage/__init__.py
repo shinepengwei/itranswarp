@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-import os, time, json, mimetypes
+import os, time, json, logging, mimetypes
 
 try:
     from cStringIO import StringIO

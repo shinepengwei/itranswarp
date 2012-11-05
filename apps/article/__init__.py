@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-import time
+import time, logging
 
 from itranswarp.web import ctx, get, post, route, jsonrpc, seeother, jsonresult, Template, Page
 from itranswarp import db
