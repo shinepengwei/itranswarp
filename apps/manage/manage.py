@@ -311,10 +311,13 @@ def do_edit_user():
             return dict(error=u'Invalid form', error_field='')
     user = db.select_one('select * from users where id=?', i.id)
     updates = {}
+    if user.name!=name:
+        updates['name'] = name
     if user.email!=email:
         if db.select('select * from users where email=?', email):
             return dict(error=u'Email was in use by other', error_field='email')
         updates['email'] = email
+        updates['verified'] = False
     if user.role!=role:
         if user.locked:
             return dict(error=u'Cannot change role.', error_field='role')

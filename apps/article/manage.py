@@ -13,7 +13,7 @@ from itranswarp import db
 
 from apps.article import internal_add_article, is_category_exist, do_get_categories
 
-PAGE_SIZE = 5
+PAGE_SIZE = 20
 
 def _get_latest_url(menu):
     return '/latest'
