@@ -215,7 +215,7 @@ class HttpError(StandardError):
 
     def header(self, name, value):
         if not hasattr(self, '_headers'):
-            self._headers = []
+            self._headers = [_HEADER_X_POWERED_BY]
         self._headers.append((name, value))
 
     @property
@@ -1150,15 +1150,16 @@ class Response(object):
 
         >>> r = Response()
         >>> r.headers
-        [('Content-Type', 'text/html; charset=utf-8')]
+        [('Content-Type', 'text/html; charset=utf-8'), ('X-Powered-By', 'iTranswarp/1.0')]
         >>> r.set_cookie('s1', 'ok', 3600)
         >>> r.headers
-        [('Content-Type', 'text/html; charset=utf-8'), ('Set-Cookie', 's1=ok; Max-Age=3600; Path=/')]
+        [('Content-Type', 'text/html; charset=utf-8'), ('Set-Cookie', 's1=ok; Max-Age=3600; Path=/'), ('X-Powered-By', 'iTranswarp/1.0')]
         '''
         L = [(_RESPONSE_HEADER_DICT.get(k, k), v) for k, v in self._headers.iteritems()]
         if self._cookies:
             for v in self._cookies.itervalues():
                 L.append(('Set-Cookie', v))
+        L.append(_HEADER_X_POWERED_BY)
         return L
 
     def header(self, name):
@@ -1751,7 +1752,7 @@ def _default_error_handler(e, start_response, is_debug):
         start_response(e.status, e.headers)
         return ('<html><body><h1>%s</h1></body></html>' % e.status)
     logging.exception('Exception:')
-    start_response('500 Internal Server Error', [])
+    start_response('500 Internal Server Error', [_HEADER_X_POWERED_BY])
     if is_debug:
         return _debug()
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
