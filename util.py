@@ -265,6 +265,8 @@ def _init_theme(path, model):
     if not '__title__' in model:
         model['__title__'] = 'iTranswarp'
     model.update(get_settings('site'))
+    if not 'site_name' in model:
+        model['site_name'] = 'iTranswarp'
     model['ctx'] = ctx
     model['__layout_categories__'] = db.select('select * from categories order by display_order, name')
     return 'themes/%s/%s' % (theme, path), model
