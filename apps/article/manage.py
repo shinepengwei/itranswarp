@@ -81,11 +81,11 @@ def pages():
     return Template('templates/pages.html', pages=ps)
 
 def do_delete_article():
-    db.update('delete from articles where id=?', request['id'])
+    db.update('delete from articles where id=?', ctx.request['id'])
     raise seeother('articles')
 
 def do_delete_page():
-    db.update('delete from pages where id=?', request['id'])
+    db.update('delete from pages where id=?', ctx.request['id'])
     raise seeother('pages')
 
 def add_article():
