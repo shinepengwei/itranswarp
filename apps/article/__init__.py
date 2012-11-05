@@ -5,7 +5,7 @@ __author__ = 'Michael Liao'
 
 import time, logging
 
-from itranswarp.web import ctx, get, post, route, jsonrpc, seeother, jsonresult, Template, Page
+from itranswarp.web import ctx, get, post, route, jsonrpc, seeother, jsonresult, Template, Page, Dict
 from itranswarp import db
 
 from util import theme, make_comment, get_comments
