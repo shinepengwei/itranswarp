@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>{{ __title__ }}</title>
+    <title>{{ __title__|e }} - {{ site_name|e }}</title>
     <!--[if lt IE 9]>
         <script src="{{ __theme_path__ }}/static/js/html5.js"></script>
     <![endif]-->
@@ -17,7 +17,7 @@
         <div class="row sep"></div>
         <div class="row sep">
             <div class="span8">
-                <h1>{{ site_name }}</h1>
+                <h1>{{ site_name|e }}</h1>
             </div>
             <div class="span4">
 {% if ctx.user %}
