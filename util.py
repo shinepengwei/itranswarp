@@ -262,11 +262,11 @@ def _init_theme(path, model):
     model['__theme_path__'] = '/themes/%s' % theme
     model['__get_theme_path__'] = lambda _templpath: 'themes/%s/%s' % (theme, _templpath)
     model['__menus__'] = db.select('select * from menus order by display_order, name')
-    if not '__title__' in model:
-        model['__title__'] = 'iTranswarp'
     model.update(get_settings('site'))
     if not 'site_name' in model:
         model['site_name'] = 'iTranswarp'
+    if not '__title__' in model:
+        model['__title__'] = model['site_name']
     model['ctx'] = ctx
     model['__layout_categories__'] = db.select('select * from categories order by display_order, name')
     return 'themes/%s/%s' % (theme, path), model
