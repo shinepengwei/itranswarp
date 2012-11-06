@@ -14,18 +14,13 @@ Commands for init mysql db:
 
 or for production mode:
 
-> grant select,insert,update,delete privileges on itranswarp.* to 'www-data'@'localhost';
+> grant select,insert,update,delete on itranswarp.* to 'www-data'@'localhost';
 '''
 
-from gevent import monkey; monkey.patch_all()
-from gevent.wsgi import WSGIServer
+from wsgiref.simple_server import make_server
 
-import logging
+import os, logging
 logging.basicConfig(level=logging.INFO)
-
-import os
-import sys
-sys.path.append(os.path.abspath('.'))
 
 from itranswarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
 from itranswarp import cache; cache.client = cache.RedisClient('localhost')
@@ -33,7 +28,7 @@ from itranswarp import web, db
 
 from plugin.filters import load_user, load_i18n
 
-if __name__=='__main__':
+def create_app():
     from conf import dbconf
     kwargs = dict([(s, getattr(dbconf, s)) for s in dir(dbconf) if s.startswith('DB_')])
     dbargs = kwargs.pop('DB_ARGS', {})
@@ -44,6 +39,9 @@ if __name__=='__main__':
             db_user = kwargs.get('DB_USER'),
             db_password = kwargs.get('DB_PASSWORD'),
             **dbargs)
-    application = web.WSGIApplication(('index', 'admin', 'apps.manage', 'apps.article', 'install'), document_root=os.path.dirname(os.path.abspath(__file__)), filters=(load_user, load_i18n), template_engine='jinja2', DEBUG=True)
-    server = WSGIServer(('0.0.0.0', 8080), application)
+    return web.WSGIApplication(('static_handler', 'admin', 'apps.manage', 'apps.article', 'install'), document_root=os.path.dirname(os.path.abspath(__file__)), filters=(load_user, load_i18n), template_engine='jinja2', DEBUG=True)
+
+if __name__=='__main__':
+    logging.info('application will start...')
+    server = make_server('', 8080, create_app())
     server.serve_forever()
