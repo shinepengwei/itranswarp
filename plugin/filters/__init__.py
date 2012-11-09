@@ -5,8 +5,8 @@ __author__ = 'Michael Liao'
 
 import functools, logging
 
-from itranswarp.web import ctx
-from itranswarp import db, i18n
+from transwarp.web import ctx
+from transwarp import db, i18n
 
 import util
 

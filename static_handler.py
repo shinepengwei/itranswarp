@@ -11,8 +11,8 @@ It is ONLY used in developement. You should use web server (e.g. nginx) to handl
 
 import os, logging, mimetypes
 
-from itranswarp.web import ctx, get, post, route, jsonrpc, Template, seeother
-from itranswarp import db
+from transwarp.web import ctx, get, post, route, jsonrpc, Template, seeother
+from transwarp import db
 
 def _static_file_generator(fpath):
     BLOCK_SIZE = 8192

@@ -6,7 +6,7 @@ __author__ = 'Michael Liao'
 import json, urlparse
 from xml.dom import minidom
 
-from itranswarp import db, task
+from transwarp import db, task
 
 def import_wp(f, auth):
     items = parse_wp(f, auth)

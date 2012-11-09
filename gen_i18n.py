@@ -5,7 +5,7 @@ __author__ = 'Michael Liao'
 
 import os, sys
 
-from itranswarp import i18n
+from transwarp import i18n
 
 _LOCALES = ('zh_cn',)
 _EXCLUDES = ('itranswarp', 'static', 'test')

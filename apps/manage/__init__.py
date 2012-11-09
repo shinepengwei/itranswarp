@@ -15,8 +15,8 @@ try:
 except ImportError:
     from PIL import Image
 
-from itranswarp.web import ctx, get, post, route, jsonresult
-from itranswarp import db
+from transwarp.web import ctx, get, post, route, jsonresult
+from transwarp import db
 import util
 
 @route('/make_comment')

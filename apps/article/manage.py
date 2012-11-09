@@ -8,8 +8,8 @@ __author__ = 'Michael Liao'
 import time
 import logging
 
-from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest
-from itranswarp import db
+from transwarp.web import ctx, get, post, route, seeother, Template, jsonresult, Dict, Page, badrequest
+from transwarp import db
 
 from apps.article import internal_add_article, is_category_exist, do_get_categories
 

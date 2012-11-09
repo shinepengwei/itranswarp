@@ -22,9 +22,9 @@ from wsgiref.simple_server import make_server
 import os, logging
 logging.basicConfig(level=logging.INFO)
 
-from itranswarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
-from itranswarp import cache; cache.client = cache.RedisClient('localhost')
-from itranswarp import web, db
+from transwarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
+from transwarp import cache; cache.client = cache.RedisClient('localhost')
+from transwarp import web, db
 
 from plugin.filters import load_user, load_i18n
 
@@ -43,5 +43,5 @@ def create_app():
 
 if __name__=='__main__':
     logging.info('application will start...')
-    server = make_server('', 8080, create_app())
+    server = make_server('127.0.0.1', 8080, create_app())
     server.serve_forever()

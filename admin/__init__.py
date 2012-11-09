@@ -6,8 +6,8 @@ __author__ = 'Michael Liao'
 import os, re, time, json, uuid, base64, hashlib, logging
 from datetime import datetime
 
-from itranswarp.web import ctx, view, get, post, route, jsonrpc, jsonresult, Dict, UTC, Template, seeother, notfound, badrequest
-from itranswarp import db, i18n, cache
+from transwarp.web import ctx, view, get, post, route, jsonrpc, jsonresult, Dict, UTC, Template, seeother, notfound, badrequest
+from transwarp import db, i18n, cache
 
 import const, util
 

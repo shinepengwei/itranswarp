@@ -12,9 +12,9 @@ logging.basicConfig(level=logging.INFO)
 
 import os
 
-from itranswarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
-from itranswarp import cache; cache.client = cache.RedisClient('localhost')
-from itranswarp import web, db
+from transwarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
+from transwarp import cache; cache.client = cache.RedisClient('localhost')
+from transwarp import web, db
 
 from plugin.filters import load_user, load_i18n
 

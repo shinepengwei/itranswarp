@@ -7,8 +7,8 @@ __author__ = 'Michael Liao'
 
 import os, re, time, base64, hashlib, logging, functools
 
-from itranswarp.web import ctx, get, post, route, jsonrpc, Dict, Template, seeother, notfound, badrequest
-from itranswarp import db
+from transwarp.web import ctx, get, post, route, jsonrpc, Dict, Template, seeother, notfound, badrequest
+from transwarp import db
 
 import const
 
@@ -232,7 +232,9 @@ def get_setting(name, default=''):
     '''
     ss = db.select('select value from settings where name=?', name)
     if ss:
-        return ss[0].value
+        v = ss[0].value
+        if v:
+            return v
     return default
 
 def set_setting(name, value):

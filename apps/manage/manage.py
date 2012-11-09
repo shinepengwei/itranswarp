@@ -17,8 +17,8 @@ except ImportError:
 import admin
 from apps.manage import upload_media
 
-from itranswarp.web import ctx, get, post, route, seeother, Template, jsonresult, UTC, Dict, Page, badrequest, UTC, UTC_0
-from itranswarp import db, cache, task
+from transwarp.web import ctx, get, post, route, seeother, Template, jsonresult, UTC, Dict, Page, badrequest, UTC, UTC_0
+from transwarp import db, cache, task
 
 import util
 
@@ -488,9 +488,18 @@ def do_imports():
     return dict(error='Import failed')
 
 def exports():
-    pass
+    return Template('templates/exportsform.html')
 
 def do_exports():
+    i = ctx.request.input(type='xml')
+    articles = db.select('select * from articles order by creation_time')
+    cols = ('id', 'visible', 'user_id', 'user_name', 'category_id', 'name', 'tags', 'description', 'content', 'creation_time', 'modified_time', 'version')
+    if i.type=='sql':
+        pass
+    if i.type=='xml':
+        pass
+    ctx.response.content_type = 'application/octet-stream'
+    ctx.response.write('just a sample!')
     return None
 
 if __name__=='__main__':

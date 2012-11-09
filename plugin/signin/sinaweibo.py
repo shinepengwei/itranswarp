@@ -7,7 +7,7 @@ import json
 import time
 import logging
 
-from itranswarp.web import ctx, seeother
+from transwarp.web import ctx, seeother
 import weibo
 
 class Provider(object):
