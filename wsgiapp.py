@@ -29,6 +29,6 @@ def create_app():
             db_user = kwargs.get('DB_USER'),
             db_password = kwargs.get('DB_PASSWORD'),
             **dbargs)
-    return web.WSGIApplication(('admin', 'apps.manage', 'apps.article'), document_root=os.path.dirname(os.path.abspath(__file__)), filters=(load_user, load_i18n), template_engine='jinja2', DEBUG=True)
+    return web.WSGIApplication(('install', 'admin', 'apps.manage', 'apps.article'), document_root=os.path.dirname(os.path.abspath(__file__)), filters=(load_user, load_i18n), template_engine='jinja2', DEBUG=True)
 
 application = create_app()
