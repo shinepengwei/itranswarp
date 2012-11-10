@@ -8,7 +8,7 @@ import time, logging
 from transwarp.web import ctx, get, post, route, jsonrpc, seeother, jsonresult, Template, Page, Dict
 from transwarp import db
 
-from util import theme, make_comment, get_comments
+from util import theme, make_comment, get_comments, get_setting_site_name
 
 def is_category_exist(category_id):
     cats = db.select('select id from categories where id=?', category_id)
@@ -112,31 +112,37 @@ def page(page_id):
 def rss():
     ctx.response.content_type = 'application/rss+xml'
     limit = 20
-    L = [r'''<?xml version="1.0"?>
+    site_name = get_setting_site_name()
+    L = [
+r'''<?xml version="1.0"?>
 <rss version="2.0">
-<channel>
-<title>%s</title>
-<image>
-<link>http://%s/</link>
-<url>http://%s/favicon.ico</url>
-</image>
-<description>%s</description>
-<link>http://%s/</link>
-<generator>iTranswarp</generator>
-<copyright><![CDATA[Copyright &copy; %s]]></copyright>
-<pubDate>%s</pubDate>''']
+  <channel>
+    <title><![CDATA[%s]]></title>
+    <image>
+      <link>http://%s/</link>
+      <url>http://%s/favicon.ico</url>
+    </image>
+    <description><![CDATA[%s]]></description>
+    <link>http://%s/</link>
+    <generator>iTranswarp</generator>
+    <copyright><![CDATA[Copyright &copy; %s]]></copyright>
+    <pubDate>%s</pubDate>
+''']
     articles = db.select('select * from articles order by creation_time desc limit ?', limit)
     for a in articles:
-        L.append(r'''<item>
-<title><![CDATA[%s]]></title>
-<link>http://%s%s</link>
-<guid>http://%s%s</guid>
-<author><![CDATA[%s]]></author>
-<pubDate>%s</pubDate>
-<description><![CDATA[%s]]></description>
-<category />
-</item>''')
-    L.append(r'</channel></rss>')
+        L.append(r'''    <item>
+      <title><![CDATA[%s]]></title>
+      <link>http://%s%s</link>
+      <guid>http://%s%s</guid>
+      <author><![CDATA[%s]]></author>
+      <pubDate>%s</pubDate>
+      <description><![CDATA[%s]]></description>
+      <category />
+    </item>
+''')
+    L.append(r'''  </channel>
+</rss>
+''')
     return ''.join(L)
 
 if __name__=='__main__':
