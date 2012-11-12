@@ -1,0 +1,10 @@
+# config for Sina AppEngine:
+
+worker: wsgi
+
+handlers:
+- url: /static
+  static_dir: static
+
+- url: /themes
+  static_dir: themes
