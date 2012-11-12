@@ -5,7 +5,7 @@ __author__ = 'Michael Liao'
 
 import re, sys, time, hashlib
 
-from transwarp.web import ctx, get, post, seeother, Template, jsonresult
+from transwarp.web import ctx, get, post, forbidden, Template, jsonresult
 from transwarp import db, task
 
 import util
@@ -249,10 +249,7 @@ def _check_system():
 @get('/install')
 def install():
     if _check_installed():
-        raise seeother('/signin?redirect=/')
-
-#    for sql in CREATE_TABLES:
-#        db.update(sql.replace('\n', ' '))
+        raise forbidden()
     return Template('templates/install/welcome.html')
 
 @post('/install')

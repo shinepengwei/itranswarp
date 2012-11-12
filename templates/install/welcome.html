@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ _('Install') }}</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <style type="text/css">
+    </style>
+    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+    function check(form) {
+        $('#md5-passwd').val($.md5($('#origin-passwd').val()));
+        return true;
+    }
+
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null || err=='') {
+            $('#div-error').hide();
+            return false;
+        }
+        $('#span-error').text(err);
+        $('#div-error').show();
+        $('#div-' + field_name).addClass('error');
+        if ($('#div-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('#div-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('#submit').attr('disabled', 'disabled');
+            $('#loading').show();
+        }
+        else {
+            $('#submit').removeAttr('disabled');
+            $('#loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        var pw1 = $('#passwd1').val()
+        var pw2 = $('#passwd2').val()
+        if (pw1.length<6)
+            return show_error('Password requires at least 6 chars!', 'passwd1');
+        if (pw1!=pw2)
+            return show_error('Passwords not match!', 'passwd2');
+        $('#passwd').val($.md5(pw1));
+        show_loading(true);
+        $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+            if (result.error) {
+                show_loading(false);
+                show_error(result.error, result.error_field);
+            }
+            else {
+                show_error(null);
+                $('#span-email').html(result.email)
+                $('#div-install').hide();
+                $('#div-success').show();
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('Server error!', '');
+        });
+        return false;
+    }
+
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="height: 60px"></div>
+
+        <div class="row">
+            <div class="span1 offset2">
+                <img src="/static/img/logo.png" width="64" height="64" />
+            </div>
+            <div class="span6" style="padding-top:16px;">
+                <h1>{{ _('iTranswarp Installation') }}</h1>
+            </div>
+        </div>
+
+        <div class="row sep">
+            <div class="span10 offset1">
+                <hr />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span8 offset2">
+
+                <div id="div-success" class="row hide">
+                    <div class="span8 sep">
+                        <p>Congrantulations! Your web site was successfully installed!</p>
+                        <p>You can now sign in with your account:</p>
+                        <p>Email: <span id="span-email"></span></p>
+                        <p>Password: ******</p>
+                    </div>
+                    <div class="span8">
+                        <button type="button" class="btn btn-primary" onclick="location.assign('/signin?redirect=/admin/')">Sign In Now</button>
+                        <button type="button" class="btn" onclick="location.assign('/')">Visit Web Site</button>
+                    </div>
+                </div>
+
+                <div id="div-install" class="row">
+                    <div class="span8">
+                        <h3>Create administrator account</h3>
+                        <div class="sep"></div>
+                        <div id="div-error" class="row hide sep">
+                            <div class="span8">
+                                <div class="alert alert-error">
+                                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                                    <span id="span-error"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <form id="form-install" action="/install" method="post" onsubmit="return ajax_post(this)" class="form-horizontal">
+                            <div id="div-name" class="control-group">
+                                <label class="control-label">Name</label>
+                                <div class="controls">
+                                    <input type="text" name="name" id="name" placeholder="Name" />
+                                </div>
+                            </div>
+                            <div id="div-email" class="control-group">
+                                <label class="control-label">Email</label>
+                                <div class="controls">
+                                    <input type="text" name="email" id="email" placeholder="Email" />
+                                </div>
+                            </div>
+                            <div id="div-passwd1" class="control-group">
+                                <label class="control-label">Password</label>
+                                <div class="controls">
+                                    <input type="hidden" id="passwd" name="passwd" value="" />
+                                    <input type="password" id="passwd1" placeholder="Password" />
+                                </div>
+                            </div>
+                            <div id="div-passwd2" class="control-group">
+                                <label class="control-label">Repeat Password</label>
+                                <div class="controls">
+                                    <input type="password" id="passwd2" placeholder="Repeat password" />
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button id="submit" type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                                <span id="loading" class="loading hide">{{ _('Processing') }}...</span>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
