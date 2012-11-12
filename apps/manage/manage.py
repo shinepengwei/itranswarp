@@ -55,6 +55,7 @@ def register_admin_menus():
         dict(order=1000, title=u'Settings', items=[
             dict(title=u'General', role=0, handler='general'),
             dict(title=u'Menus', role=0, handler='menus'),
+            dict(title=u'Email', role=0, handler='smtp'),
         ]),
         dict(order=1100, title=u'Plugins', items=[
             dict(title='Signins', role=0, handler='signins'),
@@ -210,6 +211,38 @@ def do_save_settings():
             continue
         util.set_setting(k, v)
     return dict(redirect='general')
+
+def smtp():
+    smtp_configs = util.get_settings(kind='smtp')
+    return Template('templates/smtp.html', **smtp_configs)
+
+@jsonresult
+def do_save_smtp():
+    i = ctx.request.input()
+    smtp_sender_name = i.smtp_sender_name.strip().replace('<', '').replace('>', '')
+    smtp_sender_email = i.smtp_sender_email.strip()
+    if not util.validate_email(smtp_sender_email):
+        return dict(error='Bad email address', error_field='smtp_sender_email')
+    smtp_host = i.smtp_host.strip()
+    smtp_username = i.smtp_username.strip()
+    smtp_password = i.smtp_password
+    smtp_tls = bool(i.get('smtp_tls', ''))
+    smtp_port = i.smtp_port.strip()
+    if smtp_port:
+        try:
+            p = int(smtp_port)
+            if p<0 or p>65535:
+                raise ValueError('bad port value')
+        except ValueError:
+            return dict(error='Invalid port', error_field='smtp_port')
+    util.set_setting('smtp_sender_name', smtp_sender_name)
+    util.set_setting('smtp_sender_email', smtp_sender_email)
+    util.set_setting('smtp_host', smtp_host)
+    util.set_setting('smtp_port', smtp_port)
+    util.set_setting('smtp_username', smtp_username)
+    util.set_setting('smtp_password', smtp_password)
+    util.set_setting('smtp_tls', 'True' if smtp_tls else '')
+    return dict(redirect='smtp')
 
 def _get_roles():
     roles = db.select('select * from roles order by id')

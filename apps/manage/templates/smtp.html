@@ -1,0 +1,146 @@
+<div class="row sep">
+    <div class="span10">
+        <h3>Email Settings</h3>
+    </div>
+</div>
+
+{% if info %}
+<script type="text/javascript">
+    $(function() {
+        $('#div-success').delay(3000).slideUp(300);
+    });
+</script>
+
+<div id="div-success" class="row">
+    <div class="span10">
+        <div class="alert alert-success">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <span>{{ info }}</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div id="div-error" class="row hide">
+    <div class="span10">
+        <div class="alert alert-error">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <span id="span-error"></span>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null || err=='') {
+            $('#div-error').hide();
+            return false;
+        }
+        $('#span-error').text(err);
+        $('#div-error').show();
+        $('#div-' + field_name).addClass('error');
+        if ($('#div-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('#div-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('#submit').attr('disabled', 'disabled');
+            $('#loading').show();
+        }
+        else {
+            $('#submit').removeAttr('disabled');
+            $('#loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        show_loading(true);
+        $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+            if (result.error) {
+                show_loading(false);
+                show_error(result.error, result.error_field);
+            }
+            else {
+                show_error(null);
+                location.assign(result.redirect);
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('{{ _('Server error') }}!', '');
+        });
+        return false;
+    }
+
+    function resetForm() {
+        $('#form-x').get(0).reset();
+    }
+
+    $(function() { resetForm(); });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <form id="form-x" action="do_save_smtp" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div id="div-smtp_sender_name" class="control-group">
+                    <label class="control-label">{{ _('Sender Name') }}:</label>
+                    <div class="controls">
+                        <input id="smtp_sender_name" name="smtp_sender_name" type="text" value="{{ smtp_sender_name|e }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div id="div-smtp_sender_email" class="control-group">
+                    <label class="control-label">{{ _('Sender Email') }}:</label>
+                    <div class="controls">
+                        <input id="smtp_sender_email" name="smtp_sender_email" type="text" value="{{ smtp_sender_email|e }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div id="div-smtp_host" class="control-group">
+                    <label class="control-label">{{ _('SMTP Host') }}:</label>
+                    <div class="controls">
+                        <input id="smtp_host" name="smtp_host" type="text" value="{{ smtp_host|e }}" class="input-xlarge" />
+                        <span class="help-inline">SMTP host name</span>
+                    </div>
+                </div>
+                <div id="div-smtp_port" class="control-group">
+                    <label class="control-label">{{ _('SMTP Port') }}:</label>
+                    <div class="controls">
+                        <input id="smtp_port" name="smtp_port" type="text" value="{{ smtp_port|e }}" class="input-xlarge" />
+                        <span class="help-inline">SMTP post, leave blank to use default</span>
+                    </div>
+                </div>
+                <div id="div-smtp_username" class="control-group">
+                    <label class="control-label">{{ _('SMTP Username') }}:</label>
+                    <div class="controls">
+                        <input id="smtp_username" name="smtp_username" type="text" value="{{ smtp_username|e }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div id="div-smtp_password" class="control-group">
+                    <label class="control-label">{{ _('SMTP Password') }}:</label>
+                    <div class="controls">
+                        <input id="smtp_password" name="smtp_password" type="password" value="{{ smtp_password|e }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div id="div-smtp_tls" class="control-group">
+                    <label class="control-label">{{ _('SMTP Encryption') }}:</label>
+                    <div class="controls">
+                        <label class="checkbox"><input id="smtp_tls" name="smtp_tls" type="checkbox" value="True"
+{% if smtp_tls %}
+checked="checked"
+{% endif %}
+                        />Using TLS</label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="resetForm()">{{ _('Reset') }}</button>
+                    <span id="loading" class="loading hide">{{ _('Processing, please wait') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
