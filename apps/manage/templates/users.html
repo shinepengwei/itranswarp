@@ -29,16 +29,16 @@
 
 <div class="row sep">
     <div class="span10">
-        <h3>All Users</h3>
+        <h3>{{ _('All Users') }}</h3>
     </div>
 </div>
 
 <div class="row">
     <div class="span10">
         <form name="user-filter-form" action="users" class="well form-inline">
-            <label>Role:</label>
+            <label>{{ _('Role') }}:</label>
             <select id="role-filter" name="role">
-                <option value="">All</option>
+                <option value="">{{ _('All') }}</option>
 {% for r in roles %}
                 <option value="{{ r.id }}">{{ r.name|e }}</option>
 {% endfor %}
@@ -46,8 +46,8 @@
 <script type="text/javascript">
 $('#role-filter').val('{{ role }}');
 </script>
-            <button type="submit" class="btn">Filter</button>
-            <a href="add_user" class="btn btn-primary pull-right">Add New User</a>
+            <button type="submit" class="btn">{{ _('Filter') }}</button>
+            <a href="add_user" class="btn btn-primary pull-right">{{ _('Add New User') }}</a>
         </form>
     </div>
 </div>
