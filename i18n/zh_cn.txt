@@ -1,7 +1,4 @@
 # auto-generated i18n file for zh_cn:
-
-3rd-part Sign In = 第三方登录
-3rd-part Signin Providers = 第三方登录插件
 Add Media = 添加媒体
 Add Menu = 添加菜单
 Add New Article = 添加新文章
@@ -101,7 +98,9 @@ Server error = 服务器错误
 Settings = 设置
 Sign In = 登录
 Sign Out = 登出
+Themes = 主题
 Signins = 登录
+Signin Plugins = 登录插件
 Sina Weibo = 新浪微博
 Sina Weibo Signin = 新浪微博登录
 Site Copyright = 网站版权
@@ -117,10 +116,11 @@ SMTP Username = SMTP登录名
 Statistics = 统计
 Status = 状态
 Tags = 标签
+Appearance = 外观
 Thumbnail = 缩略图
 Time Format = 时间格式
 Type = 类型
-Upload Providers = 上传插件
+Upload Plugins = 上传插件
 Uploaded Date = 上传日期
 Uploads = 上传
 URL = 地址
