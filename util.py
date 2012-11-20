@@ -259,8 +259,38 @@ def get_setting_site_name():
 def get_setting_site_description():
     return get_setting('site_description', '')
 
+def get_active_theme():
+    return get_setting('theme_active', 'default')
+
+def set_active_theme(tid):
+    for t in load_themes():
+        if t.id==tid:
+            set_setting('theme_active', tid)
+            return
+
+def load_themes():
+
+    def _is_theme(root, name):
+        p = os.path.join(root, name)
+        return os.path.isdir(p) and os.path.isfile(os.path.join(p, '__init__.py'))
+
+    def _get_theme_info(name):
+        m = load_module('themes.%s' % name)
+        return Dict( \
+            id = name, \
+            name = getattr(m, 'name', name), \
+            description = getattr(m, 'description', '(no description)'), \
+            author = getattr(m, 'author', '(unknown)'), \
+            version = getattr(m, 'version', '1.0'), \
+            snapshot = '/themes/%s/static/snapshot.png' % name)
+
+    root = os.path.join(ctx.document_root, 'themes')
+    subs = os.listdir(root)
+    L = [_get_theme_info(p) for p in subs if _is_theme(root, p)]
+    return sorted(L, lambda x, y: -1 if x.name.lower() < y.name.lower() else 1)
+
 def _init_theme(path, model):
-    theme = 'default'
+    theme = get_active_theme()
     model['__theme_path__'] = '/themes/%s' % theme
     model['__get_theme_path__'] = lambda _templpath: 'themes/%s/%s' % (theme, _templpath)
     model['__menus__'] = db.select('select * from menus order by display_order, name')
