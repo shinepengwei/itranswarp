@@ -265,7 +265,3 @@ def track_js():
     key = '_TR_%d' % (int(time.time()) // 3600)
     cache.client.incr(key)
     return r'var __track_ok__ = true;'
-
-if __name__=='__main__':
-    import doctest
-    doctest.testmod()
