@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ _('Install') }}</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <style type="text/css">
+    </style>
+    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="height: 60px"></div>
+
+        <div class="row">
+            <div class="span1 offset2">
+                <img src="/static/img/logo.png" width="64" height="64" />
+            </div>
+            <div class="span6" style="padding-top:16px;">
+                <h1>{{ _('Could not to install') }}</h1>
+            </div>
+        </div>
+
+        <div class="row sep">
+            <div class="span10 offset1">
+                <hr />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span8 offset2">
+                <div id="div-error" class="row">
+                    <div class="span8">
+                        <div class="alert alert-error">
+                            <p>Installation could not start because your configuration failed to pass check.</p>
+                        </div>
+                        <div class="sep"></div>
+                        <table class="table table-bordered">
+                            <tr>
+                                <td>Python version</td>
+                                <td>2.7</td>
+                                <td>OK</td>
+                            </tr>
+                            <tr>
+                                <td>Redis</td>
+                                <td>E</td>
+                                <td>OK</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
