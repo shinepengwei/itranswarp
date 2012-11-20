@@ -83,7 +83,7 @@ def themes():
     return Template('templates/themes.html', themes=themes)
 
 @menu_group('Plugins', 80)
-@menu_item('Signin Providers', 0)
+@menu_item('Signin Plugins', 0)
 def signins():
     i = ctx.request.input(action='')
     if i.action=='edit':
@@ -104,7 +104,7 @@ def order_signins():
     raise seeother('signins')
 
 @menu_group('Plugins')
-@menu_item('Upload Providers', 1)
+@menu_item('Upload Plugins', 1)
 def uploads():
     i = ctx.request.input(action='')
     if i.action=='edit':
