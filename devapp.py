@@ -4,17 +4,17 @@
 __author__ = 'Michael Liao'
 
 '''
-A gevent app
+A WSGI app for DEV ONLY.
 
 Commands for init mysql db:
 
 > create database itranswarp;
 > create user 'www-data'@'localhost' identified by 'www-data';
-> grant all privileges on itranswarp.* to 'www-data'@'localhost';
+> grant all privileges on itranswarp.* to 'www-data'@'localhost' identified by 'www-data';
 
 or for production mode:
 
-> grant select,insert,update,delete on itranswarp.* to 'www-data'@'localhost';
+> grant select,insert,update,delete on itranswarp.* to 'www-data'@'localhost' identified by 'www-data';
 '''
 
 from wsgiref.simple_server import make_server
