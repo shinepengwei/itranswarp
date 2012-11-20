@@ -34,81 +34,57 @@ def _verify_bind_key(key):
         raise StandardError('bad signed key')
     return auser
 
-class _AppMenu(object):
+def _sort(g1, g2):
+    if g1.order>=0 and g2.order>=0:
+        r = cmp(g1.order, g2.order)
+        return r if r!=0 else cmp(g1.name, g2.name)
+    if g1.order<0 and g2.order<0:
+        return cmp(g1.name, g2.name)
+    return 1 if g1.order<0 else (-1)
 
-    def __init__(self, mod, menu_order, title):
-        self.mod = mod
-        self.order = menu_order
-        self.title = title
-        self.items = []
+def _import_appmenus():
+    def _load_appmenus(mod_name, mod):
+        groups = Dict()
+        for attr in dir(mod):
+            f = getattr(mod, attr, None)
+            if not callable(f):
+                continue
+            groupname = getattr(f, '__groupname__', None)
+            itemname = getattr(f, '__itemname__', None)
+            if not groupname or not itemname:
+                continue
+            grouporder = getattr(f, '__grouporder__')
+            itemorder = getattr(f, '__itemorder__')
+            logging.error('Group: %s, Order: %s' % (groupname, grouporder))
+            if not groupname in groups:
+                groups[groupname] = Dict(mod=mod_name, name=groupname, order=grouporder, menus=list())
+            g = groups[groupname]
+            if grouporder!=(-1) and g.order==(-1):
+                g.order = grouporder
+            g.menus.append(Dict(handler=f.__name__, name=itemname, order=itemorder))
+        # sort groups and items:
+        L = groups.values()
+        for g in L:
+            g.menus.sort(cmp=_sort)
+        return L
+    # END _load_appmenus
 
-    def append(self, item):
-        self.items.append(item)
-
-class _AppMenuItem(object):
-
-    def __init__(self,role, handler, title):
-        self.role = role
-        self.handler = handler
-        self.title = title
-
-def _imports():
-    mdict = util.scan_submodules('apps')
     L = []
-    for name, mod in mdict.iteritems():
-        L.append((name, util.load_module('apps.%s.manage' % name)))
-    return L
+    mdict = util.scan_submodules('apps')
+    for mod_name, mod in mdict.iteritems():
+        L.extend(_load_appmenus(mod_name, mod))
+    L.sort(cmp=_sort)
+    logging.error(str(L))
+    return mdict, L
 
-def _get_all_nav_menus():
-    menus = []
-    modules = {}
-    for name, m in _imports():
-        f1 = getattr(m, 'register_navigation_menus', None)
-        if callable(f1):
-            logging.info('got nav menus.')
-            menus.extend([Dict(x) for x in f1()])
-    return menus
+_apps_modules, _apps_admin_menus = _import_appmenus()
 
-def _get_all_admin_menus():
-    menus = []
-    modules = {}
-    for mod, m in _imports():
-        f1 = getattr(m, 'register_admin_menus', None)
-        if callable(f1):
-            logging.info('got menus.')
-            for ms in f1():
-                app_menu = _AppMenu(mod, ms['order'], ms['title'])
-                for it in ms['items']:
-                    item_handler = it['handler']
-                    item_title = it['title']
-                    item_role = it['role']
-                    app_menu.append(_AppMenuItem(item_role, item_handler, item_title))
-                menus.append(app_menu)
-            modules[mod] = m
-        else:
-            logging.info('menus not found.')
-    menus.sort(lambda x, y: -1 if x.order < y.order else 1)
-    logging.info('load admin modules: %s' % str(modules))
-    return modules, menus
-
-_admin_modules, _admin_menus = _get_all_admin_menus()
-_nav_menus = _get_all_nav_menus()
-
-for the_name, the_mod in _imports():
+for the_name, the_mod in util.scan_submodules('apps').iteritems():
     the_path = os.path.dirname(os.path.abspath(the_mod.__file__))
     the_i18n = os.path.join(the_path, 'i18n')
     if os.path.isdir(the_i18n):
         for the_fname in os.listdir(the_i18n):
             i18n.load_i18n(os.path.join(os.path.join(the_i18n, the_fname)))
-
-def get_navigation_menus():
-    return _nav_menus[:]
-
-def get_navigation_menu(mtype):
-    for m in _nav_menus:
-        if mtype==m.type:
-            return m
-    raise badrequest()
 
 @route('/')
 def website_index():
@@ -123,7 +99,7 @@ def get_profile():
 
 @route('/admin/')
 def admin_index():
-    raise seeother('/admin/manage/dashboard')
+    raise seeother('/admin/manage/overview')
 
 @route('/admin/<mod>/<handler>')
 def admin_menu_item(mod, handler):
@@ -131,8 +107,8 @@ def admin_menu_item(mod, handler):
     if ctx.user is None or ctx.user.role==const.ROLE_GUEST:
         raise seeother('/signin?redirect=/admin/%s/%s' % (mod, handler))
 
-    global _admin_menus, _admin_modules
-    m = _admin_modules.get(mod, None)
+    global _apps_modules, _apps_admin_menus
+    m = _apps_modules.get(mod, None)
     if m is None:
         raise notfound()
     f = getattr(m, handler, None)
@@ -143,8 +119,10 @@ def admin_menu_item(mod, handler):
         include = 'apps/%s/%s' % (mod, r.template_name)
         logging.warn('set include: %s' % include)
         logging.warn('set model: %s' % str(r.model))
-        return Template('templates/admin/index.html', __menus__=_admin_menus, \
-            __mod__=mod, __handler__=handler, __include__=include, \
+        return Template('templates/admin/index.html', \
+            __menus__=_apps_admin_menus, \
+            __mod__=mod, __handler__=handler, \
+            __include__=include, \
             __site_name__=util.get_setting_site_name(), \
             __site_description__=util.get_setting_site_description(), \
             __user__=ctx.user, \
