@@ -41,9 +41,9 @@
                         </div>
                     </div>
                     <div class="span7">
-                        <textarea name="content" class="span7" style="height:84px" placeholder="Say something..."></textarea>
+                        <textarea id="comment-content" name="content" class="span7" style="height:84px" placeholder="Say something..."></textarea>
                         <input type="hidden" name="article_id" value="{{ article.id }}" />
-                        <button type="submit" class="btn">{{ _('Submit') }}</button>
+                        <button id="btn-comment-submit" type="submit" class="btn" disabled="disabled">{{ _('Submit') }}</button>
                     </div>
                     </form>
                 </div>
@@ -54,33 +54,112 @@
                         <h3>{{ _('Comments') }}</h3>
                     </div>
                 </div>
-{% for c in comments %}
+
+<script type="text/javascript">
+var g_next_comment_id = null;
+
+function html_encode(s) {
+    return s.replace('<', '&lt;').replace('>', '&gt;').replace(' ', '&nbsp;');
+}
+
+function show_comment_error(err) {
+    $('#span-loading').hide();
+    $('#btn-load').hide();
+    $('#span-load-error').show();
+}
+
+function show_comments(result) {
+    $('#span-loading').hide();
+    $('#span-load-error').hide();
+    g_next_comment_id = result.next_comment_id;
+    if (g_next_comment_id!=null) {
+        $('#btn-load').show();
+    }
+    L = [];
+    $.each(result.comments, function(index, c) {
+        var s = $('#div-comment-template').html();
+        s = s.replace('#IMAGE_URL#', c.image_url);
+        s = s.replace('#CREATION_TIME#', c.creation_time);
+        s = s.replace('#NAME#', html_encode(c.name));
+        var n = s.lastIndexOf('#CONTENT#');
+        L.push(s.substring(0, n) + c.content + s.substring(n + 9));
+    });
+    $('#div-comments').append(L.join('\n'));
+}
+
+function load_comments() {
+    var url = '/article/{{ article.id }}/comments';
+    if (g_next_comment_id!=null) {
+        url = url + '?next_comment_id=' + g_next_comment_id;
+    }
+    $('#btn-load').hide();
+    $('#span-load-error').hide();
+    $('#span-loading').show();
+    $.getJSON(url, function(result) {
+            if (result.error) {
+                show_comment_error(result.error);
+            }
+            else {
+                show_comments(result);
+            }
+        }).error(function() {
+            show_comment_error('Network error');
+        });
+}
+
+function check_comment() {
+    var comment_content = $('#comment-content');
+    var btn_comment_submit = $('#btn-comment-submit');
+    var s = comment_content.val().replace(/\n|\r/g, '');
+    if (/^\s*$/.test(s)) {
+        btn_comment_submit.attr('disabled', 'disabled');
+    }
+    else {
+        btn_comment_submit.removeAttr('disabled');
+    }
+}
+
+$(function() {
+    window.setInterval('check_comment()', 250);
+    load_comments();
+});
+</script>
+
+                <div id="div-comments">
+                </div>
+
                 <div class="row sep">
-                    <div class="span2">
-                        <div class="row" style="position:relative">
-                            <div class="span2">
-                                <img src="{{ c.image_url }}" class="user-small margin-small align-center" />
-                            </div>
-                            <div class="circle-1"></div>
-                            <div class="circle-2"></div>
-                            <div class="circle-3"></div>
-                        </div>
-                        <div class="row">
-                            <div class="span2">
-                                <span class="margin-small align-center">{{ c.name|e }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="span7">
-                        <div class="box">
-                            {{ c.content }}
-                            <p class="align-right">Posted at {{ c.creation_time|dt }}</p>
-                        </div>
+                    <div class="span7 offset2">
+                        <span id="span-loading" class="loading">Loading...</span>
+                        <span id="span-load-error" class="hide">Load failed. <a href="javascript:load_comments()">Retry</a></span>
+                        <button id="btn-load" onclick="load_comments()" class="btn hide">Previous</button>
                     </div>
                 </div>
-{% endfor %}
-                <div class="row sep">
-                    <div class="span7 offset2"><button class="btn">{{ _('Show Previous Comments') }}</button></div>
+
+                <div id="div-comment-template" class="hide">
+                    <div class="row sep">
+                        <div class="span2">
+                            <div class="row" style="position:relative">
+                                <div class="span2">
+                                    <img src="#IMAGE_URL#" class="user-small margin-small align-center" />
+                                </div>
+                                <div class="circle-1"></div>
+                                <div class="circle-2"></div>
+                                <div class="circle-3"></div>
+                            </div>
+                            <div class="row">
+                                <div class="span2">
+                                    <span class="margin-small align-center">#NAME#</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="span7">
+                            <div class="box">
+                                #CONTENT#
+                                <p class="align-right">Posted at #CREATION_TIME#</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
