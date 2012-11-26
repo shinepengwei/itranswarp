@@ -16,7 +16,7 @@ try:
 except ImportError:
     from PIL import Image
 
-from transwarp.web import ctx, get, post, route, jsonresult, UTC, UTC_0, Template, Page, Dict
+from transwarp.web import ctx, get, post, route, jsonresult, UTC, UTC_0, Template, Page, Dict, seeother
 from transwarp import db, cache
 from apps import menu_group, menu_item
 from admin.helper import get_navigation_menu, get_navigation_menus

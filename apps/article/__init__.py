@@ -8,7 +8,7 @@ import time, logging
 from transwarp.web import ctx, get, post, route, jsonrpc, seeother, jsonresult, Template, Page, Dict
 from transwarp import db
 
-from util import theme, make_comment, get_comments, get_setting_site_name
+from util import theme, make_comment, get_comments_desc, get_setting_site_name
 
 from apps import menu_group, menu_item
 
@@ -246,8 +246,23 @@ def category(cat_id):
 @theme('article.html')
 def article(art_id):
     a = db.select_one('select * from articles where id=?', art_id)
-    cs, has_next = get_comments(art_id, 1)
-    return dict(article=a, comments=cs, next_page=2 if has_next else 0, __title__=a.name, __active_menu__='category%s' % a.category_id)
+    cs = get_comments_desc(art_id, 21)
+    next_comment_id = None
+    if len(cs)==21:
+        next_comment_id = cs[-1].id
+        cs = cs[:-1]
+    return dict(article=a, comments=cs, next_comment_id=next_comment_id, __title__=a.name, __active_menu__='category%s' % a.category_id)
+
+@get('/article/<art_id>/comments')
+@jsonresult
+def get_comments(art_id):
+    after_id = ctx.request.input(next_comment_id=None).next_comment_id
+    next_id = None
+    cs = get_comments_desc(art_id, 21, after_id)
+    if len(cs)==21:
+        next_id = cs[-2].id
+        cs = cs[:-1]
+    return dict(next_comment_id=next_id, comments=cs)
 
 @post('/article/comment')
 def comment():
@@ -260,7 +275,7 @@ def comment():
         return dict(error='Comment cannot be empty')
     a = db.select_one('select id from articles where id=?', i.article_id)
     L = [u'<p>%s</p>' % p.replace(u'\r', u'').replace(u'&', u'&amp;').replace(u' ', u'&nbsp;').replace(u'<', u'&lt;').replace(u'>', u'&gt;') for p in c.split(u'\n')]
-    c = make_comment(a.id, user, u''.join(L))
+    c = make_comment('article', a.id, user, u''.join(L))
     raise seeother('/article/%s#comments' % i.article_id)
 
 @route('/page/<page_id>')
