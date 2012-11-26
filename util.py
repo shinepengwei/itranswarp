@@ -179,19 +179,22 @@ def extract_session_cookie():
     logging.info('read cookie: %s' % s)
     if not s:
         return None
-    if isinstance(s, unicode):
-        s = s.encode('utf-8')
-    ss = base64.urlsafe_b64decode(s.replace('_', '=')).split(':')
-    logging.info('decode cookie: %s' % str(ss))
-    if len(ss)!=4:
+    try:
+        if isinstance(s, unicode):
+            s = s.encode('utf-8')
+        ss = base64.urlsafe_b64decode(s.replace('_', '=')).split(':')
+        logging.info('decode cookie: %s' % str(ss))
+        if len(ss)!=4:
+            return None
+        provider, uid, exp, md5 = ss
+        if float(exp) < time.time():
+            return None
+        expected = ':'.join([provider, uid, exp, str(_get_passwd_by_uid(provider, uid)), _SESSION_COOKIE_KEY])
+        if hashlib.md5(expected).hexdigest()!=md5:
+            return None
+        return uid
+    except BaseException:
         return None
-    provider, uid, exp, md5 = ss
-    if float(exp) < time.time():
-        return None
-    expected = ':'.join([provider, uid, exp, str(_get_passwd_by_uid(provider, uid)), _SESSION_COOKIE_KEY])
-    if hashlib.md5(expected).hexdigest()!=md5:
-        return None
-    return uid
 
 def delete_session_cookie():
     ' delete the session cookie immediately. '
@@ -326,11 +329,12 @@ class ThemeTemplate(Template):
         templ_path, m = _init_theme(path, r)
         super(ThemeTemplate, self).__init__(templ_path, m, **kw)
 
-def make_comment(ref_id, user, content):
+def make_comment(ref_type, ref_id, user, content):
     '''
     Make a comment.
 
     Args:
+        ref_type: the ref type, e.g. 'article'.
         ref_id: the ref id, e.g., article id.
         user: current user.
         content: comment content.
@@ -338,9 +342,26 @@ def make_comment(ref_id, user, content):
         the comment object as dict.
     '''
     cid = db.next_str()
-    kw = dict(id=cid, ref_id=ref_id, user_id=user.id, image_url=user.image_url, name=user.name, content=content, creation_time=time.time(), version=0)
+    kw = dict(id=cid, ref_type=ref_type, ref_id=ref_id, user_id=user.id, image_url=user.image_url, name=user.name, content=content, creation_time=time.time(), version=0)
     db.insert('comments', **kw)
     return kw
+
+def get_comments_desc(ref_id, max_results=20, after_id=None):
+    '''
+    Get comments by page.
+
+    Args:
+        ref_id: reference id.
+        max_results: the max results.
+        after_id: comments after id.
+    Returns:
+        comments as list.
+    '''
+    if max_results < 1 or max_results > 100:
+        raise ValueError('bad max_results')
+    if after_id:
+        return db.select('select * from comments where ref_id=? and id < ? order by id desc limit ?', ref_id, after_id, max_results)
+    return db.select('select * from comments where ref_id=? order by id desc limit ?', ref_id, max_results)
 
 def get_comments(ref_id, page_index=1, page_size=20):
     '''
