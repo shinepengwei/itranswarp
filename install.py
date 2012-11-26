@@ -41,8 +41,7 @@ r'''
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
-        primary key(id),
-        unique key uk_user_id(user_id)
+        primary key(id)
     );
 ''',
 r'''
@@ -137,6 +136,7 @@ r'''
 r'''
     create table comments (
         id varchar(50) not null,
+        ref_type varchar(50) not null,
         ref_id varchar(50) not null,
         user_id varchar(50) not null,
         image_url varchar(1000) not null,
@@ -145,6 +145,7 @@ r'''
         creation_time real not null,
         version bigint not null,
         primary key(id),
+        index idx_ref_id(ref_id),
         index idx_user_id(user_id),
         index idx_creation_time(creation_time)
     );
