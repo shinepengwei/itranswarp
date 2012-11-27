@@ -13,22 +13,24 @@ logging.basicConfig(level=logging.INFO)
 import os
 
 from transwarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
-from transwarp import cache; cache.client = cache.RedisClient('localhost')
-from transwarp import web, db
+from transwarp import web, db, cache
 
 from plugin.filters import load_user, load_i18n
 
+from conf.mysql import DB_SCHEMA, DB_HOST, DB_PORT, DB_USER, DB_PASSWORD
+
 def create_app():
-    from conf import dbconf
-    kwargs = dict([(s, getattr(dbconf, s)) for s in dir(dbconf) if s.startswith('DB_')])
-    dbargs = kwargs.pop('DB_ARGS', {})
-    db.init(db_type = kwargs['DB_TYPE'],
-            db_schema = kwargs['DB_SCHEMA'],
-            db_host = kwargs['DB_HOST'],
-            db_port = kwargs.get('DB_PORT', 0),
-            db_user = kwargs.get('DB_USER'),
-            db_password = kwargs.get('DB_PASSWORD'),
-            **dbargs)
-    return web.WSGIApplication(('install', 'admin', 'apps.manage', 'apps.article'), document_root=os.path.dirname(os.path.abspath(__file__)), filters=(load_user, load_i18n), template_engine='jinja2', DEBUG=True)
+    cache.client = cache.RedisClient('localhost')
+    db.init(db_type = 'mysql', \
+            db_schema = DB_SCHEMA, \
+            db_host = DB_HOST, \
+            db_port = DB_PORT, \
+            db_user = DB_USER, \
+            db_password = DB_PASSWORD, \
+            use_unicode = True, charset = 'utf8')
+    return web.WSGIApplication(('install', 'admin', 'apps.manage', 'apps.article'), \
+            document_root=os.path.dirname(os.path.abspath(__file__)), \
+            filters=(load_user, load_i18n), template_engine='jinja2', \
+            DEBUG=True)
 
 application = create_app()

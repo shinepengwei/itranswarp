@@ -5,9 +5,6 @@ __author__ = 'Michael Liao'
 
 # database configuration file
 
-# database type: mysql, sqlite3:
-DB_TYPE = 'mysql'
-
 # schema name:
 DB_SCHEMA = 'itranswarp'
 
@@ -18,8 +15,5 @@ DB_PASSWORD = 'www-data'
 # database host:
 DB_HOST = 'localhost'
 
-# database port, default to 0 (using default port):
+# database port, default to 3306:
 DB_PORT = 3306
-
-# any other keyword args:
-DB_ARGS = {'use_unicode': True, 'charset': 'utf8'}
