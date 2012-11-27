@@ -16,19 +16,8 @@ from transwarp import web, db
 
 from plugin.filters import load_user, load_i18n
 
-# init db:
-from conf import dbconf
-
-db.init(db_type = dbconf.DB_TYPE,
-        db_schema = sae.const.MYSQL_DB,
-        db_host = sae.const.MYSQL_HOST,
-        db_port = int(sae.const.MYSQL_PORT),
-        db_user = sae.const.MYSQL_USER,
-        db_password = sae.const.MYSQL_PASS,
-        **dbconf.DB_ARGS)
-
-# SAE cache client:
-class SAEClient(object):
+class SAECacheClient(object):
+    ' Sina AppEngine Cache Client '
 
     def __init__(self):
         self._client = pylibmc.Client()
@@ -60,7 +49,18 @@ class SAEClient(object):
         except pylibmc.NotFound:
             return 0
 
-cache.client = SAEClient()
+def create_app():
+    cache.client = SAECacheClient()
+    db.init(db_type = 'mysql', \
+            db_schema = sae.const.MYSQL_DB, \
+            db_host = sae.const.MYSQL_HOST, \
+            db_port = int(sae.const.MYSQL_PORT), \
+            db_user = sae.const.MYSQL_USER, \
+            db_password = sae.const.MYSQL_PASS, \
+            use_unicode = True, charset = 'utf8')
+    return web.WSGIApplication(('install', 'admin', 'apps.manage', 'apps.article'), \
+            document_root=os.path.dirname(os.path.abspath(__file__)), \
+            filters=(load_user, load_i18n), template_engine='jinja2', \
+            DEBUG=True)
 
-app = web.WSGIApplication(('install', 'admin', 'apps.manage', 'apps.article'), document_root=os.path.dirname(os.path.abspath(__file__)), filters=(load_user, load_i18n), template_engine='jinja2', DEBUG=True)
-application = sae.create_wsgi_app(app)
+application = sae.create_wsgi_app(create_app())
