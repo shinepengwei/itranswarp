@@ -134,6 +134,20 @@ r'''
     );
 ''',
 r'''
+    create table texts (
+        id varchar(50) not null,
+        kind varchar(50) not null,
+        name varchar(50) not null,
+        value text not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        unique key uk_name(name),
+        index idx_kind(kind)
+    )
+''',
+r'''
     create table comments (
         id varchar(50) not null,
         ref_type varchar(50) not null,
@@ -280,7 +294,7 @@ def install_user():
     current = time.time()
     user = dict( \
             id=db.next_str(),
-            locked=False,
+            locked=True,
             name=name,
             role=0,
             email=email,
