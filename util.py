@@ -92,7 +92,10 @@ def save_plugin_setting_enabled(plugin_type, name, enabled):
 
 def create_signin_provider(name):
     provider = load_module('plugin.signin.%s' % name)
-    return provider.Provider(**get_settings(kind='signin.%s' % name, remove_prefix=True))
+    settings = get_settings(kind='signin.%s' % name, remove_prefix=True)
+    if settings['enabled']!='True':
+        raise StandardError('Signin provider not enabled')
+    return provider.Provider(**settings)
 
 def create_upload_provider(name):
     provider = load_module('plugin.upload.%s' % name)
@@ -252,6 +255,30 @@ def set_setting(name, value):
     if 0==db.update('update settings set value=?, modified_time=?, version=version+1 where name=?', value, current, name):
         st = dict(id=db.next_str(), kind=kind, name=name, value=value, creation_time=current, modified_time=current, version=0)
         db.insert('settings', **st)
+
+def set_text(name, value):
+    '''
+    Set text by name and value.
+    '''
+    pos = name.find('_')
+    if pos<=0:
+        raise ValueError('bad setting name: %s must be xxx_xxx' % name)
+    kind = name[:pos]
+    current = time.time()
+    if 0==db.update('update texts set value=?, modified_time=?, version=version+1 where name=?', value, current, name):
+        st = dict(id=db.next_str(), kind=kind, name=name, value=value, creation_time=current, modified_time=current, version=0)
+        db.insert('texts', **st)
+
+def get_text(name, default=''):
+    '''
+    Get text by name. Return default value '' if not exist.
+    '''
+    ss = db.select('select value from texts where name=?', name)
+    if ss:
+        v = ss[0].value
+        if v:
+            return v
+    return default
 
 def get_setting_search_provider():
     return get_setting('search_provider', 'google')
