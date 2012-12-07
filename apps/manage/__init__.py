@@ -16,7 +16,7 @@ try:
 except ImportError:
     from PIL import Image
 
-from transwarp.web import ctx, get, post, route, jsonresult, UTC, UTC_0, Template, Page, Dict, seeother
+from transwarp.web import ctx, get, post, route, jsonresult, UTC, UTC_0, Template, Page, Dict, seeother, notfound
 from transwarp import db, cache
 from apps import menu_group, menu_item
 from admin.helper import get_navigation_menu, get_navigation_menus
@@ -60,7 +60,7 @@ def overview():
     d = dict(
         articles = db.select_int('select count(id) from articles'),
         pages = db.select_int('select count(id) from pages'),
-        media = db.select_int('select count(id) from media'),
+        resources = db.select_int('select count(id) from resources'),
         users = db.select_int('select count(id) from users'),
         two_weeks = str(days),
         start_date = start_date.strftime(site_dateformat),
@@ -414,16 +414,23 @@ def make_comment():
     creation_time = time.time(),
     version = 0
 
-@post('/api/media/upload')
+@get('/api/resource/url/<rid>')
+def api_resource_url(rid):
+    rs = db.select('select url from resources where id=?', rid)
+    if rs:
+        raise seeother(rs[0].url)
+    raise notfound()
+
+@post('/api/resource/upload')
 @jsonresult
-def api_media_upload():
+def api_resource_upload():
     if ctx.user is None:
         return dict(error='bad authentication')
     i = ctx.request.input(name='', description='')
     f = i.file
-    return upload_media(i.name.strip(), i.description.strip(), f.filename, f.file)
+    return upload_resource(i.name.strip(), i.description.strip(), f.filename, f.file)
 
-def upload_media(name, description, fname, fp):
+def upload_resource(name, description, fname, fp):
     if not name:
         name = os.path.splitext(fname)[0]
     ftype, mime = _guess_mime(fname)
@@ -460,8 +467,8 @@ def upload_media(name, description, fname, fp):
     for k in r:
         if k in m:
             m[k] = r[k]
-    db.insert('media', **m)
-    return dict(redirect='media', filelink=r['url'])
+    db.insert('resources', **m)
+    return dict(redirect='resources', filelink=r['url'])
 
 @menu_group('Settings')
 @menu_item('Menus', 1)
@@ -534,33 +541,33 @@ def do_delete_menu():
     db.update('delete from menus where id=?', menu.id)
     raise seeother('menus')
 
-@menu_group('Media', 40)
-@menu_item('Media Library', 0)
-def media():
+@menu_group('Resources', 40)
+@menu_item('All Resources', 0)
+def resources():
     i = ctx.request.input(page='1')
-    total = db.select_int('select count(id) from media')
+    total = db.select_int('select count(id) from resources')
     page = Page(int(i.page), PAGE_SIZE, total)
-    media = db.select('select * from media order by creation_time desc limit ?,?', page.offset, page.limit)
-    return Template('templates/media.html', media=media, page=page)
+    resources = db.select('select * from resources order by creation_time desc limit ?,?', page.offset, page.limit)
+    return Template('templates/resources.html', resources=resources, page=page)
 
-@menu_group('Media')
-@menu_item('Add New Media', 1)
-def add_media():
-    return Template('templates/mediaform.html', form_title=_('Add Media'), action='do_add_media')
+@menu_group('Resources')
+@menu_item('Add New Res', 1)
+def add_resource():
+    return Template('templates/resourceform.html', form_title=_('Add New Resource'), action='do_add_resource')
 
 @jsonresult
-def do_add_media():
+def do_add_resource():
     i = ctx.request.input(name='', description='')
     f = i.file
-    return upload_media(i.name.strip(), i.description.strip(), f.filename, f.file)
+    return upload_resource(i.name.strip(), i.description.strip(), f.filename, f.file)
 
-def do_delete_media():
+def do_delete_resource():
     mid = ctx.request['id']
-    m = db.select_one('select * from media where id=?', mid)
+    m = db.select_one('select * from resources where id=?', mid)
     uploader = util.create_upload_provider(m.uploader)
     uploader.delete(m.ref)
-    db.update('delete from media where id=?', mid)
-    raise seeother('media')
+    db.update('delete from resources where id=?', mid)
+    raise seeother('resources')
 
 @menu_group('Plugins')
 @menu_item('Imports', 3)
