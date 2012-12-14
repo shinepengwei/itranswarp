@@ -1,7 +1,7 @@
 <script type="text/JavaScript">
     function delete_x(id, name) {
         $('#span-delete-x-name').text(name);
-        $('#a-delete-x').attr('href', 'do_delete_resource?id='+id);
+        $('#a-delete-x').attr('href', 'do_delete_attachment?id='+id);
         $('#delete-modal').modal('show');
     }
 
@@ -27,7 +27,7 @@
         <h3>Deletion Confirm</h3>
     </div>
     <div class="modal-body">
-        <p>Are you sure you want to delete the resource "<strong><span id="span-delete-x-name"></span></strong>"?</p>
+        <p>Are you sure you want to delete the attachment "<strong><span id="span-delete-x-name"></span></strong>"?</p>
         <p>The operation is unrecoverable!</p>
     </div>
     <div class="modal-footer">
@@ -38,26 +38,13 @@
 
 <div class="row sep">
     <div class="span10">
-        <h3>{{ _('All Resources') }}</h3>
+        <h3>{{ _('All Attachments') }}</h3>
     </div>
 </div>
 
-<div class="row">
+<div class="row sep">
     <div class="span10">
-        <form name="x-filter-form" action="users" class="well form-inline">
-            <label>Type:</label>
-            <select id="type-filter" name="type">
-                <option value="">{{ _('All Resources') }}</option>
-{% for t in types %}
-                <option value="{{ t.id }}">{{ t.name|e }}</option>
-{% endfor %}
-            </select>
-<script type="text/javascript">
-$('#type-filter option[value="{{ type }}"]').attr('selected', 'selected');
-</script>
-            <button type="submit" class="btn">{{ _('Filter') }}</button>
-            <a href="add_resource" class="btn btn-primary pull-right">{{ _('Add New Resource') }}</a>
-        </form>
+        <a href="add_attachment" class="btn btn-primary pull-right">{{ _('Add New Attachment') }}</a>
     </div>
 </div>
 
@@ -69,30 +56,28 @@ $('#type-filter option[value="{{ type }}"]').attr('selected', 'selected');
                     <th>{{ _('Thumbnail') }}</th>
                     <th>{{ _('Name') }}</th>
                     <th>{{ _('Size') }}</th>
-                    <th>{{ _('URL') }}</th>
                     <th>{{ _('Uploaded Date') }}</th>
                     <th>{{ _('Operations') }}</th>
                 </tr>
             </thead>
             <tbody>
-{% for m in resources %}
+{% for a in attachments %}
                 <tr>
                     <td>
                         <div style="display:block;width:90px;text-align:center">
-    {% if m.thumbnail %}
-                            <img src="{{ m.thumbnail }}" />
+    {% if a.preview_resource_id %}
+                            <img src="/api/resource/url/{{ a.preview_resource_id }}" />
     {% else %}
-                            <p>{{ m.type }}</p>
+                            <p>{{ a.mime }}</p>
     {% endif %}
                         </div>
                     </td>
-                    <td>{{ m.name|e }}</td>
-                    <td><script type="text/javascript"> document.write(filesize({{ m.size }})); </script></td>
-                    <td><a href="{{ m.url }}" target="_blank">{{ m.url|elli }}</a></td>
-                    <td>{{ m.creation_time|dt }}</td>
+                    <td><a href="/api/resource/url/{{ a.resource_id }}" target="_blank">{{ a.name|e }}</a></td>
+                    <td><script type="text/javascript"> document.write(filesize({{ a.size }})); </script></td>
+                    <td>{{ a.creation_time|dt }}</td>
                     <td>
-                        <a href="?action=edit&id={{ m.id }}">{{ _('Edit') }}</a> |
-                        <a href="javascript:delete_x('{{ m.id }}', '{{ m.name|jsstr }}')">{{ _('Delete') }}</a>
+                        <a href="?action=edit&id={{ a.id }}">{{ _('Edit') }}</a> |
+                        <a href="javascript:delete_x('{{ a.id }}', '{{ a.name|jsstr }}')">{{ _('Delete') }}</a>
                     </td>
                 </tr>
 {% endfor %}
