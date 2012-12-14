@@ -5,7 +5,17 @@ __author__ = 'Michael Liao'
 
 ' Util module '
 
-import os, re, time, base64, hashlib, logging, functools
+import os, re, time, base64, hashlib, logging, functools, mimetypes
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
+try:
+    import Image
+except ImportError:
+    from PIL import Image
 
 from transwarp.web import ctx, get, post, route, jsonrpc, Dict, Template, seeother, notfound, badrequest
 from transwarp import db
@@ -411,6 +421,65 @@ def get_comments(ref_id, page_index=1, page_size=20):
     if len(cs) > page_size:
         return cs[:page_size], True
     return cs, False
+
+def upload_resource(ref_type, ref_id, fname, fp):
+    ' upload resource and return resource object '
+    uname, uprovider = get_enabled_upload()
+    if uname is None:
+        return dict(error=_('No uploader selected'))
+
+    filename = os.path.split(fname)[1]
+    if len(filename) > 50:
+        filename = filename[-50:]
+    ext = os.path.splitext(filename)[1].lower()
+    mime = mimetypes.types_map.get(ext, 'application/octet-stream')
+    current = time.time()
+    fcontent = fp if isinstance(fp, str) else fp.read()
+
+    m = dict( \
+            id = db.next_str(), \
+            ref_id = ref_id, \
+            ref_type = ref_type, \
+            deleted = False, \
+            size = len(fcontent), \
+            filename = filename, \
+            mime = mime, \
+            uploader = uname, \
+            ref = '', \
+            url = '', \
+            creation_time = current, \
+            modified_time = current, \
+            version = 0 \
+    )
+    r = create_upload_provider(uname).upload(ref_type, ext, fcontent)
+    for k in r:
+        if k in m:
+            m[k] = r[k]
+    db.insert('resources', **m)
+    return m
+
+def create_thumbnail(fcontent, max_size=180):
+    '''
+    create thumbnail JPEG as str and return dict contains:
+    width,
+    height,
+    metadata,
+    thumbnail.
+    '''
+    im = Image.open(StringIO(fcontent))
+    w, h = im.size[0], im.size[1]
+    meta = 'format=%s&mode=%s' % (im.format, im.mode)
+    if w>max_size and h>max_size:
+        tw, th = min(w, max_size), min(h, max_size)
+    if w>max_size and h>max_size:
+        tw, th = min(w, max_size), min(h, max_size)
+        im.thumbnail((tw, th), Image.ANTIALIAS)
+    if im.mode != 'RGB':
+        im = im.convert('RGB')
+    return dict(width=w, height=h, metadata=meta, thumbnail=im.tostring('jpeg', 'RGB'))
+
+def delete_resources(ref_type, ref_id):
+    db.update_kw('resources', 'ref_id=?', ref_id, deleted=True)
 
 def validate_email(email):
     '''

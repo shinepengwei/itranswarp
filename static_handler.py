@@ -11,7 +11,7 @@ It is ONLY used in developement. You should use web server (e.g. nginx) to handl
 
 import os, logging, mimetypes
 
-from transwarp.web import ctx, get, post, route, jsonrpc, Template, seeother
+from transwarp.web import ctx, get, post, route, jsonrpc, Template, seeother, HttpError
 from transwarp import db
 
 def _static_file_generator(fpath):

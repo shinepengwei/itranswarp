@@ -49,23 +49,12 @@ class Provider(object):
         else:
             raise ValueError('Could not delete file which does not uploaded to Aliyun OSS.')
 
-    def upload(self, fname, ftype, fcontent, fthumbnail):
+    def upload(self, ftype, fext, fcontent):
         dt = datetime.now()
-        dirs = (str(dt.year), str(dt.month), str(dt.day))
-        ext = str(os.path.splitext(fname)[1]).lower()
-        name = uuid.uuid4().hex
-        iname = '%s%s' % (name, ext)
-        pname = '%s.thumbnail.jpg' % (name)
-        path = os.path.join(*dirs)
-        fpath = os.path.join(path, iname)
-        ppath = os.path.join(path, pname)
+        fpath = os.path.join(str(ftype), str(dt.year), str(dt.month), str(dt.day), '%s%s' % (uuid.uuid4().hex, fext))
         logging.info('saving uploaded file to s3 %s...' % fpath)
         url = self._client.put_object(fpath, fcontent)
-        r = dict(url=url, ref=url)
-        if fthumbnail:
-            logging.info('saving thumbnail file to s3 %s...' % ppath)
-            r['thumbnail'] = self._client.put_object(ppath, fthumbnail)
-        return r
+        return dict(url=url, ref=url)
 
 _URL = 'http://%s.s3.amazonaws.com/%s'
 

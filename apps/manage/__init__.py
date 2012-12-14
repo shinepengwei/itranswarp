@@ -6,16 +6,6 @@ __author__ = 'Michael Liao'
 import re, os, time, json, logging, hashlib, mimetypes
 from datetime import datetime, timedelta
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
-
-try:
-    import Image
-except ImportError:
-    from PIL import Image
-
 from transwarp.web import ctx, get, post, route, jsonresult, UTC, UTC_0, Template, Page, Dict, seeother, notfound
 from transwarp import db, cache
 from apps import menu_group, menu_item
@@ -60,7 +50,7 @@ def overview():
     d = dict(
         articles = db.select_int('select count(id) from articles'),
         pages = db.select_int('select count(id) from pages'),
-        resources = db.select_int('select count(id) from resources'),
+        attachments = db.select_int('select count(id) from attachments'),
         users = db.select_int('select count(id) from users'),
         two_weeks = str(days),
         start_date = start_date.strftime(site_dateformat),
@@ -430,46 +420,6 @@ def api_resource_upload():
     f = i.file
     return upload_resource(i.name.strip(), i.description.strip(), f.filename, f.file)
 
-def upload_resource(name, description, fname, fp):
-    if not name:
-        name = os.path.splitext(fname)[0]
-    ftype, mime = _guess_mime(fname)
-    current = time.time()
-    m = dict( \
-            id = db.next_str(), \
-            name = name, \
-            description = description, \
-            width = 0, \
-            height = 0, \
-            size = 0, \
-            type = ftype, \
-            mime = mime, \
-            metadata = '', \
-            ref = '', \
-            url = '', \
-            thumbnail = '', \
-            creation_time = current, \
-            modified_time = current, \
-            version = 0 \
-    )
-    uname, uprovider = util.get_enabled_upload()
-    if uname is None:
-        return dict(error=_('No uploader selected'))
-    fcontent = fp.read()
-    fthumbnail = None
-    m['uploader'] = uname
-    m['size'] = len(fcontent)
-    if ftype=='image':
-        fthumbnail, additional = _create_thumbnail(fcontent)
-        m.update(additional)
-    uploader = util.create_upload_provider(uname)
-    r = uploader.upload(fname, ftype, fcontent, fthumbnail)
-    for k in r:
-        if k in m:
-            m[k] = r[k]
-    db.insert('resources', **m)
-    return dict(redirect='resources', filelink=r['url'])
-
 @menu_group('Settings')
 @menu_item('Menus', 1)
 def menus():
@@ -541,33 +491,61 @@ def do_delete_menu():
     db.update('delete from menus where id=?', menu.id)
     raise seeother('menus')
 
-@menu_group('Resources', 40)
-@menu_item('All Resources', 0)
-def resources():
+@menu_group('Attachments', 40)
+@menu_item('All Attachments', 0)
+def attachments():
     i = ctx.request.input(page='1')
-    total = db.select_int('select count(id) from resources')
+    total = db.select_int('select count(id) from attachments')
     page = Page(int(i.page), PAGE_SIZE, total)
-    resources = db.select('select * from resources order by creation_time desc limit ?,?', page.offset, page.limit)
-    return Template('templates/resources.html', resources=resources, page=page)
+    attachments = db.select('select * from attachments order by creation_time desc limit ?,?', page.offset, page.limit)
+    return Template('templates/attachments.html', attachments=attachments, page=page)
 
-@menu_group('Resources')
-@menu_item('Add New Res', 1)
-def add_resource():
-    return Template('templates/resourceform.html', form_title=_('Add New Resource'), action='do_add_resource')
+@menu_group('Attachments')
+@menu_item('Add Attachment', 1)
+def add_attachment():
+    return Template('templates/attachmentform.html', form_title=_('Add New Attachment'), action='do_add_attachment')
 
 @jsonresult
-def do_add_resource():
+def do_add_attachment():
     i = ctx.request.input(name='', description='')
     f = i.file
-    return upload_resource(i.name.strip(), i.description.strip(), f.filename, f.file)
+    ref_type = 'attachment'
+    ref_id = db.next_str()
+    current = time.time()
+    fcontent = f.file.read()
+    r1 = util.upload_resource(ref_type, ref_id, f.filename, fcontent)
+    r2 = None
+    width = 0
+    height = 0
+    metadata = ''
+    if r1['mime'].startswith('image/'):
+        td = util.create_thumbnail(fcontent)
+        width, height, metadata = td['width'], td['height'], td['metadata']
+        r2 = util.upload_resource(ref_type, ref_id, f.filename + '.jpg', td['thumbnail'])
+    att = dict( \
+            id = ref_id, \
+            resource_id = r1['id'], \
+            preview_resource_id = '' if r2 is None else r2['id'], \
+            name = i.name.strip(), \
+            description = i.description.strip(), \
+            width = width, \
+            height = height, \
+            size = r1['size'], \
+            mime = r1['mime'], \
+            metadata = metadata, \
+            creation_time = current, \
+            modified_time = current, \
+            version = 0 \
+    )
+    db.insert('attachments', **att)
+    return dict(redirect='attachments', filelink='/api/resource/url/%s' % r1['id'])
 
-def do_delete_resource():
-    mid = ctx.request['id']
-    m = db.select_one('select * from resources where id=?', mid)
-    uploader = util.create_upload_provider(m.uploader)
-    uploader.delete(m.ref)
-    db.update('delete from resources where id=?', mid)
-    raise seeother('resources')
+def do_delete_attachment():
+    aid = ctx.request['id']
+    a = db.select_one('select * from attachments where id=?', aid)
+    util.delete_resources('attachment', aid)
+    db.update('delete from attachments where id=?', aid)
+    raise seeother('attachments')
 
 @menu_group('Plugins')
 @menu_item('Imports', 3)
@@ -626,27 +604,5 @@ def _prepare_menus():
         menus.append(menu)
     return menus
 
-def _guess_mime(fname):
-    ext = os.path.splitext(fname)[1].lower()
-    mime = mimetypes.types_map.get(ext, 'application/octet-stream')
-    ftype = mime
-    n = mime.find('/')
-    if n!=(-1):
-        ftype = mime[:n]
-    return ftype, mime
-
 def _get_avatar(email):
     return 'http://www.gravatar.com/avatar/%s' % hashlib.md5(str(email)).hexdigest()
-
-def _create_thumbnail(fcontent):
-    ' return thumbnail JPEG as str and dict contains width, height, metadata. '
-    im = Image.open(StringIO(fcontent))
-    w, h = im.size[0], im.size[1]
-    d = dict(width=w, height=h)
-    d['metadata'] = 'format=%s&mode=%s' % (im.format, im.mode)
-    if w>90 and h>90:
-        tw, th = min(w, 90), min(h, 90)
-        im.thumbnail((tw, th), Image.ANTIALIAS)
-    if im.mode != 'RGB':
-        im = im.convert('RGB')
-    return im.tostring('jpeg', 'RGB'), d

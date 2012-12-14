@@ -100,18 +100,35 @@ r'''
 r'''
     create table resources (
         id varchar(50) not null,
+        ref_id varchar(50) not null,
+        ref_type varchar(50) not null,
+        deleted bool not null,
+        size bigint not null,
+        filename varchar(50) not null,
+        mime varchar(50) not null,
+        uploader varchar(50) not null,
+        ref varchar(1000) not null,
+        url varchar(1000) not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        index idx_ref_id(ref_id),
+        index idx_creation_time(creation_time)
+    );
+''',
+r'''
+    create table attachments (
+        id varchar(50) not null,
+        resource_id varchar(50) not null,
+        preview_resource_id varchar(50) not null,
         name varchar(50) not null,
         description varchar(100) not null,
         width int not null,
         height int not null,
         size bigint not null,
-        type varchar(50) not null,
         mime varchar(50) not null,
         metadata varchar(1000) not null,
-        uploader varchar(50) not null,
-        ref varchar(1000) not null,
-        url varchar(1000) not null,
-        thumbnail varchar(1000) not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
@@ -209,6 +226,45 @@ r'''
         modified_time real not null,
         version bigint not null,
         primary key(id),
+        index idx_creation_time(creation_time)
+    );
+''',
+r'''
+    create table albums (
+        id varchar(50) not null,
+        cover_photo_id varchar(50) not null,
+        cover_resource_id varchar(50) not null,
+        photo_count int not null,
+        display_order int not null,
+        name varchar(50) not null,
+        description varchar(100) not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        index idx_display_order(display_order)
+    );
+''',
+r'''
+    create table photos (
+        id varchar(50) not null,
+        album_id varchar(50) not null,
+        origin_resource_id varchar(50) not null,
+        large_resource_id varchar(50) not null,
+        medium_resource_id varchar(50) not null,
+        small_resource_id varchar(50) not null,
+        preview_resource_id varchar(50) not null,
+        display_order int not null,
+        name varchar(50) not null,
+        description varchar(100) not null,
+        geo_lat real not null,
+        geo_lng real not null,
+        metadata varchar(1000) not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        index idx_display_order(display_order),
         index idx_creation_time(creation_time)
     );
 ''',

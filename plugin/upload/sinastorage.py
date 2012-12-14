@@ -46,20 +46,9 @@ class Provider(object):
         domain, key = ref.split(':', 1)
         self._client.delete(domain, key)
 
-    def upload(self, fname, ftype, fcontent, fthumbnail):
+    def upload(self, ftype, fext, fcontent):
         dt = datetime.now()
-        dirs = (str(dt.year), str(dt.month), str(dt.day))
-        ext = os.path.splitext(fname)[1].lower()
-        name = uuid.uuid4().hex
-        iname = '%s%s' % (name, ext)
-        pname = '%s.thumbnail.jpg' % (name)
-        path = os.path.join(*dirs)
-        fpath = os.path.join(path, iname)
-        ppath = os.path.join(path, pname)
+        fpath = os.path.join(str(ftype), str(dt.year), str(dt.month), str(dt.day), '%s%s' % (uuid.uuid4().hex, fext))
         logging.info('saving uploaded file to sae %s...' % fpath)
         url = self._client.put(self._domain,  fpath, storage.Object(fcontent))
-        r = dict(url=url, ref='%s:%s' % (self._domain, fpath))
-        if fthumbnail:
-            logging.info('saving thumbnail file to sae %s...' % ppath)
-            r['thumbnail'] = self._client.put(self._domain,  ppath, storage.Object(fthumbnail))
-        return r
+        return dict(url=url, ref='%s:%s' % (self._domain, fpath))

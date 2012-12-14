@@ -30,11 +30,11 @@ class Provider(object):
 
     @staticmethod
     def get_description():
-        return 'Upload files to local directory'
+        return 'Upload files to local directory /static/upload/'
 
     @staticmethod
     def get_settings():
-        return (dict(key='domain', name='Domain', description='Website domain'),)
+        return ()
 
     def delete(self, ref):
         fpath = '%s%s' % (self._document_root, ref)
@@ -42,25 +42,14 @@ class Provider(object):
         if os.path.isfile(fpath):
             os.remove(fpath)
 
-    def upload(self, fname, ftype, fcontent, fthumbnail):
+    def upload(self, ftype, fext, fcontent):
         dt = datetime.now()
-        dirs = (str(dt.year), str(dt.month), str(dt.day))
-        p = os.path.join(self._upload_dir, *dirs)
-        if not os.path.isdir(p):
-            os.makedirs(p)
-        ext = os.path.splitext(fname)[1].lower()
-        name = uuid.uuid4().hex
-        iname = '%s%s' % (name, ext)
-        pname = '%s.thumbnail.jpg' % (name)
-        fpath = os.path.join(p, iname)
-        ppath = os.path.join(p, pname)
+        fdir = os.path.join(self._upload_dir, str(ftype), str(dt.year), str(dt.month), str(dt.day))
+        if not os.path.isdir(fdir):
+            os.makedirs(fdir)
+        fpath = os.path.join(fdir, '%s%s' % (uuid.uuid4().hex, fext))
         logging.info('saving uploaded file to %s...' % fpath)
         with open(fpath, 'w') as fo:
             fo.write(fcontent)
-        url = '/static/upload/%s/%s' % ('/'.join(dirs), iname)
-        r = dict(url=url, ref=url)
-        if fthumbnail:
-            with open(ppath, 'w') as fo:
-                fo.write(fthumbnail)
-            r['thumbnail'] = '/static/upload/%s/%s' % ('/'.join(dirs), pname)
-        return r
+        url = '/%s' % fpath
+        return dict(url=url, ref=url)
