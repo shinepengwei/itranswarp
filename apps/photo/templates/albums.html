@@ -1,0 +1,100 @@
+<script type="text/JavaScript">
+    function saveOrders() {
+        $('#btn-order').hide();
+        $('#loading').show();
+        $('#form-order').submit();
+    }
+
+    function moveUp(trid) {
+        var me = $('#tr-' + trid);
+        var x = me.prev();
+        if (x.length > 0) {
+            me.after(x);
+            $('#btn-order').show();
+        }
+    }
+
+    function moveDown(trid) {
+        var me = $('#tr-' + trid);
+        var x = me.next();
+        if (x.length > 0) {
+            me.before(x);
+            $('#btn-order').show();
+        }
+    }
+
+    function delete_x(id) {
+        var name = $('#tr-' + id + ' td.name').text()
+        $('#span-delete-x-name').text(name);
+        $('#a-delete-x').attr('href', 'do_delete_album?id='+id);
+        $('#delete-modal').modal('show');
+    }
+</script>
+
+<div id="delete-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Deletion Confirm</h3>
+    </div>
+    <div class="modal-body">
+        <p>Are you sure you want to permanently delete the album "<strong><span id="span-delete-x-name"></span></strong>"?</p>
+        <p>This operation is unrecoverable!</p>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('All Albums') }}</h3>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <a href="add_album" class="btn btn-primary pull-right">{{ _('Add New Album') }}</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <form id="form-order" name="form-order" action="order_albums">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>{{ _('Name') }}</th>
+                        <th>{{ _('Description') }}</th>
+                        <th>{{ _('Date') }}</th>
+                        <th>{{ _('Operations') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-albums">
+{% for a in albums %}
+                    <tr id="tr-{{ a.id }}">
+                        <td class="name"><a href="/album/{{ a.id }}" target="_blank">{{ a.name|e }}</a></td>
+                        <td>{{ a.description|e }}</td>
+                        <td>{{ a.creation_time|dt }}</td>
+                        <td>
+                            <a href="javascript:moveUp('{{ a.id }}')">{{ _('Move Up') }}</a> |
+                            <a href="javascript:moveDown('{{ a.id }}')">{{ _('Move Down') }}</a> |
+                            <a href="?action=edit&id={{ a.id }}">{{ _('Edit') }}</a> |
+                            <a href="?action=list&id={{ a.id }}">{{ _('Photos') }}</a> |
+                            <a href="javascript:delete_x('{{ a.id }}')">{{ _('Delete') }}</a>
+                            <input type="hidden" name="order" value="{{ a.id }}" />
+                        </td>
+                    </tr>
+{% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">{{ _('Save Orders') }}</button>
+        <span id="loading" class="loading pull-right hide">{{ _('Saving orders') }}...</span>
+    </div>
+</div>

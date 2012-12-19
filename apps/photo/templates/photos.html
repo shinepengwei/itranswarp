@@ -1,0 +1,305 @@
+<script type="text/JavaScript">
+    function do_delete_photos() {
+        $('#btn-upload').attr('disabled', 'disabled');
+        $('#btn-delete').attr('disabled', 'disabled');
+        $('#form-photo-list').submit();
+    }
+
+    function getObjectURL(file) {
+        var url = '';
+        if (window.createObjectURL!=undefined) // basic
+            url = window.createObjectURL(file);
+        else if (window.URL!=undefined) // mozilla(firefox)
+            url = window.URL.createObjectURL(file);
+        else if (window.webkitURL!=undefined) // webkit or chrome
+            url = window.webkitURL.createObjectURL(file);
+        return url;
+    }
+
+    function cancelUpload() {
+        $('#div-upload-form').slideUp(function() {
+            $('#show-upload-form').show();
+        });
+    }
+
+    function showUploadResult(index, result) {
+        var div = $('#div-photo-' + index);
+        var html = $('#div-photo-template').html().replace(/ID/g, result.id).replace('IMAGEURL', '/api/resource/url/' + result.preview_resource_id).replace('IMAGENAME', result.name);
+        div.html(html);
+        $('#photo-' + result.id).click(function() {
+            var th = $(this);
+            if (th.is(':checked')) {
+                div.addClass('photo-item-checked');
+            }
+            else {
+                div.removeClass('photo-item-checked');
+            }
+        });
+    }
+
+    function showPreview(resource_id) {
+        $('#div-modal-image').css('background-image', '');
+        $('#div-modal-image').css('background-image', 'url(/api/resource/url/' + resource_id + ')');
+        $('#preview-modal').modal('show');
+    }
+
+$(function() {
+    $('#btn-delete').click(function() {
+        var data = $('#form-photo-list').serialize();
+        if (data.indexOf('ids=')==(-1)) {
+            $('#alert-modal').modal('show');
+        }
+        else {
+            $('#delete-modal').modal('show');
+        }
+    });
+
+    $('#btn-upload').click(function() {
+        $('#name').val('');
+        $('#file').val('');
+        $('#show-upload-form').hide();
+        $('#div-upload-form').slideDown();
+    });
+    $('#cancel-upload').click(cancelUpload);
+
+    $('div.photo-item-image').click(function() {
+        showPreview($(this).attr('pid'));
+    });
+    $('input.photo-item-select').click(function() {
+        var th = $(this);
+        var div = $('#div-' + th.attr('id'));
+        if (th.is(':checked')) {
+            div.addClass('photo-item-checked');
+        }
+        else {
+            div.removeClass('photo-item-checked');
+        }
+    });
+});
+
+$(function() {
+    $('#file').change(function() {
+        var f = $('#file').val();
+        if (f!='') {
+            if ($('#name').val()=='') {
+                var pos = Math.max(f.lastIndexOf('\\'), f.lastIndexOf('/'));
+                if (pos>0)
+                    f = f.substring(pos+1);
+                var pos = f.lastIndexOf('.');
+                if (pos>0)
+                    f = f.substring(0, pos);
+                $('#name').val(f);
+            }
+        }
+        try {
+            if (f!='') {
+                var lf = $('#file').get(0).files[0];
+                var ft = lf.type;
+                if (ft=='')
+                    ft = 'binary';
+                if (ft=='image/png' || ft=='image/jpeg' || ft=='image/gif') {
+                    $('#div-preview-image').css('background-image', 'url(' + getObjectURL(lf) + ')');
+                    $('#div-preview-text').hide();
+                }
+                else {
+                    $('#div-preview-image').css('background-image', '');
+                    $('#div-preview-text').show();
+                }
+            }
+            else {
+                $('#div-preview-image').css('background-image', '');
+                $('#div-preview-text').show();
+            }
+        }
+        catch (e) {}
+    });
+});
+
+var g_iframe_index = 0;
+
+function uploadPhoto(form) {
+    $('#div-file').removeClass('error');
+    var f = $('#file').val();
+    if (f=='') {
+        $('#div-file').addClass('error');
+        return false;
+    }
+    var lf = $('#file').get(0).files[0];
+    var ft = lf.type;
+    if (ft!='image/png' && ft!='image/jpeg' && ft!='image/gif') {
+        $('#div-file').addClass('error');
+        return false;
+    }
+    var html = $('#div-upload-template').html().replace(/IMAGEURL/g, getObjectURL(lf)).replace(/INDEX/g, '' + g_iframe_index);
+    $('#div-photo-list').prepend(html);
+
+    var fd = null;
+    try {
+        fd = form.getFormData();
+    }
+    catch(e) {
+        fd = new FormData(form);
+    }
+    var index = g_iframe_index;
+    var bar = $('#div-photo-' + index + ' div.bar');
+    var xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', function(evt) {
+        if (evt.lengthComputable) {
+            var percent = evt.loaded * 100.0 / evt.total;
+            bar.css('width', percent.toFixed(1) + '%');
+        }
+    }, false);
+    xhr.addEventListener('load', function(evt) {
+        showUploadResult(index, $.parseJSON(evt.target.responseText));
+    }, false);
+    xhr.addEventListener('error', function() {
+        showUploadError(index);
+    }, false);
+    xhr.addEventListener('abort', function() {}, false);
+    xhr.open('post', $(form).attr('action'));
+    xhr.send(fd);
+    g_iframe_index ++;
+    cancelUpload();
+    return false;
+}
+</script>
+
+<div id="alert-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>No Photo Selected</h3>
+    </div>
+    <div class="modal-body">
+        <p>Please select photos first.</p>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" class="btn btn-primary" data-dismiss="modal">{{ _('OK') }}</a>
+    </div>
+</div>
+
+<div id="delete-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Deletion Confirm</h3>
+    </div>
+    <div class="modal-body">
+        <p>Are you sure you want to permanently delete the selected photos?</p>
+        <p>This operation is unrecoverable!</p>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:do_delete_photos()" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
+    </div>
+</div>
+
+<div id="preview-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Photo Preview</h3>
+    </div>
+    <div class="modal-body">
+        <div id="div-modal-image"></div>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('OK') }}</a>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <h3>{{ _('%s Photos in Album "%s"') % (album.photo_count, album.name|e) }}</h3>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <div id="show-upload-form">
+            <a href="albums" class="btn"><i class="icon-chevron-left"></i> All Albums</a>
+            <button id="btn-upload" class="btn btn-primary">Upload New Photo</button>
+            <button id="btn-delete" class="btn">Delete</button>
+        </div>
+        <div id="div-upload-form" class="hide">
+            <div class="row sep">
+                <div class="span10"><h3>Upload New Photo</h3></div>
+            </div>
+            <div class="row sep">
+                <div class="span7">
+                    <form name="upload" action="/api/photo/upload" method="post" enctype="multipart/form-data" onsubmit="return uploadPhoto(this)" class="form-horizontal">
+                        <div class="control-group">
+                            <label class="control-label">Name</label>
+                            <div class="controls">
+                                <input id="name" name="name" type="text" placeholder="Photo Name" class="input-xlarge" />
+                                <input name="album_id" type="hidden" value="{{ album.id }}" />
+                            </div>
+                        </div>
+                        <div id="div-file" class="control-group">
+                            <label class="control-label">Photo</label>
+                            <div class="controls">
+                                <input id="file" name="file" type="file" class="input-xlarge" />
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button id="submit-upload" type="submit" class="btn btn-primary">Upload</button>
+                            <button id="cancel-upload" type="button" class="btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="span3">
+                    <div class="well" style="background-color:transparent;padding:4px;margin:0px">
+                        <div id="div-preview-image" style="height:120px;background-repeat:no-repeat;background-position:center center;background-size:cover;">
+                            <div id="div-preview-text" style="display:block;height:120px;line-height:120px;text-align:center;color:#999;text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);text-overflow:ellipsis;overflow:hidden;">Preview</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <form id="form-photo-list" name="form-delete" method="post" action="do_delete_photos">
+            <input name="album_id" type="hidden" value="{{ album.id }}" />
+        <div id="div-photo-list" class="photo-list" style="position:relative;">
+            <div id="div-upload-template" style="display:none">
+                <div id="div-photo-INDEX" class="photo-item">
+                    <div class="photo-item-image" style="background-image:url(IMAGEURL)"></div>
+                    <div style="padding:12px 0px 0px 0px">
+                        <div class="photo-item-progress">
+                            <div class="progress progress-striped active">
+                                <div class="bar" style="width:0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="div-photo-template" class="photo-item" style="display:none">
+                <div pid="ID" class="photo-item-image photo-item-image-clickable" style="background-image:url(IMAGEURL)"></div>
+                <div style="padding:12px 0px 0px 0px">
+                    <div class="photo-item-label">
+                        <label class="checkbox inline"><input type="checkbox" id="photo-ID" name="ids" class="photo-item-select" value="ID">IMAGENAME</label>
+                    </div>
+                </div>
+            </div>
+{% for p in photos %}
+            <div id="div-photo-{{ p.id }}" class="photo-item">
+                <div pid="{{ p.small_resource_id }}" class="photo-item-image photo-item-image-clickable" style="background-image:url(/api/resource/url/{{ p.preview_resource_id }})"></div>
+                <div style="padding:12px 0px 0px 0px">
+                    <div class="photo-item-label">
+                        <label class="checkbox inline"><input type="checkbox" id="photo-{{ p.id }}" name="ids" class="photo-item-select" value="{{ p.id }}">{{ p.name }}</label>
+                    </div>
+                </div>
+            </div>
+{% endfor %}
+            <div class="clearfix"></div>
+        </div>
+        </form>
+    </div>
+</div>
+
+<div class="row sep hide">
+    <div class="span10">
+        <button id="btn-order" onclick="saveOrders()" class="btn btn-info pull-right hide">{{ _('Save Orders') }}</button>
+        <span id="loading" class="loading pull-right hide">{{ _('Saving orders') }}...</span>
+    </div>
+</div>

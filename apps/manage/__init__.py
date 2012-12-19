@@ -411,15 +411,6 @@ def api_resource_url(rid):
         raise seeother(rs[0].url)
     raise notfound()
 
-@post('/api/resource/upload')
-@jsonresult
-def api_resource_upload():
-    if ctx.user is None:
-        return dict(error='bad authentication')
-    i = ctx.request.input(name='', description='')
-    f = i.file
-    return upload_resource(i.name.strip(), i.description.strip(), f.filename, f.file)
-
 @menu_group('Settings')
 @menu_item('Menus', 1)
 def menus():
@@ -504,6 +495,13 @@ def attachments():
 @menu_item('Add Attachment', 1)
 def add_attachment():
     return Template('templates/attachmentform.html', form_title=_('Add New Attachment'), action='do_add_attachment')
+
+@post('/api/attachment/upload')
+@jsonresult
+def api_attachment_upload():
+    if ctx.user is None:
+        return dict(error='auth:failed')
+    return do_add_attachment()
 
 @jsonresult
 def do_add_attachment():

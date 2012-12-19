@@ -458,9 +458,9 @@ def upload_resource(ref_type, ref_id, fname, fp):
     db.insert('resources', **m)
     return m
 
-def create_thumbnail(fcontent, max_size=180):
+def create_thumbnail(fcontent, max_width=90, max_height=90):
     '''
-    create thumbnail JPEG as str and return dict contains:
+    create thumbnail JPEG as str with size no more than max_width and max_height, and return dict contains:
     width,
     height,
     metadata,
@@ -469,11 +469,17 @@ def create_thumbnail(fcontent, max_size=180):
     im = Image.open(StringIO(fcontent))
     w, h = im.size[0], im.size[1]
     meta = 'format=%s&mode=%s' % (im.format, im.mode)
-    if w>max_size and h>max_size:
-        tw, th = min(w, max_size), min(h, max_size)
-    if w>max_size and h>max_size:
-        tw, th = min(w, max_size), min(h, max_size)
-        im.thumbnail((tw, th), Image.ANTIALIAS)
+    # calculate thumbnail width, height:
+    tw = max_width
+    th = tw * h / w
+    if th > max_height:
+        th = max_height
+        tw = th * w / h
+    if tw < 5:
+        tw = 5
+    if th < 5:
+        th = 5
+    im.thumbnail((tw, th), Image.ANTIALIAS)
     if im.mode != 'RGB':
         im = im.convert('RGB')
     return dict(width=w, height=h, metadata=meta, thumbnail=im.tostring('jpeg', 'RGB'))
