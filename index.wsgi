@@ -58,7 +58,7 @@ def create_app():
             db_user = sae.const.MYSQL_USER, \
             db_password = sae.const.MYSQL_PASS, \
             use_unicode = True, charset = 'utf8')
-    return web.WSGIApplication(('install', 'admin', 'apps.manage', 'apps.article'), \
+    return web.WSGIApplication(('install', 'admin', 'apps.manage', 'apps.article', 'apps.photo'), \
             document_root=os.path.dirname(os.path.abspath(__file__)), \
             filters=(load_user, load_i18n), template_engine='jinja2', \
             DEBUG=True)

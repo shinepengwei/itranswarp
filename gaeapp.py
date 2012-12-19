@@ -47,7 +47,7 @@ def create_app():
     cache.client = GAECacheClient()
     db.init_connector(lambda: rdbms.connect(instance=SQL_INSTANCE_NAME, database=SQL_DATABASE_NAME))
     return web.WSGIApplication( \
-            ('install', 'admin', 'apps.manage', 'apps.article'), \
+            ('install', 'admin', 'apps.manage', 'apps.article', 'apps.photo'), \
             document_root=os.path.dirname(os.path.abspath(__file__)), \
             filters=(load_user, load_i18n), \
             template_engine='jinja2', DEBUG=True)
