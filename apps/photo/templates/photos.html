@@ -24,7 +24,7 @@
 
     function showUploadResult(index, result) {
         var div = $('#div-photo-' + index);
-        var html = $('#div-photo-template').html().replace(/ID/g, result.id).replace('IMAGEURL', '/api/resource/url/' + result.preview_resource_id).replace('IMAGENAME', result.name);
+        var html = $('#div-photo-template').html().replace(/PID/g, result.small_resource_id).replace(/ID/g, result.id).replace('IMAGEURL', '/api/resource/url/' + result.preview_resource_id).replace('IMAGENAME', result.name);
         div.html(html);
         $('#photo-' + result.id).click(function() {
             var th = $(this);
@@ -34,6 +34,10 @@
             else {
                 div.removeClass('photo-item-checked');
             }
+        });
+        $('#preview-' + result.id).click(function() {
+            var pid = $('#preview-' + result.id).attr('pid');
+            showPreview(pid);
         });
     }
 
@@ -274,7 +278,7 @@ function uploadPhoto(form) {
                 </div>
             </div>
             <div id="div-photo-template" class="photo-item" style="display:none">
-                <div pid="ID" class="photo-item-image photo-item-image-clickable" style="background-image:url(IMAGEURL)"></div>
+                <div pid="PID" id="preview-ID" class="photo-item-image photo-item-image-clickable" style="background-image:url(IMAGEURL)"></div>
                 <div style="padding:12px 0px 0px 0px">
                     <div class="photo-item-label">
                         <label class="checkbox inline"><input type="checkbox" id="photo-ID" name="ids" class="photo-item-select" value="ID">IMAGENAME</label>
@@ -283,7 +287,7 @@ function uploadPhoto(form) {
             </div>
 {% for p in photos %}
             <div id="div-photo-{{ p.id }}" class="photo-item">
-                <div pid="{{ p.small_resource_id }}" class="photo-item-image photo-item-image-clickable" style="background-image:url(/api/resource/url/{{ p.preview_resource_id }})"></div>
+                <div pid="{{ p.small_resource_id }}" id="preview-{{ p.id }}" class="photo-item-image photo-item-image-clickable" style="background-image:url(/api/resource/url/{{ p.preview_resource_id }})"></div>
                 <div style="padding:12px 0px 0px 0px">
                     <div class="photo-item-label">
                         <label class="checkbox inline"><input type="checkbox" id="photo-{{ p.id }}" name="ids" class="photo-item-select" value="{{ p.id }}">{{ p.name }}</label>
