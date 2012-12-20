@@ -232,7 +232,7 @@ def do_add_album():
     return dict(redirect='albums')
 
 @route('/album/<alb_id>')
-@theme('albums.html')
+@util.theme('albums.html')
 def get_album(alb_id):
     i = ctx.request.input(page='1')
     # page_size = 20
@@ -242,7 +242,7 @@ def get_album(alb_id):
     # return dict(articles=articles, page=p, __active_menu__='category%s' % cat_id)
 
 @route('/photo/<photo_id>')
-@theme('photo.html')
+@util.theme('photo.html')
 def get_photo(photo_id):
     pass
     # a = db.select_one('select * from articles where id=?', art_id)
