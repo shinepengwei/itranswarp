@@ -1,0 +1,46 @@
+{% include __get_theme_path__('__inc_header.html') %}
+
+<div class="row">
+    <div class="span9">
+        <div id="div-main-content">
+            <div class="sep">
+                <h3>{{ album.name|e }}</h3>
+            </div>
+            <div id="photoSlideShow" class="carousel slide">
+                <div class="carousel-inner">
+    {% for p in photos %}
+        {% set active = '' %}
+        {% if photo.id==p.id %}
+            {% set active = ' active' %}
+        {% endif %}
+                    <div class="item photo-slide{{ active }}" style="background-image:url(/api/resource/url/{{ p.medium_resource_id }})">
+                    </div>
+    {% endfor %}
+                </div>
+                <a class="left carousel-control" href="#photoSlideShow" data-slide="prev">&lsaquo;</a>
+                <a class="right carousel-control" href="#photoSlideShow" data-slide="next">&rsaquo;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="span3">
+        <div class="r-sidebar">
+            <div class="c-box">
+                <h3>Album</h3>
+                <div class="c-albums">
+                    <div class="c-album">
+    {% set url = '/static/img/empty-album.png' %}
+    {% if album.cover_resource_id %}
+        {% set url = '/api/resource/url/%s' % album.cover_resource_id %}
+    {% endif %}
+                        <a href="/album/{{ album.id }}" class="c-album-img" style="background-image:url({{ url }})"></a>
+                        <div class="c-album-name">{{ album.name|e }}</div>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include __get_theme_path__('__inc_footer.html') %}

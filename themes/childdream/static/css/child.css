@@ -1,0 +1,309 @@
+
+
+body {
+  background-color: #eff5ef;
+}
+
+div.sep {
+  margin-bottom: 20px;
+}
+
+div.c-main-bg {
+  background-color: #ccc;
+  min-width: 960px;
+  background: url(../i/body-bg.png) repeat-x left top;
+}
+
+.c-h1 {
+  margin: 24px 0px;
+  font-size: 24px;
+  color: #ccc;
+}
+
+.c-nav > li > a {
+  color: #ffffff;
+  background-color: #122f3a;
+  opacity: 0.3;
+  margin-right: 6px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.c-nav > li > a:hover,
+.c-nav > .active > a,
+.c-nav > .active > a:hover {
+  color: #ffffff;
+  background-color: #122f3a;
+  opacity: 0.75;
+}
+
+div.c-div-siginin {
+  margin-top: 20px;
+  margin-right: 12px;
+  color: #ccc;
+}
+
+div.c-div-siginin a {
+  color: #f4ac2e;
+}
+
+#div-main-content-top {
+  background: url(../i/main-content-top.png) no-repeat left top;
+  height: 10px;
+}
+
+#div-main-content {
+  padding: 8px 24px;
+  min-height: 420px;
+}
+
+#div-sidebar {
+  padding: 8px 24px;
+  min-height: 420px;
+}
+
+div.c-article {
+  margin-bottom: 36px;
+}
+
+div.c-article > h3 {
+  padding-bottom: 6px;
+}
+
+div.c-article > p.c-article-info {
+  opacity: 0.8;
+}
+
+
+div.circle-1 {
+    width: 8px;
+    height: 8px;
+    border: 1px solid #ddd;
+    position: absolute;
+    left: 80px;
+    top: 20px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    background-color: #fff;
+    border-radius: 4px;
+}
+
+div.circle-2 {
+    width: 12px;
+    height: 12px;
+    border: 1px solid #ddd;
+    position: absolute;
+    left: 95px;
+    top: 22px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    background-color: #fff;
+    border-radius: 6px;
+}
+
+div.circle-3 {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ddd;
+    position: absolute;
+    left: 115px;
+    top: 25px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+img.user-small {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #e5e5e5;
+}
+
+div.box {
+  min-height: 20px;
+  padding: 19px;
+  margin-bottom: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+div.c-albums {
+}
+
+div.c-albums .c-album {
+  display: block;
+  float: left;
+  margin-bottom: 36px;
+  margin-right: 28px;
+  border: solid 1px #ccc;
+  width: 192px;
+}
+
+div.c-albums .c-album:hover {
+  box-shadow: 5px 5px 5px #999;
+}
+
+.c-album .c-album-img {
+  display: block;
+  width: 176px;
+  margin: 8px auto;
+  height: 120px;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.c-album div.c-album-name {
+  margin: 8px;
+  line-height: 200%;
+  text-align: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+div.c-photos {
+}
+
+div.c-photos .c-photo {
+  display: block;
+  float: left;
+  margin-bottom: 36px;
+  margin-right: 28px;
+  border: solid 1px #ccc;
+  width: 192px;
+  height:;
+}
+
+div.c-photos .c-photo:hover {
+  box-shadow: 5px 5px 5px #999;
+}
+
+.c-photo .c-photo-img {
+  display: block;
+  width: 176px;
+  margin: 8px auto;
+  height: 120px;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+#photoSlideShow {
+    width: 640px;
+    height: 480px;
+    margin-left: 20px;
+}
+
+.carousel-control {
+    top: 50%;
+}
+
+div.photo-slide {
+    width: 640px;
+    height: 480px;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+div.c-box {
+  margin-bottom: 36px;
+}
+
+div.c-box > h3 {
+  padding-bottom: 6px;
+}
+
+#div-abs-position {
+  position: relative;
+  display: block;
+}
+
+#div-abs-position > div.c-girl-on-left {
+  position: absolute;
+  left: -150px;
+  top: 160px;
+  width: 136px;
+  height: 281px;
+  display: block;
+  background: url(../i/girl-on-left.png) no-repeat left top;
+}
+
+#div-abs-position > div.c-witch-on-right {
+  position: absolute;
+  left: 970px;
+  top: 120px;
+  width: 69px;
+  height: 117px;
+  display: block;
+  background: url(../i/witch-on-right.png) no-repeat left top;
+}
+
+div.c-star {
+  overflow: hidden;
+  position: absolute;
+  display: block;
+  left: -100px;
+  top: 0px;
+  height: 52px;
+  background: url(../i/stars.png) no-repeat left top;
+}
+
+div.c-star-1 {
+  background-position: 0px 0px;
+  width: 50px;
+}
+
+div.c-star-2 {
+  background-position: -50px 0px;
+  width: 30px;
+}
+
+div.c-star-3 {
+  background-position: -80px 0px;
+  width: 20px;
+}
+
+div.c-star-4 {
+  background-position: -100px 0px;
+  width: 20px;
+}
+
+div.r-sidebar {
+  border-left: dashed 1px #CCC;
+  padding-left: 12px;
+}
+
+div.c-copyright {
+  margin: 24px;
+  padding: 12px;
+  color: #ccc;
+  text-align: center;
+  border-top: dashed 1px #ccc;
+}
+
+div.c-footer-bg {
+  margin-left: auto;
+  margin-right: auto;
+  height: 93px;
+  background: url(../i/footer-bg.png) repeat-x center top;
+}
+
+.c-icon {
+  background: url(../i/icons.png) no-repeat left top;
+  display: inline-block;
+}
+
+.c-icon-girl {
+  background-position: 0px 0px;
+  width: 60px;
+  height: 72px;
+}
+

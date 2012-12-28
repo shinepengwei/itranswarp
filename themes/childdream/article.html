@@ -1,0 +1,94 @@
+{% include __get_theme_path__('__inc_header.html') %}
+
+<div class="row">
+    <div class="span9">
+        <div id="div-main-content">
+            <div class="c-article">
+                <h3>{{ article.name|e }}</h3>
+                <p class="c-article-info"><a href="/user/{{ article.user_id }}/profile">{{ article.user_name|e }}</a> Posted at {{ article.creation_time|dt }}</p>
+                {{ article.content }}
+            </div>
+
+{% if ctx.user %}
+            <div class="row sep">
+                <div class="span8">
+                    <h3>{{ _('Make a comment') }}</h3>
+                </div>
+            </div>
+            <div class="row sep">
+                <form name="comment" action="/article/comment" method="post">
+                <div class="span2">
+                    <div class="row" style="position:relative">
+                        <div class="span2">
+                            <img src="{{ ctx.user.image_url }}" class="user-small margin-small align-center" />
+                        </div>
+                        <div class="circle-1"></div>
+                        <div class="circle-2"></div>
+                        <div class="circle-3"></div>
+                    </div>
+                    <div class="row">
+                        <div class="span2">
+                            <span class="margin-small align-center">{{ ctx.user.name|e }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="span6">
+                    <textarea name="content" class="span6" style="height:84px" placeholder="Say something..."></textarea>
+                    <input type="hidden" name="article_id" value="{{ article.id }}" />
+                    <button type="submit" class="btn">{{ _('Submit') }}</button>
+                </div>
+                </form>
+            </div>
+{% endif %}
+            <div class="row sep">
+                <div class="span8">
+                    <a name="comments"></a>
+                    <h3>{{ _('Comments') }}</h3>
+                </div>
+            </div>
+
+{% for c in comments %}
+            <div class="row sep">
+                <div class="span2">
+                    <div class="row" style="position:relative">
+                        <div class="span2">
+                            <img src="{{ c.image_url }}" class="user-small margin-small align-center" />
+                        </div>
+                        <div class="circle-1"></div>
+                        <div class="circle-2"></div>
+                        <div class="circle-3"></div>
+                    </div>
+                    <div class="row">
+                        <div class="span2">
+                            <span class="margin-small align-center">{{ c.name|e }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="span6">
+                    <div class="box">
+                        {{ c.content }}
+                        <p class="align-right">Posted at {{ c.creation_time|dt }}</p>
+                    </div>
+                </div>
+            </div>
+{% endfor %}
+
+            <div class="row sep">
+                <div class="span6 offset2"><button class="btn">{{ _('Show Previous Comments') }}</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="span3">
+        <div class="r-sidebar">
+            <div class="c-box">
+                <h3>All Categories</h3>
+{% for c in __layout_categories__ %}
+                <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include __get_theme_path__('__inc_footer.html') %}

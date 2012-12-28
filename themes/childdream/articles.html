@@ -1,0 +1,76 @@
+{% include __get_theme_path__('__inc_header.html') %}
+
+<div class="row">
+    <div class="span9">
+        <div id="div-main-content">
+{% for a in articles %}
+            <div class="c-article">
+                <h3><a href="/article/{{ a.id }}">{{ a.name|e }}</a></h3>
+                <p class="c-article-info"><a href="/user/{{ a.user_id }}/profile">{{ a.user_name|e }}</a> post at {{ a.creation_time|dt }}</p>
+            </div>
+{% endfor %}
+        </div>
+    </div>
+    <div class="span3">
+        <div class="r-sidebar">
+            <div class="c-box">
+                <h3>All Categories</h3>
+{% for c in __layout_categories__ %}
+                <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--
+
+                        <div class="c-albums">
+                            <div class="c-album">
+                                <a href="#" class="c-album-img" style="background-image:url(http://ww4.sinaimg.cn/mw205/62e0064fjw1dzgt0pc6bzj.jpg)"></a>
+                                <div class="c-album-name">森林公园</div>
+                            </div>
+                        </div>
+                    </div>
+
+                        <h3>我的新相册 <a href="#">立刻查看</a></h3>
+                        <div class="c-albums">
+                            <div class="c-album">
+                                <a href="#" class="c-album-img" style="background-image:url(http://ww4.sinaimg.cn/mw205/62e0064fjw1dzgt0pc6bzj.jpg)"></a>
+                                <div class="c-album-name">森林公园</div>
+                            </div>
+                            <div class="c-album">
+                                <a href="#" class="c-album-img" style="background-image:url(http://ww4.sinaimg.cn/mw205/62e0064fjw1dzgt0pc6bzj.jpg)"></a>
+                                <div class="c-album-name">森林公园 森林公园森林公园森林公园</div>
+                            </div>
+                            <div class="c-album">
+                                <a href="#" class="c-album-img" style="background-image:url(http://ww4.sinaimg.cn/mw205/62e0064fjw1dzgt0pc6bzj.jpg)"></a>
+                                <div class="c-album-name">森林公园</div>
+                            </div>
+                            <div class="c-album">
+                                <a href="#" class="c-album-img" style="background-image:url(http://ww4.sinaimg.cn/mw205/62e0064fjw1dzgt0pc6bzj.jpg)"></a>
+                                <div class="c-album-name">森林公园</div>
+                            </div>
+                            <div class="c-album">
+                                <a href="#" class="c-album-img" style="background-image:url(http://ww4.sinaimg.cn/mw205/62e0064fjw1dzgt0pc6bzj.jpg)"></a>
+                                <div class="c-album-name">森林公园</div>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="c-article">
+                            <h3>我的新相册 <a href="#">立刻查看</a></h3>
+                            <p class="c-article-info">发表于 2012年11月20日 12:33</p>
+                            <p>今天爸爸给我的网站找了一个好看的皮肤，现在我的网站更新啦，有几只小狗狗在上面，希望大家喜欢这个新的皮肤噢。</p>
+                            <p>今天爸爸给我的网站找了一个好看的皮肤，现在我的网站更新啦，有几只小狗狗在上面，希望大家喜欢这个新的皮肤噢。</p>
+                            <p><img src="http://www.liaoxinyue.com/wp-content/uploads/2011/02/contest-photo.jpg" /></p>
+                            <p>今天爸爸给我的网站找了一个好看的皮肤，现在我的网站更新啦，有几只小狗狗在上面，希望大家喜欢这个新的皮肤噢。</p>
+                            <p>今天爸爸给我的网站找了一个好看的皮肤，现在我的网站更新啦，有几只小狗狗在上面，希望大家喜欢这个新的皮肤噢。</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+-->
+
+{% include __get_theme_path__('__inc_footer.html') %}

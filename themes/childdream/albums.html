@@ -1,0 +1,40 @@
+{% include __get_theme_path__('__inc_header.html') %}
+
+<div class="row">
+    <div class="span9">
+        <div id="div-main-content">
+            <div class="c-albums">
+{% for a in albums %}
+    {% set url = '/static/img/empty-album.png' %}
+    {% if a.cover_resource_id %}
+        {% set url = '/api/resource/url/%s' % a.cover_resource_id %}
+    {% endif %}
+                <div class="c-album">
+                    <a href="/album/{{ a.id }}" class="c-album-img" style="background-image:url({{ url }})"></a>
+                    <div class="c-album-name">{{ a.name|e }}</div>
+                </div>
+{% endfor %}
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+    <div class="span3">
+        <div class="r-sidebar">
+            <div class="c-box">
+                <h3>All Categories</h3>
+                <div class="c-albums">
+                    <div class="c-album">
+                        <a href="/album/aaa" class="c-album-img" style="background-image:url( url )"></a>
+                        <div class="c-album-name">a.name|e</div>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+{% for c in __layout_categories__ %}
+                <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include __get_theme_path__('__inc_footer.html') %}
