@@ -478,7 +478,7 @@ def do_edit_menu():
     return dict(redirect='menus')
 
 def do_delete_menu():
-    menu = db.select_one('select id, url from menus where id=?', request.input().id)
+    menu = db.select_one('select id, url from menus where id=?', ctx.request.input().id)
     db.update('delete from menus where id=?', menu.id)
     raise seeother('menus')
 
