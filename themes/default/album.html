@@ -1,0 +1,24 @@
+{% include __get_theme_path__('__inc_header.html') %}
+
+        <div class="row">
+            <div class="span9">
+                <div class="sep">
+                    <h3>{{ _('Album') }} - {{ album.name|e }}</h3>
+                </div>
+                <div class="photos">
+{% for p in photos %}
+                    <div class="photo">
+                        <a href="/photo/{{ p.id }}" class="photo-cover" style="background-image:url(/api/resource/url/{{ p.preview_resource_id }})"></a>
+                    </div>
+{% endfor %}
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+            <div class="span3">
+                <div class="box">
+                    <h4>{{ _('All Albums') }}</h4>
+                </div>
+            </div>
+        </div>
+
+{% include __get_theme_path__('__inc_footer.html') %}
