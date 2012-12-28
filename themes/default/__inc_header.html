@@ -52,6 +52,13 @@
         </div>
 
 <script type="text/javascript">
-    $('#nav-menus li.{{ __active_menu__ }}').addClass('active');
+    var active_menus = '{{ __active_menu__ }}'.split(' ');
+    for (var i=0; i<active_menus.length; i++) {
+        var s = $('#nav-menus li.' + active_menus[i]);
+        if (s.length>0) {
+            s.addClass('active');
+            break;
+        }
+    }
 </script>
 <!-- END __inc_header -->

@@ -1,5 +1,70 @@
 /* custom.css */
 
+div.albums, div.photos {
+    padding-left: 16px;
+}
+
+div.album {
+    float: left;
+    width: 188px;
+    height: 170px;
+    margin-bottom: 36px;
+    margin-right: 36px;
+    border: solid 1px #ccc;
+}
+
+div.album:hover {
+    box-shadow: 6px 6px 6px #999;
+}
+
+div.photo {
+    float: left;
+    width: 188px;
+    height: 146px;
+    margin-bottom: 36px;
+    margin-right: 36px;
+    border: solid 1px #ccc;
+}
+
+div.photo:hover {
+    box-shadow: 6px 6px 6px #999;
+}
+
+#photoSlideShow {
+    width: 640px;
+    height: 480px;
+    margin-left: 30px;
+}
+
+.carousel-control {
+    top: 50%;
+}
+
+div.photo-slide {
+    width: 640px;
+    height: 480px;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+a.album-cover, a.photo-cover {
+    display: block;
+    width: 160px;
+    height: 120px;
+    margin: 12px auto;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+div.album-name {
+    margin: 0px 12px 12px 12px;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 div.circle-1 {
     width: 8px;
     height: 8px;

@@ -240,7 +240,7 @@ def category(cat_id):
     page_total = db.select_int('select count(id) from articles where category_id=?', cat_id)
     p = Page(int(i.page), page_size, page_total)
     articles = db.select('select * from articles where category_id=? order by creation_time desc, name limit ?,?', cat_id, p.offset, p.limit)
-    return dict(articles=articles, page=p, __active_menu__='category%s' % cat_id)
+    return dict(articles=articles, page=p, __active_menu__='category%s latest_articles' % cat_id)
 
 @route('/article/<art_id>')
 @theme('article.html')
@@ -251,7 +251,7 @@ def article(art_id):
     if len(cs)==21:
         next_comment_id = cs[-1].id
         cs = cs[:-1]
-    return dict(article=a, comments=cs, next_comment_id=next_comment_id, __title__=a.name, __active_menu__='category%s' % a.category_id)
+    return dict(article=a, comments=cs, next_comment_id=next_comment_id, __title__=a.name, __active_menu__='category%s latest_articles' % a.category_id)
 
 @get('/article/<art_id>/comments')
 @jsonresult

@@ -67,12 +67,12 @@ $('#category-filter').val('{{ category }}');
             <tbody>
 {% for a in articles %}
                 <tr id="tr-{{ a.id }}">
-                    <td class="name"><a href="/article/{{ a.id }}" target="_blank">{{ a.name|e }}</a></td>
+                    <td class="name"><a href="?action=edit&id={{ a.id }}">{{ a.name|e }}</a></td>
                     <td><script type="text/javascript"> document.write(CATEGORIES['{{ a.category_id }}']); </script></td>
                     <td>{{ a.user_name|e }}</td>
                     <td>{{ a.creation_time|dt }}</td>
                     <td>
-                        <a href="?action=edit&id={{ a.id }}">{{ _('Edit') }}</a> | <a href="javascript:delete_x('{{ a.id }}')">{{ _('Delete') }}</a>
+                        <a href="?action=edit&id={{ a.id }}">{{ _('Edit') }}</a> | <a href="/article/{{ a.id }}" target="_blank">{{ _('Preview') }}</a> | <a href="javascript:delete_x('{{ a.id }}')">{{ _('Delete') }}</a>
                     </td>
                 </tr>
 {% endfor %}
