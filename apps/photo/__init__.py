@@ -53,14 +53,13 @@ def do_edit_album():
 
 def do_delete_album():
     alb_id = ctx.request.input().id
-    # TODO:
-    # cat = db.select_one('select id,locked from categories where id=?', cat_id)
-    # if cat.locked:
-    #     raise badrequest()
-    # uncategorized = db.select_one('select id from categories where locked=?', True)
-    # db.update('delete from categories where id=?', cat_id)
-    # db.update('update articles set category_id=? where category_id=?', uncategorized.id, cat_id)
-    # raise seeother('categories')
+    alb = db.select_one('select id,locked from albums where id=?', alb_id)
+    if alb.locked:
+        raise badrequest()
+    uncategorized = db.select_one('select id from albums where locked=?', True)
+    db.update('delete from albums where id=?', alb_id)
+    db.update('update photos set album_id=? where album_id=?', uncategorized.id, alb_id)
+    raise seeother('albums')
 
 def order_albums():
     orders = ctx.request.gets('order')
@@ -161,18 +160,33 @@ def do_add_photo():
             version = 0 \
     )
     db.insert('photos', **photo)
-    db.update('update albums set photo_count=photo_count+1 where id=?', album_id)
+    if album.cover_photo_id:
+        db.update('update albums set photo_count=(select count(id) from photos where album_id=?) where id=?', album_id, album_id)
+    else:
+        db.update('update albums set photo_count=(select count(id) from photos where album_id=?), cover_photo_id=?, cover_resource_id=? where id=?', album_id, photo['id'], photo['preview_resource_id'], album_id)
     return photo
+
+def set_cover():
+    i = ctx.request.input()
+    album = db.select_one('select * from albums where id=?', i.album_id)
+    photo = db.select_one('select * from photos where id=?', i.ids)
+    if photo.album_id!=album.id:
+        return dict(error='bad_request')
+    db.update('update albums set cover_photo_id=?, cover_resource_id=? where id=?', photo.id, photo.preview_resource_id, album.id)
+    return dict(redirect='albums?action=list&id=%s' % album.id)
 
 def do_delete_photos():
     ids = ctx.request.gets('ids')
     album_id = ctx.request['album_id']
     album = db.select_one('select * from albums where id=?', album_id)
     resources = set()
+    remove_cover = False
     for pid in ids:
         photo = db.select_one('select * from photos where id=?', pid)
         if photo.album_id!=album_id:
             raise badrequest()
+        if pid==album.cover_photo_id:
+            remove_cover = True
         resources.add(photo.origin_resource_id)
         resources.add(photo.large_resource_id)
         resources.add(photo.medium_resource_id)
@@ -183,6 +197,10 @@ def do_delete_photos():
             db.update('delete from photos where id=?', pid)
         for rid in resources:
             db.update('update resources set deleted=? where id=?', True, rid)
+    if remove_cover:
+        db.update('update albums set photo_count=(select count(id) from photos where album_id=?), cover_photo_id=?, cover_resource_id=? where id=?', album_id, '', '', album_id)
+    else:
+        db.update('update albums set photo_count=(select count(id) from photos where album_id=?) where id=?', album_id, album_id)
     raise seeother('albums?action=list&id=%s' % album_id)
 
 @menu_group('Albums', 40)
@@ -196,62 +214,47 @@ def albums():
         album = db.select_one('select * from albums where id=?', i.id)
         photos = db.select('select * from photos where album_id=? order by creation_time desc', i.id)
         return Template('templates/photos.html', album=album, photos=photos)
-    als = db.select('select * from albums order by display_order, name')
-    return Template('templates/albums.html', albums=als)
-    # if i.action=='edit':
-    #     kw = db.select_one('select * from articles where id=?', i.id)
-    #     return Template('templates/articleform.html', categories=_do_get_categories(), form_title=_('Edit Article'), action='do_edit_article', **kw)
-    # category = ''
-    # if i.category:
-    #     category = db.select_one('select id from categories where id=?', i.category).id
-    # total = db.select_int('select count(id) from articles where category_id=?', i.category) if i.category else db.select_int('select count(id) from articles')
-    # page = Page(int(i.page), PAGE_SIZE, total)
-    # selects = 'id,name,category_id,visible,user_id,user_name,creation_time,modified_time,version'
-    # al = None
-    # if category:
-    #     al = db.select('select %s from articles where category_id=? order by creation_time desc limit ?,?' % selects, category, page.offset, page.limit)
-    # else:
-    #     al = db.select('select %s from articles order by creation_time desc limit ?,?' % selects, page.offset, page.limit)
-    # return Template('templates/articles.html', articles=al, page=page, category=category, categories=_do_get_categories())
+    return Template('templates/albums.html', albums=_do_get_albums())
 
 @menu_group('Albums')
 @menu_item('Add New Album', 1)
 def add_album():
     return Template('templates/albumform.html', form_title=_('Add New Album'), action='do_add_album')
 
-def _do_add_album(name, description):
+def _do_add_album(name, description, locked=False):
+    ' add a new album and return the album object newly created. '
     current = time.time()
     display_order = db.select_int('select count(id) from albums')
-    album = dict(id=db.next_str(), name=name, description=description, cover_photo_id='', cover_resource_id='', photo_count=0, display_order=display_order, creation_time=current, modified_time=current, version=0)
+    album = Dict(id=db.next_str(), locked=locked, name=name, description=description, cover_photo_id='', cover_resource_id='', photo_count=0, display_order=display_order, creation_time=current, modified_time=current, version=0)
     db.insert('albums', **album)
+    return album
 
 @jsonresult
 def do_add_album():
     i = ctx.request.input()
-    r = _do_add_album(i.name, i.description)
+    _do_add_album(i.name, i.description)
     return dict(redirect='albums')
 
-@route('/album/<alb_id>')
+@route('/albums')
 @util.theme('albums.html')
-def get_album(alb_id):
-    i = ctx.request.input(page='1')
-    # page_size = 20
-    # page_total = db.select_int('select count(id) from articles where category_id=?', cat_id)
-    # p = Page(int(i.page), page_size, page_total)
-    # articles = db.select('select * from articles where category_id=? order by creation_time desc, name limit ?,?', cat_id, p.offset, p.limit)
-    # return dict(articles=articles, page=p, __active_menu__='category%s' % cat_id)
+def get_albums():
+    albums = _do_get_albums()
+    return dict(albums=albums, __active_menu__='albums')
+
+@route('/album/<album_id>')
+@util.theme('album.html')
+def get_album(album_id):
+    album = db.select_one('select * from albums where id=?', album_id)
+    photos = db.select('select * from photos where album_id=? order by id desc', album_id)
+    return dict(album=album, photos=photos, __active_menu__='album%s albums' % album_id)
 
 @route('/photo/<photo_id>')
 @util.theme('photo.html')
 def get_photo(photo_id):
-    pass
-    # a = db.select_one('select * from articles where id=?', art_id)
-    # cs = get_comments_desc(art_id, 21)
-    # next_comment_id = None
-    # if len(cs)==21:
-    #     next_comment_id = cs[-1].id
-    #     cs = cs[:-1]
-    # return dict(article=a, comments=cs, next_comment_id=next_comment_id, __title__=a.name, __active_menu__='category%s' % a.category_id)
+    photo = db.select_one('select * from photos where id=?', photo_id)
+    album = db.select_one('select * from albums where id=?', photo.album_id)
+    photos = db.select('select * from photos where album_id=? order by id desc', photo.album_id)
+    return dict(album=album, photo=photo, photos=photos, __active_menu__='album%s albums' % photo.album_id)
 
 @get('/photo/<photo_id>/comments')
 @jsonresult
@@ -287,7 +290,10 @@ def _is_album_exist(album_id):
     return len(albums) > 0
 
 def _do_get_albums():
-    return db.select('select * from albums order by display_order, name')
+    L = db.select('select * from albums order by display_order, name')
+    if L:
+        return L
+    return [_do_add_album('Uncategorized', '', True)]
 
 def _do_add_photo(name, tags, category_id, user_id, content, creation_time=None):
     name = name.strip()

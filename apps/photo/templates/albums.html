@@ -38,6 +38,7 @@
     </div>
     <div class="modal-body">
         <p>Are you sure you want to permanently delete the album "<strong><span id="span-delete-x-name"></span></strong>"?</p>
+        <p>Your photos in this album will be moved to the 'Uncategorized' albums.</p>
         <p>This operation is unrecoverable!</p>
     </div>
     <div class="modal-footer">
@@ -64,6 +65,7 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
+                        <th style="width:120px;"></th>
                         <th>{{ _('Name') }}</th>
                         <th>{{ _('Description') }}</th>
                         <th>{{ _('Date') }}</th>
@@ -73,15 +75,25 @@
                 <tbody id="tbody-albums">
 {% for a in albums %}
                     <tr id="tr-{{ a.id }}">
-                        <td class="name"><a href="/album/{{ a.id }}" target="_blank">{{ a.name|e }}</a></td>
+                        <td align="center">
+    {% if a.cover_resource_id %}
+                            <a href="?action=list&id={{ a.id }}"><img src="/api/resource/url/{{ a.cover_resource_id }}" /></a>
+    {% else %}
+                            <a href="?action=list&id={{ a.id }}"><img src="/static/img/empty-album.png" /></a>
+    {% endif %}
+                        </td>
+                        <td class="name locked-{{ a.locked }}"><a href="?action=list&id={{ a.id }}">{{ a.name|e }}</a></td>
                         <td>{{ a.description|e }}</td>
                         <td>{{ a.creation_time|dt }}</td>
                         <td>
+                            <a href="?action=list&id={{ a.id }}">{{ _('Photos') }}</a> |
+                            <a href="?action=edit&id={{ a.id }}">{{ _('Edit') }}</a> |
                             <a href="javascript:moveUp('{{ a.id }}')">{{ _('Move Up') }}</a> |
                             <a href="javascript:moveDown('{{ a.id }}')">{{ _('Move Down') }}</a> |
-                            <a href="?action=edit&id={{ a.id }}">{{ _('Edit') }}</a> |
-                            <a href="?action=list&id={{ a.id }}">{{ _('Photos') }}</a> |
-                            <a href="javascript:delete_x('{{ a.id }}')">{{ _('Delete') }}</a>
+                            <a href="/album/{{ a.id }}" target="_blank">{{ _('Preview') }}</a>
+                        {% if not a.locked %}
+                            | <a href="javascript:delete_x('{{ a.id }}')">{{ _('Delete') }}</a>
+                        {% endif %}
                             <input type="hidden" name="order" value="{{ a.id }}" />
                         </td>
                     </tr>

@@ -22,9 +22,17 @@
         });
     }
 
+    function setcover() {
+        $.postJSON('set_cover', $('#form-photo-list').serialize(), function(result) {
+            $('#setcover-modal').modal('hide');
+        }).error(function() {
+            $('#setcover-modal').modal('hide');
+        });
+    }
+
     function showUploadResult(index, result) {
         var div = $('#div-photo-' + index);
-        var html = $('#div-photo-template').html().replace(/PID/g, result.small_resource_id).replace(/ID/g, result.id).replace('IMAGEURL', '/api/resource/url/' + result.preview_resource_id).replace('IMAGENAME', result.name);
+        var html = $('#div-photo-template').html().replace(/RID/g, result.small_resource_id).replace(/ID/g, result.id).replace('IMAGEURL', '/api/resource/url/' + result.preview_resource_id).replace('IMAGENAME', result.name);
         div.html(html);
         $('#photo-' + result.id).click(function() {
             var th = $(this);
@@ -34,17 +42,36 @@
             else {
                 div.removeClass('photo-item-checked');
             }
+            selection_changed();
         });
         $('#preview-' + result.id).click(function() {
-            var pid = $('#preview-' + result.id).attr('pid');
-            showPreview(pid);
+            var d = $('#preview-' + result.id);
+            showPreview(d.attr('pid'), d.attr('rid'));
         });
     }
 
-    function showPreview(resource_id) {
+    function showPreview(photo_id, resource_id) {
         $('#div-modal-image').css('background-image', '');
         $('#div-modal-image').css('background-image', 'url(/api/resource/url/' + resource_id + ')');
+        $('#photo-id').val(photo_id);
         $('#preview-modal').modal('show');
+    }
+
+    function selection_changed() {
+        var data = $('#form-photo-list').serialize();
+        var selected = data.split('&').length - 1;
+        if (selected==1) {
+            $('#btn-cover').show();
+        }
+        else {
+            $('#btn-cover').hide();
+        }
+        if (selected > 0) {
+            $('#btn-delete').show();
+        }
+        else {
+            $('#btn-delete').hide();
+        }
     }
 
 $(function() {
@@ -58,16 +85,22 @@ $(function() {
         }
     });
 
+    $('#btn-cover').click(function() {
+        var data = $('#form-photo-list').serialize();
+        $('#setcover-modal').modal('show');
+    })
+
     $('#btn-upload').click(function() {
         $('#name').val('');
         $('#file').val('');
+        $('#div-preview-image').css('background-image', '');
         $('#show-upload-form').hide();
         $('#div-upload-form').slideDown();
     });
     $('#cancel-upload').click(cancelUpload);
 
     $('div.photo-item-image').click(function() {
-        showPreview($(this).attr('pid'));
+        showPreview($(this).attr('pid'), $(this).attr('rid'));
     });
     $('input.photo-item-select').click(function() {
         var th = $(this);
@@ -78,6 +111,7 @@ $(function() {
         else {
             div.removeClass('photo-item-checked');
         }
+        selection_changed();
     });
 });
 
@@ -168,6 +202,20 @@ function uploadPhoto(form) {
 }
 </script>
 
+<div id="setcover-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Set Photo as Cover</h3>
+    </div>
+    <div class="modal-body">
+        <p>Are you sure you want to set this photo as album cover?</p>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:setcover()" class="btn btn-primary">{{ _('OK') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
+    </div>
+</div>
+
 <div id="alert-modal" class="modal hide fade">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -202,10 +250,31 @@ function uploadPhoto(form) {
         <h3>Photo Preview</h3>
     </div>
     <div class="modal-body">
-        <div id="div-modal-image"></div>
+        <div>
+            <div id="div-modal-image"></div>
+        </div>
+        <div><hr /></div>
+        <div>
+            <form id="form-edit-photo" name="editphoto" method="post" action="do_edit_photo" class="form-horizontal">
+                <input type="hidden" id="photo-id" name="id" value="" />
+                <div class="control-group">
+                    <label class="control-label">Name</label>
+                    <div class="controls">
+                        <input type="text" id="photo-name" name="name" value="" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Description</label>
+                    <div class="controls">
+                        <input type="text" id="photo-description" name="description" value="" />
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
     <div class="modal-footer">
-        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('OK') }}</a>
+        <a href="javascript:do_edit_photo()" class="btn btn-primary">{{ _('OK') }}</a>
+        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
     </div>
 </div>
 
@@ -220,7 +289,8 @@ function uploadPhoto(form) {
         <div id="show-upload-form">
             <a href="albums" class="btn"><i class="icon-chevron-left"></i> All Albums</a>
             <button id="btn-upload" class="btn btn-primary">Upload New Photo</button>
-            <button id="btn-delete" class="btn">Delete</button>
+            <button id="btn-cover" class="btn hide">Set Cover</button>
+            <button id="btn-delete" class="btn btn-danger hide">Delete</button>
         </div>
         <div id="div-upload-form" class="hide">
             <div class="row sep">
@@ -239,7 +309,7 @@ function uploadPhoto(form) {
                         <div id="div-file" class="control-group">
                             <label class="control-label">Photo</label>
                             <div class="controls">
-                                <input id="file" name="file" type="file" class="input-xlarge" />
+                                <input id="file" name="file" type="file" class="input-xlarge" accept="image/jpeg,image/gif,image/png" />
                             </div>
                         </div>
                         <div class="form-actions">
@@ -278,7 +348,7 @@ function uploadPhoto(form) {
                 </div>
             </div>
             <div id="div-photo-template" class="photo-item" style="display:none">
-                <div pid="PID" id="preview-ID" class="photo-item-image photo-item-image-clickable" style="background-image:url(IMAGEURL)"></div>
+                <div pid="ID" rid="RID" id="preview-ID" class="photo-item-image photo-item-image-clickable" style="background-image:url(IMAGEURL)"></div>
                 <div style="padding:12px 0px 0px 0px">
                     <div class="photo-item-label">
                         <label class="checkbox inline"><input type="checkbox" id="photo-ID" name="ids" class="photo-item-select" value="ID">IMAGENAME</label>
@@ -287,7 +357,7 @@ function uploadPhoto(form) {
             </div>
 {% for p in photos %}
             <div id="div-photo-{{ p.id }}" class="photo-item">
-                <div pid="{{ p.small_resource_id }}" id="preview-{{ p.id }}" class="photo-item-image photo-item-image-clickable" style="background-image:url(/api/resource/url/{{ p.preview_resource_id }})"></div>
+                <div pid="{{ p.id }}" rid="{{ p.small_resource_id }}" id="preview-{{ p.id }}" class="photo-item-image photo-item-image-clickable" style="background-image:url(/api/resource/url/{{ p.preview_resource_id }})"></div>
                 <div style="padding:12px 0px 0px 0px">
                     <div class="photo-item-label">
                         <label class="checkbox inline"><input type="checkbox" id="photo-{{ p.id }}" name="ids" class="photo-item-select" value="{{ p.id }}">{{ p.name }}</label>

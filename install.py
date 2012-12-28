@@ -167,9 +167,10 @@ r'''
 r'''
     create table comments (
         id varchar(50) not null,
+        user_id varchar(50) not null,
         ref_type varchar(50) not null,
         ref_id varchar(50) not null,
-        user_id varchar(50) not null,
+        ref_url varchar(1000) not null,
         image_url varchar(1000) not null,
         name varchar(50) not null,
         content text not null,
@@ -232,6 +233,7 @@ r'''
 r'''
     create table albums (
         id varchar(50) not null,
+        locked bool not null,
         cover_photo_id varchar(50) not null,
         cover_resource_id varchar(50) not null,
         photo_count int not null,
