@@ -9,61 +9,56 @@ Michael Liao (askxuefeng@gmail.com)
 
 __author__ = 'Michael Liao'
 
-import re, os, sha, time, uuid, hmac, base64, hashlib, urllib, urllib2, mimetypes, logging
+import re, os, sha, time, hmac, base64, hashlib, urllib, urllib2, mimetypes, logging
 
 from datetime import datetime, timedelta, tzinfo
 from StringIO import StringIO
 
-class Provider(object):
+class Plugin(object):
 
     def __init__(self, **kw):
         bucket = kw.get('bucket')
         access_key_id = kw.get('access_key_id')
         access_key_secret = kw.get('access_key_secret')
         if not bucket:
-            raise ValueError('missing param: bucket')
+            raise IOError('missing param: bucket')
         if not access_key_id:
-            raise ValueError('missing param: access_key_id')
+            raise IOError('missing param: access_key_id')
         if not access_key_secret:
-            raise ValueError('missing param: access_key_secret')
+            raise IOError('missing param: access_key_secret')
         self._client = Client(str(access_key_id), str(access_key_secret), str(bucket))
 
     @staticmethod
-    def get_name():
-        return 'Aliyun OSS Uploader'
-
-    @staticmethod
     def get_description():
-        return 'Upload files to Aliyun OSS'
+        return 'Aliyun Open Storage Service'
 
     @staticmethod
-    def get_settings():
+    def get_inputs():
         return (dict(key='bucket', name='Bucket', description='Bucket'),
                 dict(key='access_key_id', name='Access Key ID', description='Access key id'),
                 dict(key='access_key_secret', name='Access Key Secret', description='Access key secret'))
+
+    @staticmethod
+    def validate(**kw):
+        pass
 
     def delete(self, ref):
         bucket, obj = self._client.names_from_url(ref)
         if obj:
             self._client.delete_object(obj, bucket=bucket)
         else:
-            raise ValueError('Could not delete file which does not uploaded to Aliyun OSS.')
+            raise IOError('Could not delete file which does not uploaded to Aliyun OSS.')
 
-    def upload(self, ftype, fext, fcontent):
-        dt = datetime.now()
-        fpath = os.path.join(str(ftype), str(dt.year), str(dt.month), str(dt.day), '%s%s' % (uuid.uuid4().hex, fext))
+    def upload(self, fpath, fp):
         logging.info('saving uploaded file to oss %s...' % fpath)
-        url = self._client.put_object(fpath, fcontent)
-        return dict(url=url, ref=url)
+        url = self._client.put_object(fpath, fp)
+        return url, url
 
 _HOST = 'storage.aliyun.com'
 _URL = 'http://%s.oss.aliyuncs.com/%s'
 
 _RE_URL1 = re.compile(r'^http\:\/\/(\w+)\.oss\.aliyuncs\.com\/+(.+)$')
 _RE_URL2 = re.compile(r'^http\:\/\/storage\.aliyun\.com/(\w+)\/+(.+)$')
-
-class StorageError(StandardError):
-    pass
 
 class Client(object):
 
@@ -74,11 +69,11 @@ class Client(object):
 
     def _check_obj(self, obj):
         if not obj:
-            raise StorageError('ObjectName', 'Object cannot be empty.')
+            raise IOError('Object cannot be empty.')
         if isinstance(obj, unicode):
             obj = obj.encode('utf-8')
         if obj.startswith('/') or obj.startswith('\\'):
-            raise StorageError('ObjectName', 'Object name cannot start with \"/\" or \"\\\"')
+            raise IOError('Object name cannot start with \"/\" or \"\\\"')
         return obj
 
     def _check_bucket(self, bucket):
@@ -86,7 +81,7 @@ class Client(object):
             return bucket
         if self._bucket:
             return self._bucket
-        raise StorageError('BucketName', 'Bucket is required but no default bucket specified.')
+        raise IOError('Bucket is required but no default bucket specified.')
 
     def names_from_url(self, url):
         '''
@@ -211,7 +206,7 @@ def _httprequest(host, verb, path, payload, headers):
         logging.info('HTTPError: %s' % xml)
         code = _mid(xml, '<Code>', '</Code>')
         msg = _mid(xml, '<Message>', '</Message>')
-        raise StorageError(code, msg)
+        raise IOError('Code: %s, Message: %s' % (code, msg))
 
 def _api(access_key_id, access_key_secret, verb, bucket, obj, payload=None, headers=None):
     host = '%s.oss.aliyuncs.com' % bucket

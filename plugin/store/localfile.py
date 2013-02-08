@@ -7,15 +7,12 @@ __author__ = 'Michael Liao'
 Upload files to local dir /static/upload/
 '''
 
-import os
-import uuid
-import shutil
-import logging
+import os, uuid, shutil, logging
 from datetime import datetime
 
 from transwarp.web import ctx
 
-class Provider(object):
+class Plugin(object):
 
     def __init__(self, **kw):
         self._document_root = ctx.request.document_root
@@ -25,16 +22,16 @@ class Provider(object):
             os.makedirs(self._upload_dir)
 
     @staticmethod
-    def get_name():
-        return 'Local Uploader'
-
-    @staticmethod
     def get_description():
-        return 'Upload files to local directory /static/upload/'
+        return 'Local File System Storage'
 
     @staticmethod
-    def get_settings():
+    def get_inputs():
         return ()
+
+    @staticmethod
+    def validate(**kw):
+        pass
 
     def delete(self, ref):
         fpath = '%s%s' % (self._document_root, ref)
@@ -42,14 +39,15 @@ class Provider(object):
         if os.path.isfile(fpath):
             os.remove(fpath)
 
-    def upload(self, ftype, fext, fcontent):
+    def upload(self, fpath, fp):
         dt = datetime.now()
-        fdir = os.path.join(self._upload_dir, str(ftype), str(dt.year), str(dt.month), str(dt.day))
+        fpath1, ffile = os.path.split(fpath)
+        fdir = os.path.join(self._upload_dir, fpath1)
         if not os.path.isdir(fdir):
             os.makedirs(fdir)
-        fpath = os.path.join(fdir, '%s%s' % (uuid.uuid4().hex, fext))
-        logging.info('saving uploaded file to %s...' % fpath)
-        with open(fpath, 'w') as fo:
-            fo.write(fcontent)
-        url = '/%s' % fpath
-        return dict(url=url, ref=url)
+        ffullpath = os.path.join(fdir, ffile)
+        logging.info('saving uploaded file to %s...' % ffullpath)
+        with open(ffullpath, 'w') as fo:
+            fo.write(fp)
+        url = '/static/upload/%s' % fpath
+        return url, url

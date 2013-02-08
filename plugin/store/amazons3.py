@@ -7,12 +7,12 @@ Amazon S3 API by:
 Michael Liao (askxuefeng@gmail.com)
 '''
 
-import re, os, sha, uuid, time, hmac, base64, hashlib, urllib, urllib2, mimetypes, logging
+import re, os, sha, time, hmac, base64, hashlib, urllib, urllib2, mimetypes, logging
 
 from datetime import datetime, timedelta, tzinfo
 from StringIO import StringIO
 
-class Provider(object):
+class Plugin(object):
 
     def __init__(self, **kw):
         bucket = kw.get('bucket')
@@ -28,19 +28,19 @@ class Provider(object):
         self._client = Client(str(access_key_id), str(access_key_secret), str(bucket), bool(cname))
 
     @staticmethod
-    def get_name():
-        return 'Amazon S3 Uploader'
-
-    @staticmethod
     def get_description():
-        return 'Upload files to Amazon S3'
+        return 'Amazon Simple Storage Service'
 
     @staticmethod
-    def get_settings():
+    def get_inputs():
         return (dict(key='bucket', name='Bucket', description='Bucket'),
                 dict(key='access_key_id', name='Access Key ID', description='Access key id'),
                 dict(key='access_key_secret', name='Access Key Secret', description='Access key secret'),
                 dict(key='cname', name='Use CNAME', description='Use CNAME', input='checkbox'))
+
+    @staticmethod
+    def validate(**kw):
+        pass
 
     def delete(self, ref):
         bucket, obj = self._client.names_from_url(ref)
@@ -49,21 +49,17 @@ class Provider(object):
         else:
             raise ValueError('Could not delete file which does not uploaded to Aliyun OSS.')
 
-    def upload(self, ftype, fext, fcontent):
+    def upload(self, fpath, fp):
         dt = datetime.now()
-        fpath = os.path.join(str(ftype), str(dt.year), str(dt.month), str(dt.day), '%s%s' % (uuid.uuid4().hex, fext))
         logging.info('saving uploaded file to s3 %s...' % fpath)
-        url = self._client.put_object(fpath, fcontent)
-        return dict(url=url, ref=url)
+        url = self._client.put_object(fpath, fp)
+        return url, url
 
 _URL = 'http://%s.s3.amazonaws.com/%s'
 
 _RE_URL1 = re.compile(r'^http\:\/\/([\.\w]+)\.s3[\-\w]*\.amazonaws\.com\/(.+)$')
 _RE_URL2 = re.compile(r'^http\:\/\/s3[\-\w]*\.amazonaws\.com\/([\.\w]+)\/(.+)$')
 _RE_URL3 = re.compile(r'^http\:\/\/([\.\-\w]+)\/(.+)$')
-
-class StorageError(StandardError):
-    pass
 
 class Client(object):
 
@@ -84,11 +80,11 @@ class Client(object):
 
     def _check_key(self, key):
         if not key:
-            raise StorageError('Key', 'Key cannot be empty.')
+            raise IOError('Key cannot be empty.')
         if isinstance(key, unicode):
             key = key.encode('utf-8')
         if key.startswith('/') or key.startswith('\\'):
-            raise StorageError('Key', 'Key cannot start with \"/\" or \"\\\"')
+            raise IOError('Key cannot start with \"/\" or \"\\\"')
         return key
 
     def _check_bucket(self, bucket):
@@ -96,7 +92,7 @@ class Client(object):
             return bucket
         if self._bucket:
             return self._bucket
-        raise StorageError('BucketName', 'Bucket is required but no default bucket specified.')
+        raise IOError('Bucket is required but no default bucket specified.')
 
     def names_from_url(self, url):
         '''
@@ -277,7 +273,7 @@ def _httprequest(host, verb, path, payload, headers):
             logging.warn('resend http request to endpoint: %s' % endpoint)
             return _httprequest(endpoint, verb, path, payload, headers)
         msg = _mid(xml, '<Message>', '</Message>')[0]
-        raise StorageError(code, msg)
+        raise IOError('Code: %s, Message: %s' % (code, msg))
 
 def _api(access_key_id, access_key_secret, verb, bucket, key, payload=None, headers=None):
     host = '%s.s3.amazonaws.com' % bucket if bucket else 's3.amazonaws.com'
