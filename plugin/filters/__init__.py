@@ -5,26 +5,49 @@ __author__ = 'Michael Liao'
 
 import functools, logging
 
-from transwarp.web import ctx
+from transwarp.web import ctx, forbidden, notfound
 from transwarp import db, i18n
 
-import util
+from auth import extract_session_cookie, http_basic_auth
+
+def load_site(func):
+    @functools.wraps(func)
+    def _wrapper(*args, **kw):
+        website = None
+        host = ctx.request.host.lower()
+        n = host.find(u':')
+        if n!=(-1):
+            host = host[:n]
+        logging.debug('try load website: %s' % host)
+        # FIXME: improve speed:
+        wss = db.select('select * from websites where domain=?', host)
+        if wss:
+            ws = wss[0]
+            if ws.disabled:
+                logging.debug('website is disabled: %s' % host)
+                raise forbidden()
+            logging.info('bind ctx.website')
+            ctx.website = ws
+            try:
+                return func(*args, **kw)
+            finally:
+                del ctx.website
+        logging.debug('website not found: %s' % host)
+        raise notfound()
+    return _wrapper
 
 def load_user(func):
     @functools.wraps(func)
     def _wrapper(*args, **kw):
-        user = None
-        uid = util.extract_session_cookie()
-        if uid:
-            users = db.select('select * from users where id=?', uid)
-            if users:
-                user = users[0]
-                logging.info('load user ok from cookie.')
+        user = extract_session_cookie()
         if user is None:
             auth = ctx.request.header('AUTHORIZATION')
-            logging.warn(auth)
+            logging.debug('get authorization header: %s' % auth)
             if auth and auth.startswith('Basic '):
-                user = util.http_basic_auth(auth[6:])
+                user = http_basic_auth(auth[6:])
+        if user and ctx.website.id!=user.website_id:
+            user = None
+        logging.info('bind ctx.user')
         ctx.user = user
         try:
             return func(*args, **kw)
