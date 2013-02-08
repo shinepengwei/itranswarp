@@ -1,56 +1,39 @@
-<div class="row sep">
-    <div class="span10">
-        <h3>{{ form_title }}</h3>
-    </div>
-</div>
-
-<div id="div-error" class="row hide">
-    <div class="span10">
-        <div class="alert alert-error">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <span id="span-error"></span>
-        </div>
-    </div>
-</div>
-
 <script type="text/javascript">
     function show_error(err, field_name) {
         $('div.control-group').removeClass('error');
-        if (err==null || err=='') {
-            $('#div-error').hide();
+        if (err==null) {
+            $('div.alert-error').text('').hide();
             return false;
         }
-        $('#span-error').text(err);
-        $('#div-error').show();
-        $('#div-' + field_name).addClass('error');
-        if ($('#div-error').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('#div-error').offset().top});
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
         }
         return false;
     }
 
     function show_loading(show) {
         if (show) {
-            $('#submit').attr('disabled', 'disabled');
-            $('#loading').show();
+            $('button[type=submit]').attr('disabled', 'disabled');
+            $('span.loading').show();
         }
         else {
-            $('#submit').removeAttr('disabled');
-            $('#loading').hide();
+            $('button[type=submit]').removeAttr('disabled');
+            $('span.loading').hide();
         }
     }
 
     function ajax_post(form) {
         show_error(null);
         show_loading(true);
-        $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
+            show_loading(false);
             if (result.error) {
-                show_loading(false);
-                show_error(result.error, result.error_field);
+                show_error(result.message, result.data);
             }
             else {
-                show_error(null);
-                location.assign(result.redirect);
+                location.assign('categories');
             }
         }).error(function() {
             show_loading(false);
@@ -62,19 +45,21 @@
 
 <div class="row">
     <div class="span10">
-        <form id="form-x" action="{{ action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+        <form id="x-form" action="{{ form_action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
-                <div id="div-name" class="control-group">
+                <legend>{{ form_title }}</legend>
+                <div class="alert alert-error hide"></div>
+                <div class="field-name control-group">
                     <label class="control-label">{{ _('Name') }}:</label>
                     <div class="controls">
-                        <input id="name" name="name" type="text" value="{{ name }}" class="input-xlarge" />
+                        <input name="name" type="text" value="{{ name|e }}" class="input-xlarge" />
                         <span class="help-inline">Category name</span>
                     </div>
                 </div>
-                <div id="div-description" class="control-group">
+                <div class="field-description control-group">
                     <label class="control-label">{{ _('Description') }}:</label>
                     <div class="controls">
-                        <input id="description" name="description" type="text" value="{{ description }}" class="input-xlarge" />
+                        <input name="description" type="text" value="{{ description|e }}" class="input-xlarge" />
                         <span class="help-inline">Category description</span>
                     </div>
                 </div>
@@ -82,7 +67,7 @@
                     <input type="hidden" name="id" value="{{ id }}" />
                     <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
                     <button type="button" class="btn" onclick="location.assign('categories')">{{ _('Cancel') }}</button>
-                    <span id="loading" class="loading hide">{{ _('Processing, please wait') }}...</span>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
                 </div>
             </fieldset>
         </form>

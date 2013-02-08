@@ -1,10 +1,21 @@
 <script type="text/JavaScript">
-    function delete_x(id) {
-        var name = $('#tr-' + id + ' td.name').text();
-        $('#span-delete-x-name').text(name);
-        $('#a-delete-x').attr('href', 'do_delete_page?id='+id);
-        $('#delete-modal').modal('show');
-    }
+    $(function() {
+        $('a.x-btn-delete').each(function() {
+            var aid = $(this).attr('id');
+            var rel = $(this).attr('rel');
+            $(this).popover({
+                placement:'top',
+                html:true,
+                title:'Confirm Deletion',
+                content:'<p>Are you sure you want to delete the <strong>'
+                    + $(this).attr('prompt')
+                    + '</strong>?</p>'
+                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="location.assign(\'?action=delete&id='
+                    + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
+                    + aid + '\').popover(\'hide\')">Cancel</button></div>',
+            });
+        });
+    });
 </script>
 
 <div id="delete-modal" class="modal hide fade">
@@ -52,7 +63,8 @@
                     <td>{{ p.tags|e }}</td>
                     <td>{{ p.creation_time|dt }}</td>
                     <td>
-                        <a href="?action=edit&id={{ p.id }}">{{ _('Edit') }}</a> | <a href="javascript:delete_x('{{ p.id }}')">{{ _('Delete') }}</a>
+                        <a href="?action=edit&id={{ p.id }}" class="x-btn"><i class="icon-edit"></i></a>
+                        <a id="delete-{{ p.id }}" rel="{{ p.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ p.name|e }}"><i class="icon-trash"></i></a>
                     </td>
                 </tr>
 {% endfor %}
