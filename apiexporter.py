@@ -10,7 +10,7 @@ except ImportError:
 
 import re, logging, functools
 
-from transwarp.web import ctx, get, post, forbidden, jsonresult
+from transwarp.web import ctx, get, post, forbidden, jsonresult, HttpError
 from transwarp import db
 
 _TRUES = set([u'1', u't', u'true', u'y', u'yes'])
@@ -67,6 +67,9 @@ def api(role=ROLE_ADMINISTRATORS):
                     return json.dumps(dict(error='permission:forbidden', data='permission', message='No permission for anonymous user.'))
             try:
                 return json.dumps(func(*args, **kw))
+            except HttpError, e:
+                ctx.response.content_type = None
+                raise
             except APIError, e:
                 return json.dumps(dict(error=e.code, data=e.data, message=e.message))
             except Exception, e:
