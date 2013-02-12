@@ -12,78 +12,43 @@ import util
 
 CREATE_TABLES = [
 r'''
+    create table websites (
+        id varchar(50) not null,
+        disabled bool not null,
+        domain varchar(100) not null,
+        name varchar(100) not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        unique key uk_domain(domain),
+        index idx_creation_time(creation_time)
+    );
+''',
+r'''
     create table users (
         id varchar(50) not null,
+        website_id varchar(50) not null,
         locked bool not null,
-        name varchar(50) not null,
-        role int not null,
-        email varchar(50) not null,
+        name varchar(100) not null,
+        role_id int not null,
+        email varchar(100) not null,
         verified bool not null,
-        passwd varchar(32) not null,
+        passwd varchar(100) not null,
         image_url varchar(1000) not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
         primary key(id),
         unique key uk_email(email),
+        index idx_website_id(website_id),
         index idx_creation_time(creation_time)
-    );
-''',
-r'''
-    create table auth_users (
-        id varchar(200) not null,
-        user_id varchar(50) not null,
-        provider varchar(50) not null,
-        name varchar(50) not null,
-        image_url varchar(1000) not null,
-        auth_token varchar(2000) not null,
-        expired_time real not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id)
-    );
-''',
-r'''
-    create table auth_emails (
-        id varchar(50) not null,
-        user_id varchar(50) not null,
-        email varchar(50) not null,
-        auth_token varchar(50) not null,
-        expired_time real not null,
-        creation_time real not null,
-        primary key(id),
-        index idx_user_id(user_id),
-        index idx_creation_time(creation_time)
-    );
-''',
-r'''
-    create table auth_passwd (
-        id varchar(50) not null,
-        user_id varchar(50) not null,
-        auth_token varchar(50) not null,
-        expired_time real not null,
-        creation_time real not null,
-        primary key(id),
-        index idx_user_id(user_id),
-        index idx_creation_time(creation_time)
-    );
-''',
-r'''
-    create table roles (
-        id int not null,
-        locked bool not null,
-        name varchar(50) not null,
-        privileges varchar(1000) not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id)
     );
 ''',
 r'''
     create table menus (
         id varchar(50) not null,
+        website_id varchar(50) not null,
         name varchar(50) not null,
         description varchar(100) not null,
         type varchar(50) not null,
@@ -94,32 +59,34 @@ r'''
         modified_time real not null,
         version bigint not null,
         primary key(id),
+        index idx_website_id(website_id),
         index idx_creation_time(creation_time)
     );
 ''',
 r'''
     create table resources (
         id varchar(50) not null,
+        website_id varchar(50) not null,
         ref_id varchar(50) not null,
         ref_type varchar(50) not null,
         deleted bool not null,
         size bigint not null,
         filename varchar(50) not null,
         mime varchar(50) not null,
-        uploader varchar(50) not null,
         ref varchar(1000) not null,
         url varchar(1000) not null,
         creation_time real not null,
-        modified_time real not null,
         version bigint not null,
         primary key(id),
-        index idx_ref_id(ref_id),
-        index idx_creation_time(creation_time)
+        index idx_website_id(website_id),
+        index idx_ref_id(ref_id)
     );
 ''',
 r'''
     create table attachments (
         id varchar(50) not null,
+        website_id varchar(50) not null,
+        user_id varchar(50) not null,
         resource_id varchar(50) not null,
         preview_resource_id varchar(50) not null,
         name varchar(50) not null,
@@ -128,31 +95,31 @@ r'''
         height int not null,
         size bigint not null,
         mime varchar(50) not null,
-        metadata varchar(1000) not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
         primary key(id),
-        index idx_creation_time(creation_time)
+        index idx_website_id(website_id)
     );
 ''',
 r'''
     create table settings (
         id varchar(50) not null,
+        website_id varchar(50) not null,
         kind varchar(50) not null,
-        name varchar(50) not null,
+        name varchar(100) not null,
         value varchar(1000) not null,
         creation_time real not null,
-        modified_time real not null,
         version bigint not null,
         primary key(id),
-        unique key uk_name(name),
-        index idx_kind(kind)
+        index idx_name_website_id(name, website_id),
+        index idx_kind_website_id(kind, website_id)
     );
 ''',
 r'''
     create table texts (
         id varchar(50) not null,
+        website_id varchar(50) not null,
         kind varchar(50) not null,
         name varchar(50) not null,
         value text not null,
@@ -161,30 +128,14 @@ r'''
         version bigint not null,
         primary key(id),
         unique key uk_name(name),
+        index idx_website_id(website_id),
         index idx_kind(kind)
     )
 ''',
 r'''
-    create table comments (
-        id varchar(50) not null,
-        user_id varchar(50) not null,
-        ref_type varchar(50) not null,
-        ref_id varchar(50) not null,
-        ref_url varchar(1000) not null,
-        image_url varchar(1000) not null,
-        name varchar(50) not null,
-        content text not null,
-        creation_time real not null,
-        version bigint not null,
-        primary key(id),
-        index idx_ref_id(ref_id),
-        index idx_user_id(user_id),
-        index idx_creation_time(creation_time)
-    );
-''',
-r'''
     create table categories (
         id varchar(50) not null,
+        website_id varchar(50) not null,
         locked bool not null,
         display_order int not null,
         name varchar(50) not null,
@@ -193,46 +144,50 @@ r'''
         modified_time real not null,
         version bigint not null,
         primary key(id),
+        index idx_website_id(website_id),
         index idx_display_order(display_order)
     );
 ''',
 r'''
     create table articles (
         id varchar(50) not null,
-        visible bool not null,
-        name varchar(50) not null,
-        tags varchar(1000) not null,
-        category_id varchar(50) not null,
+        website_id varchar(50) not null,
         user_id varchar(50) not null,
-        user_name varchar(50) not null,
+        category_id varchar(50) not null,
+        draft bool not null,
+        user_name varchar(100) not null,
+        name varchar(100) not null,
+        tags varchar(1000) not null,
         description varchar(1000) not null,
         content mediumtext not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
         primary key(id),
+        index idx_website_id(website_id),
         index idx_category_id(category_id),
-        index idx_user_id(user_id),
-        index idx_creation_time(creation_time)
+        index idx_user_id(user_id)
     );
 ''',
 r'''
     create table pages (
         id varchar(50) not null,
-        visible bool not null,
-        name varchar(50) not null,
+        website_id varchar(50) not null,
+        draft bool not null,
+        name varchar(100) not null,
         tags varchar(1000) not null,
         content mediumtext not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
         primary key(id),
-        index idx_creation_time(creation_time)
+        index idx_website_id(website_id)
     );
 ''',
 r'''
     create table albums (
         id varchar(50) not null,
+        website_id varchar(50) not null,
         locked bool not null,
         cover_photo_id varchar(50) not null,
         cover_resource_id varchar(50) not null,
@@ -244,12 +199,14 @@ r'''
         modified_time real not null,
         version bigint not null,
         primary key(id),
+        index idx_website_id(website_id),
         index idx_display_order(display_order)
     );
 ''',
 r'''
     create table photos (
         id varchar(50) not null,
+        website_id varchar(50) not null,
         album_id varchar(50) not null,
         origin_resource_id varchar(50) not null,
         large_resource_id varchar(50) not null,
@@ -269,6 +226,8 @@ r'''
         modified_time real not null,
         version bigint not null,
         primary key(id),
+        index idx_website_id(website_id),
+        index idx_album_id(album_id),
         index idx_display_order(display_order),
         index idx_creation_time(creation_time)
     );
@@ -353,8 +312,17 @@ def install_user():
     except BaseException:
         return dict(error='CANNOT create table in MySQL. Please check the privileges of database user!')
     current = time.time()
-    user = dict( \
+    website = dict(
             id=db.next_str(),
+            disabled=False,
+            domain='localhost',
+            name='Localhost Sample Website',
+            creation_time=current,
+            modified_time=current,
+            version=0)
+    user = dict(
+            id=db.next_str(),
+            website_id=website['id'],
             locked=True,
             name=name,
             role=0,
