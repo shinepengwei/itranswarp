@@ -25,10 +25,10 @@ def scan_submodules(module_name):
     <type 'module'>
     >>> ms['article'].__name__
     'apps.article'
-    >>> type(ms['manage'])
+    >>> type(ms['website'])
     <type 'module'>
-    >>> ms['manage'].__name__
-    'apps.manage'
+    >>> ms['website'].__name__
+    'apps.website'
     '''
     web_root = os.path.dirname(os.path.abspath(__file__))
     mod_path = os.path.join(web_root, *module_name.split('.'))
