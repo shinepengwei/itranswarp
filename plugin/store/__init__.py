@@ -38,10 +38,11 @@ class Plugin(object):
 raise any IOError when failed.
 '''
 
-import os, uuid, logging
+import os, time, uuid, logging, mimetypes
 from datetime import datetime
 
-from transwarp.web import Dict
+from transwarp.web import ctx, Dict
+from transwarp import db
 
 import setting, loader, plugin
 
@@ -67,15 +68,37 @@ def get_store_instance(pname):
 def get_enabled_store_instance():
     return get_store_instance(get_enabled_store_name())
 
-def upload_file(ftype, fext, fp):
-    dt = datetime.now()
-    fpath = os.path.join(str(ftype), str(dt.year), str(dt.month), str(dt.day), '%s%s' % (uuid.uuid4().hex, fext))
-    url, ref = get_enabled_store_instance().upload(fpath, fp)
-    return url, '%s.%s' % (get_enabled_store_name(), ref)
+def delete_resources(ref_id):
+    db.update('update resources set deleted=? where ref_id=?', True, ref_id)
 
 def delete_file(the_ref):
-    ss = the_ref.split('.', 1)
+    ss = the_ref.split(':', 1)
     if len(ss) != 2:
         raise IOError('Bad ref')
     name, ref = ss
     get_store_instance(name).delete(ref)
+
+def upload_file(ref_type, ref_id, filename, fcontent):
+    fileext = os.path.splitext(filename)[1].lower()
+    filesize = len(fcontent)
+    dt = datetime.now()
+    fpath = os.path.join(ctx.website.id, str(ref_type), str(dt.year), str(dt.month), str(dt.day), '%s%s' % (uuid.uuid4().hex, fileext))
+    sname = get_enabled_store_name()
+    url, the_ref = get_store_instance(sname).upload(fpath, fcontent)
+    logging.info('uploaded file: %s' % url)
+    ref = '%s:%s' % (sname, the_ref)
+    r = Dict( \
+        id = db.next_str(), \
+        website_id = ctx.website.id, \
+        ref_id = ref_id, \
+        ref_type = ref_type, \
+        deleted = False, \
+        size = filesize, \
+        filename = filename, \
+        mime = mimetypes.types_map.get(fileext, 'application/octet-stream'), \
+        ref = ref, \
+        url = url, \
+        creation_time = time.time(), \
+        version = 0)
+    db.insert('resources', **r)
+    return r
