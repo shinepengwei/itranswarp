@@ -10,7 +10,7 @@ from transwarp import db
 
 from apiexporter import *
 from plugin import store
-import thumbnail
+import html, thumbnail
 
 from util import theme
 
@@ -241,6 +241,7 @@ def api_create_article():
     if ctx.user.role_id < ROLE_CONTRIBUTORS:
         draft = True if i.draft else False
     current = time.time()
+    content, summary = html.parse(content, 1000)
     article = Dict( \
         id=db.next_str(), \
         website_id=ctx.website.id, \
@@ -250,7 +251,7 @@ def api_create_article():
         draft=draft, \
         name=name, \
         tags=_format_tags(i.tags), \
-        description='', \
+        summary=summary, \
         content=content, \
         creation_time=current, \
         modified_time=current, \
@@ -276,7 +277,9 @@ def api_update_article():
         content = i.content.strip()
         if not content:
             raise APIValueError('content', 'content cannot be empty.')
+        content, summary = html.parse(content, 1000)
         kw['content'] = content
+        kw['summary'] = summary
     if 'category_id' in i:
         category_id = i.category_id
         cat = get_category(category_id)

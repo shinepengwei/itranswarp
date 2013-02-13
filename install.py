@@ -158,7 +158,7 @@ r'''
         user_name varchar(100) not null,
         name varchar(100) not null,
         tags varchar(1000) not null,
-        description varchar(1000) not null,
+        summary mediumtext not null,
         content mediumtext not null,
         creation_time real not null,
         modified_time real not null,
