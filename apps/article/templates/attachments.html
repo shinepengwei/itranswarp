@@ -1,10 +1,4 @@
 <script type="text/JavaScript">
-    function delete_x(id, name) {
-        $('#span-delete-x-name').text(name);
-        $('#a-delete-x').attr('href', 'do_delete_attachment?id='+id);
-        $('#delete-modal').modal('show');
-    }
-
     function filesize(size) {
         if (size<=0)
             return '';
@@ -39,22 +33,7 @@
     });
 </script>
 
-<div id="delete-modal" class="modal hide fade">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h3>Deletion Confirm</h3>
-    </div>
-    <div class="modal-body">
-        <p>Are you sure you want to delete the attachment "<strong><span id="span-delete-x-name"></span></strong>"?</p>
-        <p>The operation is unrecoverable!</p>
-    </div>
-    <div class="modal-footer">
-        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
-        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
-    </div>
-</div>
-
-<div class="row sep">
+<div class="row">
     <div class="span10">
         <h3>{{ _('All Attachments') }}</h3>
     </div>
@@ -62,7 +41,7 @@
 
 <div class="row sep">
     <div class="span10">
-        <a href="add_attachment" class="btn btn-primary pull-right">{{ _('Add New Attachment') }}</a>
+        <a href="add_attachment" class="btn btn-primary pull-right">{{ _('Add Attachment') }}</a>
     </div>
 </div>
 
@@ -90,7 +69,7 @@
     {% endif %}
                         </div>
                     </td>
-                    <td><a href="/api/resources/url/{{ a.resource_id }}" target="_blank">{{ a.name|e }}</a></td>
+                    <td><a href="/api/resources/url?id={{ a.resource_id }}" target="_blank">{{ a.name|e }}</a></td>
                     <td><script type="text/javascript"> document.write(filesize({{ a.size }})); </script></td>
                     <td>{{ a.creation_time|dt }}</td>
                     <td>
@@ -104,22 +83,4 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="span10">
-        <div class="pagination pull-right">
-            <ul>
-{% if previous %}
-                <li><a href="?page={{ page - 1 }}">«</a></li>
-{% else %}
-                <li class="disabled"><a href="javascript:void(0);">«</a></li>
-{% endif %}
-                <li class="active"><a href="javascript:void(0);">{{ page }}</a></li>
-{% if previous %}
-                <li><a href="?page={{ page + 1 }}">»</a></li>
-{% else %}
-                <li class="disabled"><a href="javascript:void(0);">»</a></li>
-{% endif %}
-            </ul>
-        </div>
-    </div>
-</div>
+{% include 'templates/admin/inc_page.html' %}

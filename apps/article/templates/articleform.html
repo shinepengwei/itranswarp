@@ -42,6 +42,15 @@
         });
         return false;
     }
+
+    $(function() {
+        $('#html-editor').redactor({
+            autoresize: false,
+            convertDivs: true,
+            imageUpload: '/api/attachments/upload?link=t',
+            fileUpload: '/api/attachments/upload?link=t',
+        });
+    });
 </script>
 
 <div class="row">
@@ -78,8 +87,8 @@ $('#category_id').val('{{ category_id }}');
                         <span class="help-inline">Tags seperated by ,</span>
                     </div>
                 </div>
-                <div id="div-content-x" class="control-group">
-                    <textarea id="redactor-editor" name="content" class="redactor span8" style="height: 420px;">
+                <div class="field-content control-group">
+                    <textarea id="html-editor" name="content" class="redactor" style="width:780px;height=600px">
                     {{ content|e }}
                     </textarea>
                 </div>

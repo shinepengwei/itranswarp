@@ -3,12 +3,15 @@
 
 __author__ = 'Michael Liao'
 
-import time, logging
+import os, time, logging, mimetypes
 
 from transwarp.web import ctx, get, post, route, jsonrpc, seeother, jsonresult, Template, Page, Dict
 from transwarp import db
 
 from apiexporter import *
+from plugin import store
+import thumbnail
+
 from util import theme
 
 from apps import menu
@@ -16,6 +19,12 @@ from apps import menu
 ################################################################################
 # Categories
 ################################################################################
+
+def get_category(category_id):
+    cat = db.select_one('select * from categories where id=?', category_id)
+    if cat.website_id != ctx.website.id:
+        raise APIPermissionError('cannot get category that does not belong to current website.')
+    return cat
 
 def categories():
     i = ctx.request.input(action='')
@@ -28,12 +37,6 @@ def categories():
         api_delete_category()
         raise seeother('categories')
     return Template('templates/categories.html', categories=get_categories())
-
-def get_category(category_id):
-    cat = db.select_one('select * from categories where id=?', category_id)
-    if cat.website_id != ctx.website.id:
-        raise APIPermissionError('cannot get category that does not belong to current website.')
-    return cat
 
 def get_categories():
     cats = db.select('select * from categories where website_id=? order by display_order, name', ctx.website.id)
@@ -217,8 +220,8 @@ def api_list_articles():
     published_only = ctx.user is None or ctx.user.role_id==ROLE_GUESTS or boolean(i.published_only)
     articles = get_articles(page=page, limit=size+1, published_only=published_only)
     if len(articles)==size+1:
-        return dict(articles=articles[:-1], previous=page>2, next=True)
-    return dict(articles=articles, previous=page>2, next=False)
+        return dict(articles=articles[:-1], page=page, previous=page>2, next=True)
+    return dict(articles=articles, page=page, previous=page>2, next=False)
 
 @api(role=ROLE_CONTRIBUTORS)
 @post('/api/articles/create')
@@ -415,63 +418,99 @@ def api_delete_page():
     db.update('delete from pages where id=?', i.id)
     return True
 
+################################################################################
+# Attachments
+################################################################################
 
+def delete_attachment(attr_id):
+    att = db.select_one('select * from attachments where id=?', attr_id)
+    if att.website_id != ctx.website.id:
+        raise APIPermissionError('Cannot delete resource that not belong to current website.')
+    # FIXME: check user_id:
+    store.delete_resources(attr_id)
+    db.update('delete from attachments where id=?', attr_id)
+
+@api(role=ROLE_CONTRIBUTORS)
+@post('/api/attachments/upload')
+def api_upload_attachment():
+    i = ctx.request.input(name='', description='', link='')
+    name = i.name.strip()
+    description = i.description.strip()
+    f = i.file
+    ref_type = 'attachment'
+    ref_id = db.next_str()
+    fcontent = f.file.read()
+    filename = f.filename
+    fext = os.path.splitext(filename)[1]
+
+    preview = None
+    w = h = 0
+    res = store.upload_file(ref_type, ref_id, filename, fcontent)
+    if res.mime.startswith('image/'):
+        try:
+            logging.info('it seems an image was uploaded, so try to get size...')
+            im = thumbnail.as_image(fcontent)
+            w, h = im.size[0], im.size[1]
+            logging.info('size got: %d x %d' % (w, h))
+            if w > 160 or h > 120:
+                logging.info('creating thumbnail for uploaded image (size %d x %d)...' % (w, h))
+                tn = thumbnail.create_thumbnail(im, 160, 120)
+                pw, ph, pcontent = tn['width'], tn['height'], tn['data']
+                logging.info('thumbnail was created successfully with size %d x %d.' % (w, h))
+                preview = store.upload_file(ref_type, ref_id, filename, fcontent)
+            else:
+                logging.info('No need to create thumbnail.')
+                preview = res
+        except:
+            logging.exception('error when creating thumbnail.')
+
+    current = time.time()
+    attr = Dict( \
+        id = ref_id, \
+        website_id = ctx.website.id, \
+        user_id = ctx.user.id, \
+        resource_id = res.id, \
+        preview_resource_id = preview and preview.id or '', \
+        name = name, \
+        description = description, \
+        width = w, \
+        height = h, \
+        size = res.size, \
+        mime = res.mime, \
+        creation_time = current, \
+        modified_time = current, \
+        version = 0)
+    db.insert('attachments', **attr)
+    if i.link==u't':
+        attr.filelink = '/api/resources/url?id=%s' % attr.resource_id
+    return attr
+
+def add_attachment():
+    return Template('templates/attachmentform.html')
+
+def attachments():
+    i = ctx.request.input(action='', page='1', size='20')
+    if i.action=='delete':
+        delete_attachment(i.id)
+        raise seeother('attachments')
+    page = int(i.page)
+    size = int(i.size)
+    num = db.select_int('select count(id) from attachments where website_id=?', ctx.website.id)
+    if page < 1:
+        raise APIValueError('page', 'page invalid.')
+    if size < 1 or size > 100:
+        raise APIValueError('size', 'size invalid.')
+    offset = (page - 1) * size
+    atts = db.select('select * from attachments where website_id=? order by id desc limit ?,?', ctx.website.id, offset, size+1)
+    next = False
+    if len(atts)>size:
+        atts = atts[:-1]
+        next = True
+    return Template('templates/attachments.html', attachments=atts, page=page, previous=page>2, next=next)
 
 s=r'''
 
 
-def do_delete_article():
-    db.update('delete from articles where id=?', ctx.request['id'])
-    raise seeother('articles')
-
-@menu_group('Pages', 20)
-@menu_item('All Pages', 0)
-def pages():
-    i = ctx.request.input(action='')
-    if i.action=='edit':
-        kw = db.select_one('select * from pages where id=?', i.id)
-        return Template('templates/articleform.html', static=True, form_title=_('Edit Page'), action='do_edit_page', **kw)
-    selects = 'id,name,visible,tags,creation_time,modified_time,version'
-    ps = _get_pages(selects=selects)
-    return Template('templates/pages.html', pages=ps)
-
-def do_delete_page():
-    db.update('delete from pages where id=?', ctx.request['id'])
-    raise seeother('pages')
-
-@menu_group('Pages')
-@menu_item('Add New Page', 1)
-def add_page():
-    return Template('templates/articleform.html', static=True, form_title=_('Add New Page'), action='do_add_page')
-
-@jsonresult
-def do_edit_page():
-    i = ctx.request.input()
-    name = i.name.strip()
-    tags = i.tags.strip()
-    content = i.content.strip()
-    if not name:
-        return dict(error=u'Name cannot be empty', error_field='name')
-    if not content:
-        return dict(error=u'Content cannot be empty', error_field='')
-    pg = db.select_one('select version from pages where id=?', i.id)
-    db.update_kw('pages', 'id=?', i.id, name=name, tags=tags, content=content, modified_time=time.time(), version=pg.version+1)
-    return dict(redirect='pages')
-
-@jsonresult
-def do_add_page():
-    i = ctx.request.input()
-    name = i.name.strip()
-    tags = i.tags.strip()
-    content = i.content.strip()
-    if not name:
-        return dict(error=_('Name cannot be empty'), error_field='name')
-    if not content:
-        return dict(error=_('Content cannot be empty'), error_field='')
-    current = time.time()
-    page = dict(id=db.next_str(), visible=True, name=name, tags=tags, content=content, creation_time=current, modified_time=current, version=0)
-    db.insert('pages', **page)
-    return dict(redirect='pages')
 
 @route('/latest')
 @theme('articles.html')
@@ -572,39 +611,6 @@ r'''<?xml version="1.0"?>
 </rss>
 ''')
     return ''.join(L)
-
-#
-# private functions
-#
-
-def _get_pages(selects='id, name'):
-    return db.select('select %s from pages order by creation_time desc' % selects)
-
-def _is_category_exist(category_id):
-    cats = db.select('select id from categories where id=?', category_id)
-    return len(cats) > 0
-
-def _do_add_article(name, tags, category_id, user_id, content, creation_time=None):
-    name = name.strip()
-    tags = tags.strip()
-    content = content.strip()
-    if not name:
-        return dict(error=u'Name cannot be empty', error_field='name')
-    if not content:
-        return dict(error=u'Content cannot be empty', error_field='content')
-    if not user_id:
-        return dict(errur=u'Missing user_id', error_field='user_id')
-    if not _is_category_exist(category_id):
-        return dict(error=u'Invalid category', error_field='category_id')
-    u = db.select_one('select * from users where id=?', user_id)
-    if u.role!=0:
-        return dict(error=u'User cannot post article')
-    user_name = u.name
-    description = 'a short description...'
-    current = float(creation_time) if creation_time else time.time()
-    article = dict(id=db.next_str(), visible=True, name=name, tags=tags, category_id=category_id, user_id=user_id, user_name=user_name, description=description, content=content, creation_time=current, modified_time=current, version=0)
-    db.insert('articles', **article)
-    return dict(article=article)
 
 if __name__=='__main__':
     import doctest
