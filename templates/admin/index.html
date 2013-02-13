@@ -2,87 +2,76 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>{{ __site_name__ }}</title>
+    <title>{{ __website__.name|e }}</title>
     <!--[if lt IE 9]>
         <script src="/static/js/html5.js"></script>
     <![endif]-->
     <link rel="stylesheet" href="/static/css/bootstrap.css" />
     <link rel="stylesheet" href="/static/css/custom.css" />
     <link rel="stylesheet" href="/static/css/redactor.css" />
-    <link rel="stylesheet" href="/static/css/jquery.jqplot.min.css" />
-    <link rel="stylesheet" href="/apps/{{ __mod__ }}/static/style.css" />
 
-    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-1.9.0.min.js"></script>
     <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
     <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/static/js/redactor.min.js"></script>
     <script type="text/javascript">
         $(function() {
-            var li = $('#menuitem-{{ __mod__ }}-{{ __handler__ }}');
+            var li = $('#menu-{{ __mod__ }}-{{ __handler__ }}');
             li.addClass('active');
             document.title = li.text() + ' - ' + document.title;
-            $('.redactor').redactor({
-                autoresize: false,
-                imageUpload: '/admin/manage/do_add_attachment'
-            });
         });
     </script>
 </head>
 <body>
-    <div class="navbar">
+    <div class="navbar navbar-static-top">
         <div class="navbar-inner">
-            <div class="container" style="width:940px">
-                <a class="brand" style="color:#fff" href="/" target="_blank" title="{{ __site_description__|e }}">{{ __site_name__ }}</a>
-                <div class="nav-collapse">
-                    <ul class="nav">
-                        <li><a href="/" target="_blank">{{ _('Visit Site') }}</a></li>
-                        <li><a href="http://michaelliao.github.com/itranswarp/" target="_blank">{{ _('Documentation') }}</a></li>
-                        <li><a href="https://github.com/michaelliao/itranswarp/issues" target="_blank">{{ _('Feedback') }}</a></li>
-                    </ul>
-<!--
-                    <form class="navbar-search pull-left" action="/" method="post">
-                        <input type="text" name="q" placeholder="Type keywords" class="search-query span2" />
-                    </form>
--->
-                    <ul class="nav pull-right">
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" style="color:#fff">
-                                {{ __user__.name }}
-<!--
-                                <span class="badge badge-warning">3</span>
--->
-                                <b class="caret" style="opacity:1.0"></b>
-                            </a>
-                            <ul class="dropdown-menu">
-<!--
-                                <li><a href="/">Comments <span class="badge badge-warning pull-right">3</span></a></li>
-                                <li><a href="/">My Connect <span class="badge badge-warning pull-right">3</span></a></li>
--->
-                                <li><a href="/profile" target="_blank">{{ _('My Profile') }}</a></li>
+            <div class="container">
+                <a class="brand" href="/" target="_blank">{{ __website__.name|e }}</a>
+                <ul class="nav">
+                    <li class="active"><a href="javascript:void(0)">Management</a></li>
+                    <li><a href="http://michaelliao.github.com/itranswarp/" target="_blank">{{ _('Documentation') }}</a></li>
+                    <li><a href="https://github.com/michaelliao/itranswarp/issues" target="_blank">{{ _('Feedback') }}</a></li>
+                </ul>
+                <ul class="nav pull-right">
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">{{ __user__.name }} <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/profile" target="_blank">{{ _('My Profile') }}</a></li>
                                 <li class="divider"></li>
-                                <li><a href="/signout?redirect=/">{{ _('Sign Out') }}</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
+                            <li><a href="/signout?redirect=/">{{ _('Sign Out') }}</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     </div><!-- /navbar -->
 
     <div class="container">
+        <div class="row sep"></div>
+
         <div class="row">
             <div class="span2">
                 <div class="well" style="padding: 8px 0px;">
                     <ul class="nav nav-list">
-{% for m in __menus__ %}
-                        <li class="nav-header">{{ _(m.name) }}</li>
-    {% for i in m.menus %}
-                        <li id="menuitem-{{ m.mod }}-{{ i.handler }}"><a href="/admin/{{ m.mod }}/{{ i.handler }}">{{ _(i.name) }}</a></li>
-    {% endfor %}
-{% endfor %}
+                        <li class="nav-header">{{ _('Overview') }}</li>
+                        <li id="menu-manage-overview"><a href="/admin/manage/overview">{{ _('Statistics') }}</a></li>
+                        <li class="nav-header">{{ _('Articles') }}</li>
+                        <li id="menu-article-categories"><a href="/admin/article/categories">{{ _('Categories') }}</a></li>
+                        <li id="menu-article-articles"><a href="/admin/article/articles">{{ _('All Articles') }}</a></li>
+                        <li id="menu-article-add_article"><a href="/admin/article/add_article">{{ _('Add Article') }}</a></li>
+                        <li class="nav-header">{{ _('Pages') }}</li>
+                        <li id="menu-article-pages"><a href="/admin/article/pages">{{ _('All Pages') }}</a></li>
+                        <li id="menu-article-add_page"><a href="/admin/article/add_page">{{ _('Add New Page') }}</a></li>
+                        <li class="nav-header">{{ _('Attachments') }}</li>
+                        <li id="menu-article-attachments"><a href="/admin/article/attachments">{{ _('All Attachments') }}</a></li>
+                        <li id="menu-article-add_attachment"><a href="/admin/article/add_attachment">{{ _('Add Attachment') }}</a></li>
+                        <li class="nav-header">{{ _('Settings') }}</li>
+                        <li id="menu-website-general"><a href="/admin/website/general">{{ _('General') }}</a></li>
+                        <li id="menu-website-domain"><a href="/admin/website/domain">{{ _('Domain') }}</a></li>
+                        <li id="menu-website-storages"><a href="/admin/website/storages">{{ _('Storage') }}</a></li>
                         <li class="divider"></li>
-                        <li><a href="http://michaelliao.github.com/transwarpdrive/" target="_blank">{{ _('Help') }}</a></li>
+                        <li><a href="http://www.itranswarp.com/" target="_blank">{{ _('Help') }}</a></li>
                     </ul>
                 </div>
             </div>
@@ -100,14 +89,13 @@
             </div>
         </div>
 
-        <div class="row" style="padding-top: 16px; padding-bottom: 16px;">
+        <div class="row">
             <div class="span4">
                 <p><a href="https://github.com/michaelliao/itranswarp" target="_blank">iTranswarp</a> by <a href="http://twitter.com/liaoxuefeng" target="_blank">@liaoxuefeng</a>.</p>
             </div>
             <div class="span4">
                 <p>CSS from <a href="http://twitter.github.com/bootstrap/" target="_blank">Bootstrap</a>.</p>
-                <p>JavaScript from <a href="http://www.jquery.com/" target="_blank">JQuery</a>.</p>
-                <p>WYSIWYG from <a href="http://redactorjs.com/" target="_blank">Redactor</a>.</p>
+                <p>JavaScript from <a href="http://www.jquery.com/" target="_blank">jQuery</a>.</p>
             </div>
             <div class="span4">
                 <p>Code licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License v2.0</a>.</p>
