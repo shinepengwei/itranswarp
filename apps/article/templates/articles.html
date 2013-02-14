@@ -117,7 +117,7 @@
 
 <div class="row sep">
     <div class="span10">
-        <a href="add_article" class="btn btn-primary pull-right">{{ _('Add New Article') }}</a>
+        <a href="add_article" class="btn btn-primary pull-right">{{ _('Add Article') }}</a>
     </div>
 </div>
 
@@ -136,7 +136,7 @@
             <tbody>
 {% for a in articles %}
                 <tr id="tr-{{ a.id }}">
-                    <td class="name"><a href="?action=edit&id={{ a.id }}">{{ a.name|e }}</a></td>
+                    <td class="name"><a href="/article/{{ a.id }}" target="_blank">{{ a.name|e }}</a></td>
                     <td>
                         <a id="cat-{{ a.id }}" rel="{{ a.category_id }}" href="javascript:void(0)" class="x-btn-select x-editable" prompt="{{ a.id }}"><span class="name"></span></a>
                         <span class="loading loading-{{a.id}} hide"></span>

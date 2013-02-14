@@ -50,16 +50,20 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>{{ _('Name') }}</th>
-                    <th>{{ _('Tags') }}</th>
-                    <th>{{ _('Creation Date') }}</th>
-                    <th>{{ _('Operations') }}</th>
+                    <th width="35%">{{ _('Name') }}</th>
+                    <th width="15%">{{ _('Status') }}</th>
+                    <th width="20%">{{ _('Tags') }}</th>
+                    <th width="20%">{{ _('Creation Date') }}</th>
+                    <th width="10%">&nbsp;</th>
                 </tr>
             </thead>
             <tbody>
 {% for p in pages %}
                 <tr id="tr-{{ p.id }}">
                     <td class="name"><a href="/page/{{ p.id }}" target="_blank">{{ p.name|e }}</a></td>
+                    <td>
+                        {{ _(p.draft and 'Draft' or 'Published') }}
+                    </td>
                     <td>{{ p.tags|e }}</td>
                     <td>{{ p.creation_time|dt }}</td>
                     <td>
