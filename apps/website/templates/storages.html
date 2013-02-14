@@ -1,0 +1,58 @@
+<script type="text/javascript">
+    function cancel_popover(aid) {
+        $('#' + aid).popover('hide');
+    }
+
+    $(function() {
+        $('a.x-editable').each(function() {
+            var aid = $(this).attr('id');
+            var pid = $(this).attr('plugin_id');
+
+            $(this).popover({
+                placement: 'top',
+                html: true,
+                title: 'Enable',
+                content: '<p>Enable this plugin?</p><div style="text-align:center">'
+                    + '<button class="btn btn-primary" onclick="location.assign(\''
+                    + '?action=enable&id=' + pid + '&ts=' + new Date().getTime()
+                    + '\')">Yes</button> <button class="btn" onclick="cancel_popover(\''
+                    + aid + '\')">Cancel</button></div>'
+            });
+        });
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Storage Plugins') }}</h3>
+    </div>
+
+    <div class="span10">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="30%">{{ _('Name') }}</th>
+                    <th width="50%">{{ _('Description') }}</th>
+                    <th width="10%">{{ _('Enabled') }}</th>
+                    <th width="10%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for p in plugins %}
+                <tr id="tr-{{ p.id }}" class="{{ cls }}">
+                    <td>{{ p.name|e }}</td>
+                    <td>{{ p.description|e }}</td>
+                    <td>
+                    {% if enabled==p.id %}
+                        Enabled
+                    {% else %}
+                        <a href="javascript:void(0)" id="a-{{ p.id }}" plugin_id="{{ p.id }}" class="x-editable">Disabled</a>
+                    {% endif %}
+                    </td>
+                    <td><a href="?action=edit&id={{ p.id }}" class="x-btn"><i class="icon-edit"></i></a></td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

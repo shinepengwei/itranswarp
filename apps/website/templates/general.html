@@ -1,0 +1,143 @@
+<script type="text/javascript">
+    function show_success() {
+        $('div.alert-success').show().delay(3000).slideUp(300);
+        if ($('div.alert-success').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-success').offset().top});
+        }
+    };
+
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null || err=='') {
+            $('div.alert-error').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('button[type=submit]').attr('disabled', 'disabled');
+            $('span.loading').show();
+        }
+        else {
+            $('button[type=submit]').removeAttr('disabled');
+            $('span.loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        show_loading(true);
+        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
+            if (result.error) {
+                show_error(result.error, result.error_field);
+            }
+            else {
+                show_error(null);
+                show_success();
+                $('a.brand').text($('input[name=name]').val())
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('{{ _('Server error') }}!', '');
+        }).complete(function() {
+            show_loading(false);
+        });
+        return false;
+    }
+
+    $(function() {
+        $('select[name=timezone]').val('{{ timezone }}');
+        $('div.field-dateformat :radio[value="{{ dateformat|e }}"]').attr('checked', 'checked');
+        $('div.field-timeformat :radio[value="{{ timeformat|e }}"]').attr('checked', 'checked');
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('General Settings') }}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <div class="alert alert-success hide">{{ _('Settings saved') }}.</div>
+        <div class="alert alert-error hide">ERROR</div>
+
+        <form name="x-form" action="/api/settings/website/update" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div class="field-name control-group">
+                    <label class="control-label">{{ _('Site Name') }}:</label>
+                    <div class="controls">
+                        <input name="name" type="text" value="{{ name|e }}" class="input-xlarge" maxlength="100" />
+                    </div>
+                </div>
+                <div class="field-description control-group">
+                    <label class="control-label">{{ _('Site Description') }}:</label>
+                    <div class="controls">
+                        <input name="description" type="text" value="{{ description|e }}" class="input-xlarge" maxlength="100" />
+                    </div>
+                </div>
+                <div class="field-copyright control-group">
+                    <label class="control-label">{{ _('Site Copyright') }}:</label>
+                    <div class="controls">
+                        <input name="copyright" type="text" value="{{ copyright|e }}" class="input-xlarge" maxlength="100" />
+                    </div>
+                </div>
+                <div class="field-timezone control-group">
+                    <label class="control-label">{{ _('Timezone') }}:</label>
+                    <div class="controls">
+                        <select name="timezone" class="input-xlarge">
+{% for tz in timezones %}
+                            <option value="{{ tz }}">UTC{{ tz }}</option>
+{% endfor %}
+                        </select>
+                        <span class="help-inline">Default timezone for visitors</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">UTC Date Time:</label>
+                    <div class="controls">
+                        <span class="input-xlarge uneditable-input">{{ utc_example }}</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Local Date Time:</label>
+                    <div class="controls">
+                        <span class="input-xlarge uneditable-input">{{ local_example }}</span>
+                    </div>
+                </div>
+
+                <div class="field-dateformat control-group">
+                    <label class="control-label">{{ _('Date Format') }}:</label>
+                    <div class="controls">
+{% for k, v in date_examples %}
+                        <label class="radio"><input type="radio" name="dateformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
+{% endfor %}
+                    </div>
+                </div>
+
+                <div class="field-timeformat control-group">
+                    <label class="control-label">{{ _('Time Format') }}:</label>
+                    <div class="controls">
+{% for k, v in time_examples %}
+                        <label class="radio"><input type="radio" name="timeformat" value="{{ k }}" /> <span class="example">{{ v }}</span></label>
+{% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

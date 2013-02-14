@@ -1,0 +1,42 @@
+<script type="text/javascript">
+    function post(form) {
+        $('button[type=submit]').attr('disabled', 'disabled');
+        $('span.loading').show();
+        return true;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Domain Settings') }}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <div class="alert alert-info">
+            <a class="close" data-dismiss="alert" href="javascript:void(0)">&times;</a>
+            <strong>How to bind domain</strong><br /><br />
+            You can bind the domain you want to your website rather than <code>{{ __website__.id }}.itranswarp.com</code>. To bind the domain, please set the CNAME of the domain properly.<br /><br />
+            For example, to bind the domain <code>www.example.com</code>, just set the CNAME of <code>www.example.com</code> to <code>host.itranswarp.com</code>.<br /><br />
+            You must set CNAME properly before you can set the domain below. If you already set the CNAME but system notify that the CNAME is not properly set, please retry in 24 hours for DNS records usually cached for 24 hours.
+        </div>
+{% if error %}
+        <div class="alert alert-error">Bind domain failed: {{ error }}</div>
+{% endif %}
+        <form name="x-form" action="?action=update" method="post" class="form-horizontal" onsubmit="return post(this)">
+            <fieldset>
+                <div class="field-domain control-group">
+                    <label class="control-label">{{ _('Domain') }}:</label>
+                    <div class="controls">
+                        <input name="domain" type="text" value="{{ domain }}" class="input-xlarge" maxlength="100" />
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

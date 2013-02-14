@@ -1,0 +1,140 @@
+<script type="text/javascript">
+    $(function() {
+        $('#select-navigation option:first').attr('selected', 'selected');
+        selectNavigationType($('#select-navigation option:first').attr('value'));
+        $('#select-navigation').change(function() {
+             selectNavigationType($(this).val());
+        });
+        $('select[name=value]').change(function() {
+            setName($(this));
+        })
+    });
+
+    function setName(select) {
+        var v = $('#' + select.attr('id') + ' option:selected').text();
+        $('input[name=name]').val(v);
+    }
+
+    function selectNavigationType(navId) {
+        if ($('#select-navigation').val()!=navId) {
+            $('#select-navigation').val(type);
+        }
+        $('div.nav').hide();
+        $('div.nav input').attr('disabled', 'disabled');
+        $('div.nav select').attr('disabled', 'disabled');
+        $('div.nav-' + navId + ' input').removeAttr('disabled');
+        $('div.nav-' + navId + ' select').removeAttr('disabled');
+        $('div.nav-' + navId).show();
+        if ($('div.nav-' + navId).hasClass('input-select')) {
+            setName($('div.nav-' + navId + ' select'));
+        }
+    }
+
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null) {
+            $('div.alert-error').text('').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('button[type=submit]').attr('disabled', 'disabled');
+            $('span.loading').show();
+        }
+        else {
+            $('button[type=submit]').removeAttr('disabled');
+            $('span.loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        show_loading(true);
+        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
+            if (result.error) {
+                show_error(result.message, result.data);
+            }
+            else {
+                location.assign('navigations');
+            }
+        }).error(function() {
+            show_error('{{ _('Server error') }}', '');
+        }).complete(function() {
+            show_loading(false);
+        });
+        return false;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>Add Navigation</h3>
+    </div>
+    <div class="span10">
+        <form id="form-x" action="/api/navigations/create" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div class="alert alert-error hide"></div>
+                <div class="field-name control-group">
+                    <label class="control-label">{{ _('Name') }}:</label>
+                    <div class="controls">
+                        <input name="name" type="text" value="" class="input-xlarge" />
+                        <span class="help-inline">Navigation menu name</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">{{ _('Type') }}:</label>
+                    <div class="controls">
+                        <select id="select-navigation" name="kind" class="input-xlarge">
+{% for nav in navigations %}
+                            <option value="{{ nav.id }}" help="{{ nav.description|e }}">{{ nav.prompt|e }}</option>
+{% endfor %}
+                        </select>
+                        <span class="help-inline"></span>
+                    </div>
+                </div>
+
+{% for nav in navigations %}
+                <!-- navigation input -->
+    {% if nav.input=='text' %}
+                <div class="nav nav-{{ nav.id }} input-text control-group">
+                    <label class="control-label">{{ nav.prompt|e }}</label>
+                    <div class="controls">
+                        <input type="text" name="value" value="" class="input-xlarge" />
+                        <span class="help-inline">{{ nav.description|e }}</span>
+                    </div>
+                </div>
+    {% elif nav.input=='select' %}
+                <div class="nav nav-{{ nav.id }} input-select control-group">
+                    <label class="control-label">{{ nav.prompt|e }}</label>
+                    <div class="controls">
+                        <select id="select-{{ nav.id }}" name="value" class="input-xlarge">
+        {% for k, v in nav.options %}
+                            <option value="{{ k|e }}">{{ v|e }}</option>
+        {% endfor %}
+                        </select>
+                        <span class="help-inline">{{ nav.description|e }}</span>
+                    </div>
+                </div>
+    {% else %}
+                <div class="nav nav-{{ nav.id }} input-none"><input type="hidden" name="value" value="" /></div>
+    {% endif %}
+                <!-- // navigation input -->
+{% endfor %}
+                <div class="form-actions">
+                    <input type="hidden" name="action" value="add" />
+                    <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('navigations')">{{ _('Cancel') }}</button>
+                    <span class="loading hide">{{ _('Processing, please wait') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,86 @@
+<script type="text/javascript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null) {
+            $('div.alert-error').text('').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('span.loading').show();
+        }
+        else {
+            $('span.loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        show_loading(true);
+        $('button[type=submit]').attr('disabled', 'disabled');
+        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
+            if (result.error) {
+                show_error(result.message, result.data);
+                $('button[type=submit]').removeAttr('disabled');
+            }
+            else {
+                show_error(null);
+                location.assign('{{ cancel_url }}');
+            }
+        }).error(function() {
+            show_error('Server error!', '');
+            $('button[type=submit]').removeAttr('disabled');
+        }).complete(function() {
+            show_loading(false);
+        });
+        return false;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ form_title }}</h3>
+    </div>
+
+    <div class="span10">
+        <div class="alert alert-error hide"></div>
+    </div>
+
+    <div class="span10">
+        <form id="form-x" action="{{ submit_url }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+{% for ip in inputs %}
+  {% set t = ip.get('input', 'text') %}
+                <div class="field-{{ ip.key }} control-group">
+                {% if t=='checkbox' %}
+                    {% set ischecked = ' checked=\"checked\" ' if ip.value else '' %}
+                    <div class="controls">
+                        <label class="checkbox"><input id="{{ ip.key }}" name="{{ ip.key }}" type="checkbox" value="True" {{ ischecked }} class="input-xlarge" /> {{ ip.name }}</label>
+                    </div>
+                {% else %}
+                    <label class="control-label">{{ ip.name }}:</label>
+                    <div class="controls">
+                        <input id="{{ ip.key }}" name="{{ ip.key }}" type="text" value="{{ ip.value|e }}" class="input-xlarge" />
+                        <span class="help-inline">{{ ip.description }}</span>
+                    </div>
+                {% endif %}
+                </div>
+{% endfor %}
+                <div class="form-actions">
+                    <input type="hidden" name="id" value="{{ id }}" />
+                    <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('{{ cancel_url }}')">{{ _('Cancel') }}</button>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

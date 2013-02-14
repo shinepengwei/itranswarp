@@ -1,0 +1,181 @@
+<script type="text/JavaScript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null) {
+            $('div.alert-error').text('').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('span.loading').show();
+        }
+        else {
+            $('span.loading').hide();
+        }
+    }
+
+    function showSortButton() {
+        if ($('span.loading:visible').length==0) {
+            $('#btn-sort').show();
+        }
+    }
+
+    function saveOrders() {
+        $('#btn-sort').hide();
+        show_loading(true);
+        var f = $('#x-form-sort');
+        $.postJSON(f.attr('action'), f.serialize()).success(function(result) {
+            show_loading(false);
+            if (result.error) {
+                show_error(result.message);
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('{{ _('Server error') }}!', '');
+        });
+    }
+
+    function moveUp(trid) {
+        var me = $('#tr-' + trid);
+        var x = me.prev();
+        if (x.length > 0) {
+            me.after(x);
+            showSortButton();
+        }
+    }
+
+    function moveDown(trid) {
+        var me = $('#tr-' + trid);
+        var x = me.next();
+        if (x.length > 0) {
+            me.before(x);
+            showSortButton();
+        }
+    }
+
+    function save_name(nav_id, ahref_id, value) {
+        if (value=='' || value==$('#' + ahref_id).text()) {
+            return;
+        }
+        $('#' + ahref_id).removeClass('x-error').hide();
+        $('span.loading-' + nav_id).show();
+        $.postJSON('/api/navigations/update', 'id=' + nav_id + '&name=' + value).success(function(result) {
+            if (result.error) {
+                $('#' + ahref_id).addClass('x-error');
+            }
+            else {
+                $('#' + ahref_id).text(value);
+            }
+        }).error(function() {
+            $('#' + ahref_id).addClass('x-error');
+        }).complete(function() {
+            $('span.loading-' + nav_id).hide();
+            $('#' + ahref_id).show();
+        });
+    }
+
+    $(function() {
+        $('a.x-btn-delete').each(function() {
+            var aid = $(this).attr('id');
+            var rel = $(this).attr('rel');
+            $(this).popover({
+                placement:'top',
+                html:true,
+                title:'Confirm Deletion',
+                content:'<p>Are you sure you want to delete the <strong>'
+                    + $(this).attr('prompt')
+                    + '</strong>?</p>'
+                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="location.assign(\'?action=delete&id='
+                    + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
+                    + aid + '\').popover(\'hide\')">Cancel</button></div>',
+            });
+        });
+
+        $('a.x-btn-name').each(function() {
+            var ahref = $(this);
+            var aid = $(this).attr('id');
+            function create_popover() {
+                var text = ahref.text();
+                var rel = ahref.attr('rel');
+                var tid = 'text-' + rel;
+                return '<div style="text-align:center">'
+                    + '<input type="text" id="' + tid + '" value="'
+                    + $('<div/>').text(text).html() + '" style="width:190px" />'
+                    + '</div><div style="text-align:center"><button class="btn btn-primary" onclick="var v=$(\'#' + tid + '\').val();$(\'#'
+                    + aid + '\').popover(\'hide\');save_name(\''
+                    + rel + '\',\'' + aid + '\',v);">OK</button> <button class="btn" onclick="$(\'#'
+                    + aid + '\').popover(\'hide\')">Cancel</button></div>'
+            }
+
+            $(this).popover({
+                placement: 'top',
+                html: true,
+                title: 'Edit Name',
+                content: create_popover
+            });
+        });
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Navigations') }}</h3>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <a href="?action=add" class="btn btn-primary pull-right">{{ _('Add Navigation') }}</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <div class="alert alert-error hide"></div>
+        <form id="x-form-sort" name="x-form-sort" action="/api/navigations/sort" onsubmit="return false">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th width="25%">{{ _('Name') }}</th>
+                        <th width="40%">{{ _('URL') }}</th>
+                        <th width="20%">{{ _('Creation Date') }}</th>
+                        <th width="15%">&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>
+{% for n in navigations %}
+                    <tr id="tr-{{ n.id }}">
+                        <td class="name">
+                            <a id="edit-name-{{ n.id }}" rel="{{ n.id }}" href="javascript:void(0)" class="x-editable x-btn-name">{{ n.name|e }}</a>
+                            <span class="loading loading-{{n.id}} hide"></span>
+                        </td>
+                        <td><a href="{{ n.url }}" target="_blank">{{ n.url|elli }}</a></td>
+                        <td>{{ n.creation_time|dt }}</td>
+                        <td>
+                            <a href="javascript:moveUp('{{ n.id }}')" class="x-btn"><i class="icon-arrow-up"></i></a>
+                            <a href="javascript:moveDown('{{ n.id }}')" class="x-btn"><i class="icon-arrow-down"></i></a>
+                            <a id="delete-{{ n.id }}" rel="{{ n.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ n.name|e }}"><i class="icon-trash"></i></a>
+                            <input type="hidden" name="id" value="{{ n.id }}" />
+                        </td>
+                    </tr>
+{% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <button id="btn-sort" onclick="saveOrders()" class="btn btn-info pull-right hide">{{ _('Save Orders') }}</button>
+        <span class="loading pull-right hide">{{ _('Saving') }}...</span>
+    </div>
+</div>
