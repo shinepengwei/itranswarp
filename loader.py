@@ -109,6 +109,10 @@ def scan_submodules(module_name):
             mod_dict[name] = __import__('%s.%s' % (module_name, name), globals(), locals(), [name])
     return mod_dict
 
+def load_navigations():
+    navs = db.select('select * from navigations where website_id=? order by display_order', ctx.website.id)
+    return navs
+
 if __name__=='__main__':
     import doctest
     doctest.testmod()
