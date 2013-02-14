@@ -10,7 +10,7 @@ except ImportError:
 
 import re, logging, functools
 
-from transwarp.web import ctx, get, post, forbidden, jsonresult, HttpError
+from transwarp.web import ctx, get, post, forbidden, HttpError
 from transwarp import db
 
 _TRUES = set([u'1', u't', u'true', u'y', u'yes'])

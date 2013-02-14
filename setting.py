@@ -86,7 +86,6 @@ def delete_settings(kind):
 
 KIND_WEBSITE = 'website'
 
-WEBSITE_NAME = 'name'
 WEBSITE_DESCRIPTION = 'description'
 WEBSITE_COPYRIGHT = 'copyright'
 WEBSITE_TIMEZONE = 'timezone'
@@ -94,7 +93,7 @@ WEBSITE_DATE_FORMAT = 'dateformat'
 WEBSITE_TIME_FORMAT = 'timeformat'
 WEBSITE_DATETIME_FORMAT = 'datetimeformat'
 
-KEYS_WEBSITE = set([WEBSITE_NAME, WEBSITE_DESCRIPTION, WEBSITE_COPYRIGHT, WEBSITE_TIMEZONE, WEBSITE_DATE_FORMAT, WEBSITE_TIME_FORMAT])
+KEYS_WEBSITE = set([WEBSITE_DESCRIPTION, WEBSITE_COPYRIGHT, WEBSITE_TIMEZONE, WEBSITE_DATE_FORMAT, WEBSITE_TIME_FORMAT])
 
 DATE_FORMATS = [
     '%B %d, %Y',
@@ -157,8 +156,6 @@ TIMEZONES = [
 
 def get_website_settings():
     d = get_settings(KIND_WEBSITE)
-    if not WEBSITE_NAME in d:
-        d[WEBSITE_NAME] = u'Untitled'
     if not WEBSITE_DESCRIPTION in d:
         d[WEBSITE_DESCRIPTION] = u''
     if not WEBSITE_COPYRIGHT in d:

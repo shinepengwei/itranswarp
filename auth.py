@@ -12,7 +12,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from transwarp.web import ctx, view, get, post, route, jsonrpc, Dict, Template, seeother, notfound, badrequest
+from transwarp.web import ctx, view, get, post, route, Dict, Template, seeother, notfound, badrequest
 from transwarp import db
 
 from apiexporter import *

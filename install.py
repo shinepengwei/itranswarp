@@ -5,7 +5,7 @@ __author__ = 'Michael Liao'
 
 import re, sys, time, hashlib
 
-from transwarp.web import ctx, get, post, forbidden, Template, jsonresult
+from transwarp.web import ctx, get, post, forbidden, Template
 from transwarp import db, task
 
 import util
@@ -46,21 +46,20 @@ r'''
     );
 ''',
 r'''
-    create table menus (
+    create table navigations (
         id varchar(50) not null,
         website_id varchar(50) not null,
+        display_order int not null,
+        kind varchar(50) not null,
         name varchar(50) not null,
         description varchar(100) not null,
-        type varchar(50) not null,
-        display_order int not null,
         ref varchar(1000) not null,
         url varchar(1000) not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
         primary key(id),
-        index idx_website_id(website_id),
-        index idx_creation_time(creation_time)
+        index idx_website_id(website_id)
     );
 ''',
 r'''
@@ -288,7 +287,6 @@ def install():
     return Template('templates/install/welcome.html')
 
 @post('/install')
-@jsonresult
 def install_user():
     if _check_installed():
         return dict(error='CANNOT install because the web site was already installed.')
