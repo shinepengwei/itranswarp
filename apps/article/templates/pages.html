@@ -18,22 +18,7 @@
     });
 </script>
 
-<div id="delete-modal" class="modal hide fade">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h3>{{ _('Deletion Confirm') }}</h3>
-    </div>
-    <div class="modal-body">
-        <p>Are you sure you want to permanently delete the page "<strong><span id="span-delete-x-name"></span></strong>"?</p>
-        <p>This operation is unrecoverable!</p>
-    </div>
-    <div class="modal-footer">
-        <a href="javascript:void(0)" id="a-delete-x" class="btn btn-danger">{{ _('Delete') }}</a>
-        <a href="javascript:void(0)" class="btn" data-dismiss="modal">{{ _('Cancel') }}</a>
-    </div>
-</div>
-
-<div class="row sep">
+<div class="row">
     <div class="span10">
         <h3>{{ _('All Pages') }}</h3>
     </div>
@@ -41,7 +26,7 @@
 
 <div class="row sep">
     <div class="span10">
-        <a href="add_page" class="btn btn-primary pull-right">{{ _('Add New Page') }}</a>
+        <a href="add_page" class="btn btn-primary pull-right">{{ _('Add Page') }}</a>
     </div>
 </div>
 
