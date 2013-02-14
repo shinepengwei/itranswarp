@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ _('Sign In') }} - {{ website.name }}</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <script type="text/javascript" src="/static/js/jquery-1.9.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+var redirect = '{{ redirect }}';
+
+function show_loading(show) {
+    if (show) {
+        $('#span-loading').show();
+    }
+    else {
+        $('#span-loading').hide();
+    }
+}
+
+function show_error(msg) {
+    if (msg) {
+        $('#span-signin-error').text(msg);
+        $('#div-signin-error').show();
+    }
+    else {
+        $('#div-signin-error').hide();
+    }
+}
+
+function ajax_signin(form) {
+    $('#md5-passwd').val($.md5($('#origin-passwd').val()));
+    show_loading(true);
+    show_error(null);
+    $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        show_loading(false);
+        if (result.error) {
+            show_error(result.message);
+        }
+        else {
+            location.assign(redirect);
+        }
+    }).error(function() {
+        show_loading(false);
+        show_error('{{ _('Server error') }}!');
+    });
+    return false;
+}
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="height: 120px"></div>
+
+        <div class="row">
+            <div class="span1 offset3">
+                <img src="/static/img/logo.png" width="64" height="64" />
+            </div>
+            <div class="span4" style="padding-top:16px;">
+                <h1>{{ website.name }}</h1>
+            </div>
+        </div>
+
+        <div class="row sep"></div>
+
+        <div class="row">
+            <form action="/api/authenticate" method="post" onsubmit="return ajax_signin(this)">
+                <div class="span4 offset4">
+                    <div id="div-signin-error" class="alert alert-error hide">
+                        <span id="span-signin-error"></span>
+                    </div>
+                    <label class="control-label">{{ _('Email') }}:</label>
+                    <input type="text" id="input-email" name="email" maxlength="50" class="input-xlarge" value="{{ email }}" />
+                    <label class="control-label">{{ _('Password') }}:</label>
+                    <input type="password" id="origin-passwd" maxlength="50" class="input-xlarge" />
+                    <input type="hidden" id="md5-passwd" name="passwd" />
+                    <label class="checkbox"><input type="checkbox" name="remember" value="True" /> {{ _('Remember me') }}</label>
+                </div>
+                <div class="span6 offset3">
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="span5 offset1">
+                                <button type="submit" class="btn btn-primary">{{ _('Sign In') }}</button>
+                                &nbsp;&nbsp;
+                                <span id="span-loading" class="loading hide">{{ _('Processing') }}...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="span6 offset4">
+                    <i class="icon-question-sign"></i> <a href="/forgot">{{ _('Forgot password') }}</a>
+                    &nbsp;&nbsp;
+                    <i class="icon-circle-arrow-left"></i> <a href="/">{{ _('Back to home') }}</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="row">
+            <div class="span10 offset1">
+                <div style="margin-top: 24px; padding: 12px 0px; text-align: center; border-top: 1px solid #ccc;">
+                    About iTranswarp &copy; 2013, <a href="https://github.com/michaelliao/itranswarp" target="_blank">iTranswarp on GitHub</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
