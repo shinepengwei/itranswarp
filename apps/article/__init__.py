@@ -30,10 +30,10 @@ def _get_category(category_id):
 def categories():
     i = ctx.request.input(action='')
     if i.action=='add':
-        return Template('templates/categoryform.html', form_title='Add new category', form_action='/api/categories/create')
+        return Template('templates/categoryform.html', form_title=_('Add Category'), form_action='/api/categories/create')
     if i.action=='edit':
         cat = _get_category(i.id)
-        return Template('templates/categoryform.html', form_title='Edit category', form_action='/api/categories/update', **cat)
+        return Template('templates/categoryform.html', form_title=_('Edit Category'), form_action='/api/categories/update', **cat)
     if i.action=='delete':
         api_delete_category()
         raise seeother('categories')
@@ -168,7 +168,7 @@ def articles():
     i = ctx.request.input(action='', page='1')
     if i.action=='edit':
         article = _get_article(i.id)
-        return Template('templates/articleform.html', form_title='Edit article', form_action='/api/articles/update', categories=_get_categories(), static=False, **article)
+        return Template('templates/articleform.html', form_title=_('Edit Article'), form_action='/api/articles/update', categories=_get_categories(), static=False, **article)
     if i.action=='delete':
         api_delete_article()
         raise seeother('articles')
@@ -182,7 +182,7 @@ def articles():
     return Template('templates/articles.html', page=page, previous=previous, next=next, categories=_get_categories(), articles=articles)
 
 def add_article():
-    return Template('templates/articleform.html', form_title='Add new article', form_action='/api/articles/create', categories=_get_categories(), static=False)
+    return Template('templates/articleform.html', form_title=_('Add Article'), form_action='/api/articles/create', categories=_get_categories(), static=False)
 
 def _format_tags(tags):
     if tags:
@@ -374,14 +374,14 @@ def pages():
     i = ctx.request.input(action='')
     if i.action=='edit':
         page = _get_page(i.id)
-        return Template('/templates/articleform.html', form_title='Edit Page', form_action='/api/pages/update', static=True, **page)
+        return Template('/templates/articleform.html', form_title=_('Edit Page'), form_action='/api/pages/update', static=True, **page)
     if i.action=='delete':
         api_delete_page()
         raise seeother('pages')
     return Template('templates/pages.html', pages=_get_pages())
 
 def add_page():
-    return Template('templates/articleform.html', form_title='Add New Page', form_action='/api/pages/create', static=True)
+    return Template('templates/articleform.html', form_title=_('Add Page'), form_action='/api/pages/create', static=True)
 
 def _get_page(page_id):
     page = db.select_one('select * from pages where id=?', page_id)
