@@ -45,9 +45,9 @@
 
 <div class="row">
     <div class="span10">
+        <h3>{{ form_title }}</h3>
         <form id="x-form" action="{{ form_action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
-                <legend>{{ form_title }}</legend>
                 <div class="alert alert-error hide"></div>
                 <div class="field-name control-group">
                     <label class="control-label">{{ _('Name') }}:</label>
