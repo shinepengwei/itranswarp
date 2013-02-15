@@ -4,13 +4,14 @@
 __author__ = 'Michael Liao'
 
 import os, time, logging, mimetypes
+from datetime import datetime
 
-from transwarp.web import ctx, get, post, route, seeother, Template, Dict
+from transwarp.web import ctx, get, post, route, seeother, Template, Dict, UTC_0
 from transwarp import db
 
 from apiexporter import *
 from plugin import store
-import html, thumbnail
+import html, thumbnail, setting
 
 from plugin.theme import theme
 
@@ -609,41 +610,10 @@ def get_nav_definitions():
 
 
 ################################################################################
+# RSS
+################################################################################
 
 s=r'''
-
-
-
-@route('/latest')
-@theme('articles.html')
-def latest():
-    i = ctx.request.input(page='1')
-    page_size = 20
-    page_total = db.select_int('select count(id) from articles')
-    p = Page(int(i.page), page_size, page_total)
-    articles = db.select('select * from articles order by creation_time desc limit ?,?', p.offset, p.limit)
-    return dict(articles=articles, page=p, __active_menu__='latest_articles')
-
-@route('/category/<cat_id>')
-@theme('articles.html')
-def category(cat_id):
-    i = ctx.request.input(page='1')
-    page_size = 20
-    page_total = db.select_int('select count(id) from articles where category_id=?', cat_id)
-    p = Page(int(i.page), page_size, page_total)
-    articles = db.select('select * from articles where category_id=? order by creation_time desc, name limit ?,?', cat_id, p.offset, p.limit)
-    return dict(articles=articles, page=p, __active_menu__='category%s latest_articles' % cat_id)
-
-@route('/article/<art_id>')
-@theme('article.html')
-def article(art_id):
-    a = db.select_one('select * from articles where id=?', art_id)
-    cs = get_comments_desc(art_id, 21)
-    next_comment_id = None
-    if len(cs)==21:
-        next_comment_id = cs[-1].id
-        cs = cs[:-1]
-    return dict(article=a, comments=cs, next_comment_id=next_comment_id, __title__=a.name, __active_menu__='category%s latest_articles' % a.category_id)
 
 @get('/article/<art_id>/comments')
 @jsonresult
@@ -670,49 +640,60 @@ def comment():
     c = make_comment('article', a.id, user, u''.join(L))
     raise seeother('/article/%s#comments' % i.article_id)
 
-@route('/page/<page_id>')
-@theme('page.html')
-def page(page_id):
-    p = db.select_one('select * from pages where id=?', page_id)
-    return dict(page=p, __title__=p.name, __active_menu__='page%s' % page_id)
 '''
+
+def _rss_datetime(ts):
+    dt = datetime.fromtimestamp(ts, UTC_0)
+    return dt.strftime('%a, %d %b %Y %H:%M:%S GMT')
+
+def _safe_str(s):
+    if isinstance(s, str):
+        return s
+    if isinstance(s, unicode):
+        return s.encode('utf-8')
+    return str(s)
 
 @get('/feed')
 def rss():
     ctx.response.content_type = 'application/rss+xml'
     limit = 20
-    site_name = get_setting_site_name()
+    ss = setting.get_website_settings()
+    description = ss['description']
+    copyright = ss['copyright']
+    domain = ctx.website.domain
+    articles = _get_articles(1, 20)
+    rss_time = articles and articles[0].creation_time or time.time()
     L = [
-r'''<?xml version="1.0"?>
-<rss version="2.0">
-  <channel>
-    <title><![CDATA[%s]]></title>
-    <image>
-      <link>http://%s/</link>
-      <url>http://%s/favicon.ico</url>
-    </image>
-    <description><![CDATA[%s]]></description>
-    <link>http://%s/</link>
-    <generator>iTranswarp</generator>
-    <copyright><![CDATA[Copyright &copy; %s]]></copyright>
-    <pubDate>%s</pubDate>
-''']
-    articles = db.select('select * from articles order by creation_time desc limit ?', limit)
+        '<?xml version="1.0"?>\n<rss version="2.0"><channel><title><![CDATA[',
+        ctx.website.name,
+        ']]></title><link>http://',
+        domain,
+        '/</link><description><![CDATA[',
+        description,
+        ']]></description><lastBuildDate>',
+        _rss_datetime(rss_time),
+        '</lastBuildDate><generator>iTranswarp</generator><ttl>30</ttl>'
+    ]
     for a in articles:
-        L.append(r'''    <item>
-      <title><![CDATA[%s]]></title>
-      <link>http://%s%s</link>
-      <guid>http://%s%s</guid>
-      <author><![CDATA[%s]]></author>
-      <pubDate>%s</pubDate>
-      <description><![CDATA[%s]]></description>
-      <category />
-    </item>
-''')
-    L.append(r'''  </channel>
-</rss>
-''')
-    return ''.join(L)
+        L.append('<item><title><![CDATA[')
+        L.append(a.name)
+        L.append(']]></title><link>http://')
+        L.append(domain)
+        L.append('/article/')
+        L.append(a.id)
+        L.append('</link><guid>http://')
+        L.append(domain)
+        L.append('/article/')
+        L.append(a.id)
+        L.append('</guid><author><![CDATA[')
+        L.append(a.user_name)
+        L.append(']]></author><pubDate>')
+        L.append(_rss_datetime(a.creation_time))
+        L.append('</pubDate><description><![CDATA[')
+        L.append(a.content)
+        L.append(']]></description></item>')
+    L.append(r'</channel></rss>')
+    return map(_safe_str, L)
 
 if __name__=='__main__':
     import doctest
