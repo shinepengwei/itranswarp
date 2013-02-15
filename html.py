@@ -44,6 +44,17 @@ class MyHTMLParser(HTMLParser):
         else:
             logging.warn('ERROR when parsing tag.')
 
+    def handle_startendtag(self, tag, attrs):
+        if tag=='br' or tag=='hr' or tag=='img':
+            if attrs:
+                self._buffer.append(u'<%s %s />' % (tag, u' '.join([u'%s="%s"' % (k, v) for k, v in attrs])))
+            else:
+                self._buffer.append(u'<%s />' % tag)
+            self._last_is_pre = False
+        else:
+            self.handle_starttag(tag, attrs)
+            self.handle_endtag(tag)
+
     def handle_data(self, data):
         s = data if self._last_is_pre else data.strip()
         self._length = self._length + len(s)
@@ -77,5 +88,5 @@ def parse(s, maxchars):
     return h, summary
 
 if __name__=='__main__':
-    s = u'<p>paragrah 1</p> <p color=red><a>another papa</a></p> <img src="test.jpg" /> <div>END</div><h1>END</h1>'
+    s = u'<p>paragrah 1</p> <p color=red><a>another papa</a></p> <br/> <img src="test.jpg" /> <div>END</div><h1>END</h1>'
     print parse(s, 12)
