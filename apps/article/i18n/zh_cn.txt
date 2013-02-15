@@ -1,0 +1,32 @@
+# auto-generated i18n file for zh_cn:
+
+Add Article = 添加文章
+Add Attachment = 添加附件
+Add Category = 添加分类
+Add Page = 添加页面
+All Articles = 所有文章
+All Attachments = 所有附件
+All Categories = 所有分类
+All Pages = 所有页面
+Author = 作者
+Cancel = 取消
+Category = 分类
+Creation Date = 创建日期
+Date = 日期
+Description = 描述
+Edit Article = 编辑文章
+Edit Category = 编辑分类
+Edit Page = 编辑页面
+File = 文件
+Name = 名称
+Preview = 预览
+Processing = 处理中
+Progress = 进度
+Published = 已发布
+Draft = 草稿
+Save = 保存
+Save Orders = 保存顺序
+Size = 大小
+Status = 状态
+Tags = 标签
+Thumbnail = 缩略图
