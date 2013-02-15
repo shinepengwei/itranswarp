@@ -138,6 +138,27 @@ def api_sort_categories():
             db.update('update categories set display_order=? where id=?', odict.get(c.id, l), c.id)
     return True
 
+@theme('category.html')
+@route('/category/<category_id>')
+def theme_get_category_articles(category_id):
+    i = ctx.request.input(page='1', size='20')
+    page = int(i.page)
+    size = int(i.size)
+    if page < 1:
+        raise APIValueError('page', 'page invalid.')
+    if size < 1 or size > 100:
+        raise APIValueError('size', 'size invalid.')
+    category = _get_category(category_id)
+    articles = _get_articles_by_category(category_id, page=page, limit=size+1, published_only=True)
+    next = len(articles)==size+1
+    if next:
+        articles = articles[:-1]
+    categories = _get_categories()
+    category_dict = dict()
+    for cat in categories:
+        category_dict[cat.id] = cat.name
+    return dict(__navigation__=('/category/%s' % category_id, '/articles'), category=category, articles=articles, page=page, previous=page>2, next=next, categories=categories, get_category_name=lambda cid: category_dict.get(cid, 'ERROR'))
+
 ################################################################################
 # Articles
 ################################################################################
@@ -153,7 +174,7 @@ def articles():
     page = int(i.page)
     previous = page > 1
     next = False
-    articles = get_articles(page, 51, published_only=False)
+    articles = _get_articles(page, 51, published_only=False)
     if len(articles)==51:
         articles = articles[:-1]
         next = True
@@ -175,16 +196,22 @@ def _get_article(article_id):
         raise APIPermissionError('cannot get draft article.')
     return article
 
-def count_articles(published_only=True):
+def _count_articles(published_only=True):
     if published_only:
         return db.select_int('select count(id) from articles where website_id=? and draft=?', ctx.website.id, False)
     return db.select_int('select count(id) from articles where website_id=?', ctx.website.id)
 
-def get_articles(page=1, limit=20, published_only=True):
+def _get_articles(page=1, limit=20, published_only=True):
     offset = (page - 1) * limit
     if published_only:
         return db.select('select * from articles where website_id=? and draft=? order by id desc limit ?,?', ctx.website.id, False, offset, limit)
     return db.select('select * from articles where website_id=? order by id desc limit ?,?', ctx.website.id, offset, limit)
+
+def _get_articles_by_category(category_id, page=1, limit=20, published_only=True):
+    offset = (page - 1) * limit
+    if published_only:
+        return db.select('select * from articles where category_id=? and draft=? order by id desc limit ?,?', category_id, False, offset, limit)
+    return db.select('select * from articles where category_id=? order by id desc limit ?,?', category_id, offset, limit)
 
 @api(role=ROLE_GUESTS)
 @get('/api/articles/get')
@@ -205,7 +232,7 @@ def api_count_articles():
     '''
     i = ctx.request.input(published_only='true')
     published_only = ctx.user is None or ctx.user.role_id==ROLE_GUESTS or boolean(i.published_only)
-    return count_articles(published_only)
+    return _count_articles(published_only)
 
 @api(role=ROLE_GUESTS)
 @get('/api/articles/list')
@@ -218,7 +245,7 @@ def api_list_articles():
     if size < 1 or size > 100:
         raise APIValueError('size', 'size invalid.')
     published_only = ctx.user is None or ctx.user.role_id==ROLE_GUESTS or boolean(i.published_only)
-    articles = get_articles(page=page, limit=size+1, published_only=published_only)
+    articles = _get_articles(page=page, limit=size+1, published_only=published_only)
     if len(articles)==size+1:
         return dict(articles=articles[:-1], page=page, previous=page>2, next=True)
     return dict(articles=articles, page=page, previous=page>2, next=False)
@@ -316,7 +343,7 @@ def theme_get_article(article_id):
     category_dict = dict()
     for cat in categories:
         category_dict[cat.id] = cat.name
-    return dict(article=article, categories=categories, get_category_name=lambda cid: category_dict.get(cid, 'ERROR'))
+    return dict(__navigation__=('/category/%s' % article.category_id, '/articles'), article=article, categories=categories, get_category_name=lambda cid: category_dict.get(cid, 'ERROR'))
 
 @theme('articles.html')
 @route('/articles')
@@ -328,7 +355,7 @@ def theme_get_articles():
         raise APIValueError('page', 'page invalid.')
     if size < 1 or size > 100:
         raise APIValueError('size', 'size invalid.')
-    articles = get_articles(page=page, limit=size+1, published_only=True)
+    articles = _get_articles(page=page, limit=size+1, published_only=True)
     next = len(articles)==size+1
     if next:
         articles = articles[:-1]
@@ -336,7 +363,7 @@ def theme_get_articles():
     category_dict = dict()
     for cat in categories:
         category_dict[cat.id] = cat.name
-    return dict(articles=articles, page=page, previous=page>2, next=next, categories=categories, get_category_name=lambda cid: category_dict.get(cid, 'ERROR'))
+    return dict(__navigation__=('/articles',), articles=articles, page=page, previous=page>2, next=next, categories=categories, get_category_name=lambda cid: category_dict.get(cid, 'ERROR'))
 
 ################################################################################
 # Pages
@@ -345,7 +372,7 @@ def theme_get_articles():
 def pages():
     i = ctx.request.input(action='')
     if i.action=='edit':
-        page = get_page(i.id)
+        page = _get_page(i.id)
         return Template('/templates/articleform.html', form_title='Edit Page', form_action='/api/pages/update', static=True, **page)
     if i.action=='delete':
         api_delete_page()
@@ -355,7 +382,7 @@ def pages():
 def add_page():
     return Template('templates/articleform.html', form_title='Add New Page', form_action='/api/pages/create', static=True)
 
-def get_page(page_id):
+def _get_page(page_id):
     page = db.select_one('select * from pages where id=?', page_id)
     if page.website_id != ctx.website.id:
         raise APIPermissionError('cannot get page that does not belong to current website.')
@@ -387,7 +414,7 @@ def api_get_page():
     i = ctx.request.input(id='')
     if not i.id:
         raise APIValueError('id', 'id cannot be empty')
-    return get_page(i.id)
+    return _get_page(i.id)
 
 @api(role=ROLE_ADMINISTRATORS)
 @post('/api/pages/create')
@@ -420,7 +447,7 @@ def api_update_page():
     i = ctx.request.input(id='')
     if not i.id:
         raise APIValueError('id', 'id cannot be empty.')
-    page = get_page(i.id)
+    page = _get_page(i.id)
     kw = {}
     if 'name' in i:
         name = i.name.strip()
@@ -447,9 +474,16 @@ def api_delete_page():
     i = ctx.request.input(id='')
     if not i.id:
         raise APIValueError('id', 'id cannot be empty.')
-    page = get_page(i.id)
+    page = _get_page(i.id)
     db.update('delete from pages where id=?', i.id)
     return True
+
+@theme('page.html')
+@route('/page/<page_id>')
+def theme_get_page(page_id):
+    page = _get_page(page_id)
+    categories = _get_categories()
+    return dict(__navigation__=('/page/%s' % page_id,), page=page, categories=categories)
 
 ################################################################################
 # Attachments
@@ -548,14 +582,14 @@ def attachments():
 def get_nav_definitions():
     return [
         dict(
-            id='all_articles',
+            id='articles',
             input=None,
             prompt='All Articles',
             description='Show all articles',
             get_url=lambda value: '/articles',
         ),
         dict(
-            id='all_category',
+            id='category',
             input='select',
             prompt='Category',
             description='Show articles of category',
