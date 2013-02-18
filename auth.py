@@ -17,8 +17,6 @@ from transwarp import db
 
 from apiexporter import *
 
-_REG_EMAIL = re.compile(r'^[0-9a-z]([\-\.\w]*[0-9a-z])*\@([0-9a-z][\-\w]*[0-9a-z]\.)+[a-z]{2,9}$')
-
 _SESSION_COOKIE_NAME = '_auth_session_cookie_'
 _SESSION_COOKIE_SALT = '_Auth-SalT_'
 _SESSION_COOKIE_EXPIRES = 604800.0
