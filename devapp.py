@@ -19,28 +19,27 @@ or for production mode:
 
 from wsgiref.simple_server import make_server
 
-import os, logging
-logging.basicConfig(level=logging.INFO)
+import os
+import logging; logging.basicConfig(level=logging.DEBUG)
+import locale; locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 from transwarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
 from transwarp import web, db, cache
 
-from plugin.filters import load_user, load_i18n
-
-from conf.mysql import DB_SCHEMA, DB_HOST, DB_PORT, DB_USER, DB_PASSWORD
+from loader import load_site, load_user, load_i18n
 
 def create_app():
     cache.client = cache.RedisClient('localhost')
     db.init(db_type = 'mysql', \
-            db_schema = DB_SCHEMA, \
-            db_host = DB_HOST, \
-            db_port = DB_PORT, \
-            db_user = DB_USER, \
-            db_password = DB_PASSWORD, \
+            db_schema = 'itranswarp', \
+            db_host = 'localhost', \
+            db_port = 3306, \
+            db_user = 'root', \
+            db_password = 'passw0rd', \
             use_unicode = True, charset = 'utf8')
-    return web.WSGIApplication(('static_handler', 'install', 'admin', 'apps.manage', 'apps.article', 'apps.photo'), \
+    return web.WSGIApplication(('apps.article', 'apps.website', 'static_handler', 'install', 'auth', 'admin',), \
             document_root=os.path.dirname(os.path.abspath(__file__)), \
-            filters=(load_user, load_i18n), template_engine='jinja2', \
+            filters=(load_site, load_user, load_i18n), template_engine='jinja2', \
             DEBUG=True)
 
 if __name__=='__main__':
