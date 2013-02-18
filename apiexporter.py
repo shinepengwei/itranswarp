@@ -20,6 +20,9 @@ def boolean(s):
         return s
     return s.lower() in _TRUES
 
+TASK_MAIL_HIGH = 'mail-high'
+TASK_MAIL_LOW = 'mail-low'
+
 ROLE_SUPER_ADMINS = 0
 ROLE_ADMINISTRATORS = 1
 ROLE_DESIGNERS = 2
@@ -112,47 +115,47 @@ def check_email(email):
     >>> check_email('localhost')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('@localhost')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('michael@')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('michael@localhost')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('michael@local.host.')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('-hello@example.local')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('michael$name@local.local')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('user.@example.com')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('user-@example.com')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     >>> check_email('user-0@example-.com')
     Traceback (most recent call last):
       ...
-    APIError: Invalid email address.
+    APIValueError: Invalid email address.
     '''
     e = str(email).strip().lower()
     if _REG_EMAIL.match(e) is None:
-        raise APIError('argument:invalid', 'email', 'Invalid email address.')
+        raise APIValueError('email', 'Invalid email address.')
     return e
 
 if __name__=='__main__':
