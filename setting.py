@@ -96,62 +96,62 @@ WEBSITE_DATETIME_FORMAT = 'datetimeformat'
 KEYS_WEBSITE = set([WEBSITE_DESCRIPTION, WEBSITE_COPYRIGHT, WEBSITE_TIMEZONE, WEBSITE_DATE_FORMAT, WEBSITE_TIME_FORMAT])
 
 DATE_FORMATS = [
-    '%B %d, %Y',
-    '%a, %b %d, %Y',
-    '%b %d, %Y',
-    '%m/%d/%Y',
-    '%d/%m/%Y',
-    '%Y-%m-%d',
-    '%y-%m-%d',
+    u'%B %d, %Y',
+    u'%a, %b %d, %Y',
+    u'%b %d, %Y',
+    u'%m/%d/%Y',
+    u'%d/%m/%Y',
+    u'%Y-%m-%d',
+    u'%y-%m-%d',
 ]
 
 TIME_FORMATS = [
-    '%H:%M:%S',
-    '%H:%M',
-    '%I:%M %p',
+    u'%H:%M:%S',
+    u'%H:%M',
+    u'%I:%M %p',
 ]
 
-DEFAULT_TIMEZONE = '+00:00'
+DEFAULT_TIMEZONE = u'+00:00'
 TIMEZONES = [
-    '-12:00',
-    '-11:00',
-    '-10:00',
-    '-09:30',
-    '-09:00',
-    '-08:00',
-    '-07:00',
-    '-06:00',
-    '-05:00',
-    '-04:30',
-    '-04:00',
-    '-03:30',
-    '-03:00',
-    '-02:00',
-    '-01:00',
+    u'-12:00',
+    u'-11:00',
+    u'-10:00',
+    u'-09:30',
+    u'-09:00',
+    u'-08:00',
+    u'-07:00',
+    u'-06:00',
+    u'-05:00',
+    u'-04:30',
+    u'-04:00',
+    u'-03:30',
+    u'-03:00',
+    u'-02:00',
+    u'-01:00',
     DEFAULT_TIMEZONE,
-    '+01:00',
-    '+02:00',
-    '+03:00',
-    '+03:30',
-    '+04:00',
-    '+04:30',
-    '+05:00',
-    '+05:30',
-    '+05:45',
-    '+06:00',
-    '+06:30',
-    '+07:00',
-    '+08:00',
-    '+09:00',
-    '+09:30',
-    '+10:00',
-    '+10:30',
-    '+11:00',
-    '+11:30',
-    '+12:00',
-    '+12:45',
-    '+13:00',
-    '+14:00',
+    u'+01:00',
+    u'+02:00',
+    u'+03:00',
+    u'+03:30',
+    u'+04:00',
+    u'+04:30',
+    u'+05:00',
+    u'+05:30',
+    u'+05:45',
+    u'+06:00',
+    u'+06:30',
+    u'+07:00',
+    u'+08:00',
+    u'+09:00',
+    u'+09:30',
+    u'+10:00',
+    u'+10:30',
+    u'+11:00',
+    u'+11:30',
+    u'+12:00',
+    u'+12:45',
+    u'+13:00',
+    u'+14:00',
 ]
 
 def get_website_settings():
@@ -166,7 +166,7 @@ def get_website_settings():
         d[WEBSITE_DATE_FORMAT] = DATE_FORMATS[0]
     if not WEBSITE_TIME_FORMAT in d:
         d[WEBSITE_TIME_FORMAT] = TIME_FORMATS[0]
-    d[WEBSITE_DATETIME_FORMAT] = '%s %s' % (d[WEBSITE_DATE_FORMAT], d[WEBSITE_TIME_FORMAT])
+    d[WEBSITE_DATETIME_FORMAT] = u'%s %s' % (d[WEBSITE_DATE_FORMAT], d[WEBSITE_TIME_FORMAT])
     return d
 
 def set_website_settings(**kw):
@@ -175,6 +175,40 @@ def set_website_settings(**kw):
         if k in KEYS_WEBSITE:
             d[k] = v
     set_settings(KIND_WEBSITE, **d)
+    return d
+
+KIND_SMTP = 'smtp'
+SMTP_HOST = 'host'
+SMTP_PORT = 'port'
+SMTP_USE_TLS = 'use_tls'
+SMTP_USERNAME = 'username'
+SMTP_PASSWD = 'passwd'
+SMTP_FROM_ADDR = 'from_addr'
+
+KEYS_SMTP = set([SMTP_HOST, SMTP_PORT, SMTP_USE_TLS, SMTP_USERNAME, SMTP_PASSWD, SMTP_FROM_ADDR])
+
+def get_smtp_settings():
+    d = get_settings(KIND_SMTP)
+    if not SMTP_HOST in d:
+        d[SMTP_HOST] = u'localhost'
+    if not SMTP_PORT in d:
+        d[SMTP_PORT] = u'0'
+    if not SMTP_USE_TLS in d:
+        d[SMTP_USE_TLS] = u''
+    if not SMTP_USERNAME in d:
+        d[SMTP_USERNAME] = u''
+    if not SMTP_PASSWD in d:
+        d[SMTP_PASSWD] = u''
+    if not SMTP_FROM_ADDR in d:
+        d[SMTP_FROM_ADDR] = u''
+    return d
+
+def set_smtp_settings(**kw):
+    d = {}
+    for k, v in kw.iteritems():
+        if k in KEYS_SMTP:
+            d[k] = v
+    set_settings(KIND_SMTP, **d)
     return d
 
 if __name__=='__main__':
