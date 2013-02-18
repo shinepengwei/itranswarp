@@ -1,0 +1,66 @@
+<script type="text/javascript">
+$(function() {
+    $('#ul-tasks a[data-toggle="tab"]').click(function () {
+        location.assign('?tab=' + $(this).attr('tab'));
+    });
+    $('#ul-tasks a[tab={{ selected }}]').tab('show');
+});
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Tasks') }}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <ul id="ul-tasks" class="nav nav-tabs">
+            <li style="width:24px">&nbsp;</li>
+{% for k, n in tabs %}
+            <li><a href="#" tab="{{ k }}" data-toggle="tab" class="tab-{{ k }}">{{ n|e }}</a></li>
+{% endfor %}
+        </ul>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="40%">{{ _('Status') }} / {{ _('Name') }}</th>
+                    <th width="10%">{{ _('Retry') }}</th>
+                    <th width="20%">{{ _('Plan Date') }}</th>
+                    <th width="20%">{{ _('Creation Date') }}</th>
+                    <th width="10%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for t in tasks %}
+                <tr>
+                    <td><i class="icon-{{ to_icon(t.status) }}"></i> {{ t.name }}</td>
+                    <td>{{ t.retried }} / {{ t.max_retry }}</td>
+                    <td>{{ t.execution_plan_time|dt }}</td>
+                    <td>{{ t.creation_time|dt }}</td>
+                    <td></td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row">
+    <div class="span10">
+        <div class="pagination pull-right">
+            <ul>
+{% if previous %}
+                <li><a href="?tab={{ selected }}&page={{ page - 1 }}">«</a></li>
+{% else %}
+                <li class="disabled"><a href="javascript:void(0);">«</a></li>
+{% endif %}
+                <li class="active"><a href="javascript:void(0);">{{ page }}</a></li>
+{% if next %}
+                <li><a href="?tab={{ selected }}&page={{ page + 1 }}">»</a></li>
+{% else %}
+                <li class="disabled"><a href="javascript:void(0);">»</a></li>
+{% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
