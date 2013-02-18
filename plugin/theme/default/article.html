@@ -1,0 +1,45 @@
+{% include __get_theme_path__('_inc_header.html') %}
+
+    <div class="container">
+        <div class="row">
+            <div class="span9">
+                <!-- begin main -->
+                <div class="row">
+                    <div class="span9">
+                        <h3>{{ article.name|e }}</h3>
+                    </div>
+                    <div class="span9">
+                        <div>
+{% if article.tags %}
+                            <i class="icon-tags"></i> {{ article.tags }}
+{% endif %}
+                            <i class="icon-user"></i> {{ article.user_name|e }}
+                            <i class="icon-calendar"></i> {{ article.creation_time|dt }}
+                        </div>
+                    </div>
+                    <div class="span9">
+                        {{ article.content }}
+                    </div>
+                </div>
+                <!-- end main -->
+            </div>
+            <div class="span3">
+                <!-- begin sidebar -->
+                <div class="row">
+                    <div class="span3">
+                        <div class="sidebar">
+                            <div class="sidebar-header">Categories</div>
+                            <div class="sidebar-body">
+{% for c in categories %}
+                            <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end sidebar -->
+            </div>
+        </div>
+    </div>
+
+{% include __get_theme_path__('_inc_footer.html') %}

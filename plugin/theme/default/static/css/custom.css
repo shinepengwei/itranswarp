@@ -1,0 +1,27 @@
+/* custom.css */
+
+.navbar-inner {
+    padding-left: 0px;
+}
+
+.sidebar {
+  background-color: #ffffff;
+  border: 1px solid #e3e3e3;
+  *border: 1px solid #e3e3e3;
+  /* IE6-7 */
+
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.sidebar-header {
+  padding: 9px 15px;
+  border-bottom: 1px solid #e3e3e3;
+  font-weight: bold;
+}
+
+.sidebar-body {
+  padding: 15px;
+}
