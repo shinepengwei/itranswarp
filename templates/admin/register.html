@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ _('Register') }}</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <script type="text/javascript" src="/static/js/jquery-1.9.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+
+    function show_success(email) {
+        $('#form-register').hide();
+        $('#span-email').text(email);
+        $('div.alert-success').show();
+    }
+
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null) {
+            $('div.alert-error').text('').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('span.loading').show();
+        }
+        else {
+            $('span.loading').hide();
+        }
+    }
+
+function ajax_register(form) {
+    $('button[type=submit]').attr('disabled', 'disabled');
+    show_loading(true);
+    show_error(null);
+    $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
+        if (result.error) {
+            show_error(result.message);
+        }
+        else {
+            show_success(result);
+        }
+    }).error(function() {
+        show_error('{{ _('Server error') }}!');
+    }).complete(function() {
+        show_loading(false);
+        $('button[type=submit]').removeAttr('disabled');
+    });
+    return false;
+}
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="height: 120px"></div>
+
+        <div class="row">
+            <div class="span1 offset3">
+                <img src="/static/img/logo.png" width="64" height="64" />
+            </div>
+            <div class="span5" style="padding-top:16px;">
+                <h1>{{ _('Register') }}</h1>
+            </div>
+        </div>
+
+        <div class="row sep"></div>
+        <div class="row">
+            <div class="span6 offset3">
+                <div class="alert alert-success hide">Thank you for your registration! You will receive the activation mail in your mail box "<span id="span-email" style="font-weight:bold"></span>" once your registration is processed. This usually takes serveral hours.</div>
+                <div class="alert alert-error hide"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <form id="form-register" action="/register" method="post" onsubmit="return ajax_register(this)">
+                <div class="span4 offset4">
+                    <div class="field-email control-group">
+                        <label class="control-label">{{ _('Email') }}:</label>
+                        <input type="text" name="email" maxlength="50" class="input-xlarge" />
+                        <span class="help-inline">Your sign in email address.</span>
+                    </div>
+                    <div class="field-name control-group">
+                        <label class="control-label">{{ _('Name') }}:</label>
+                        <input type="text" name="name" maxlength="50" class="input-xlarge" />
+                        <span class="help-inline">Your website name.</span>
+                    </div>
+                    <div class="field-domain control-group">
+                        <label class="control-label">{{ _('Domain') }}:</label>
+                        <div class="input-append">
+                            <input type="text" name="domain" maxlength="20" class="span2" />
+                            <span class="add-on">.web.itranswarp.com</span>
+                        </div>
+                        <span class="help-inline">You can change to your own domain later.</span>
+                    </div>
+                </div>
+                <div class="span6 offset3">
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="span5 offset1">
+                                <button type="submit" class="btn btn-primary">{{ _('Register') }}</button>
+                                &nbsp;&nbsp;
+                                <span class="loading hide">{{ _('Processing') }}...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="row">
+            <div class="span10 offset1">
+                <div style="margin-top: 24px; padding: 12px 0px; text-align: center; border-top: 1px solid #ccc;">
+                    About iTranswarp &copy; 2013, <a href="https://github.com/michaelliao/itranswarp" target="_blank">iTranswarp on GitHub</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
