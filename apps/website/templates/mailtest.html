@@ -1,0 +1,35 @@
+<script type="text/javascript">
+    function ajax_post(form) {
+        $('button[type=submit]').attr('disabled', 'disabled');
+        $('span.loading').show();
+        return true;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Mail Test') }}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <form name="x-form" action="mail" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div class="field-email control-group">
+                    <label class="control-label">{{ _('Send To') }}:</label>
+                    <div class="controls">
+                        <input name="email" type="text" value="" class="input-xlarge" maxlength="100" />
+                        <span class="help-inline">Email address you want to send to.</span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <input type="hidden" name="action" value="send" />
+                    <button type="submit" class="btn btn-primary">{{ _('Send') }}</button>
+                    <a href="mail" class="btn">{{ _('Cancel') }}</a>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

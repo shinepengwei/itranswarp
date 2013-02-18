@@ -3,11 +3,12 @@
 
 __author__ = 'Michael Liao'
 
-import re, time, logging, socket, struct
+import re, time, logging, socket, struct, linecache
 from datetime import datetime
 
 from transwarp.web import ctx, get, post, route, seeother, notfound, UTC, Template, Dict
-from transwarp import db
+from transwarp.mail import send_mail
+from transwarp import db, task
 
 from apiexporter import *
 import setting, loader
@@ -394,6 +395,79 @@ def general():
         date_examples=date_examples, \
         time_examples=time_examples, \
         **ss)
+
+@api(role=ROLE_SUPER_ADMINS)
+@get('/api/settings/smtp/gets')
+def api_get_smtp_settings():
+    return setting.get_smtp_settings()
+
+@api(role=ROLE_SUPER_ADMINS)
+@post('/api/settings/smtp/update')
+def api_update_smtp_settings():
+    i = ctx.request.input()
+    try:
+        n = int(i.port)
+        if n < 0 or n > 65535:
+            raise ValueError('Invalid port')
+    except ValueError:
+        raise APIValueError('port', 'Invalid port')
+    setting.set_smtp_settings(**i)
+    return True
+
+def mail():
+    i = ctx.request.input(action='')
+    if i.action=='test':
+        return Template('templates/mailtest.html')
+    if i.action=='send':
+        # send test mail:
+        ss = setting.get_smtp_settings()
+        conf = (ss[setting.SMTP_HOST], int(ss[setting.SMTP_PORT]), ss[setting.SMTP_USERNAME], ss[setting.SMTP_PASSWD], bool(ss[setting.SMTP_USE_TLS]))
+        from_addr = ss[setting.SMTP_FROM_ADDR]
+        to_addr = i.email.strip()
+        subject = 'Subject: Testing SMTP settings at %s' % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        body = '<html><body><h3>Tesing SMTP settings</h3><p>SMTP settings are valid if you received this mail.</p></body></html>'
+        error = None
+        try:
+            send_mail(conf, from_addr, to_addr, subject, body)
+        except Exception, e:
+            error = _debug_info()
+        return Template('templates/mailresult.html', error=error, email=to_addr)
+    ss = setting.get_smtp_settings()
+    return Template('templates/mail.html', **ss)
+
+def _to_icon(s):
+    return dict(executing='play', error='warning-sign', pending='pause', done='ok').get(s, 'question-sign')
+
+def tasks():
+    i = ctx.request.input(action='', tab='multiinsert', page='1')
+    page = int(i.page)
+    tabs = (('multiinsert', 'Default'), ('mail-high', 'High Mail Queue'), ('mail-low', 'Low Mail Queue'))
+    tasks = task.get_tasks(i.tab, offset=100 * (page - 1), limit=51)
+    next = len(tasks)==51
+    if next:
+        tasks = tasks[:-1]
+    previous = page > 1
+    return Template('templates/tasks.html', to_icon=_to_icon, tabs=tabs, selected=i.tab, tasks=tasks, page=page, previous=previous, next=next)
+
+def _debug_info():
+    etype, evalue, tb = sys.exc_info()
+    while tb.tb_next:
+        tb = tb.tb_next
+    stack = []
+    f = tb.tb_frame
+    while f:
+        stack.append(f)
+        f = f.f_back
+    stack.reverse()
+    L = ['Traceback (most recent call last):']
+    for frame in stack:
+        line1 = r'File "%s", line %s, in %s' % (frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)
+        line2 = linecache.getline(frame.f_code.co_filename, frame.f_lineno, frame.f_globals)
+        L.append(line1)
+        if line2:
+            L.append(line2)
+    L.append('%s: %s' % (etype.__name__, evalue.message))
+    return L
 
 ################################################################################
 # Store

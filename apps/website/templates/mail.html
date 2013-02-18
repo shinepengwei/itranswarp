@@ -1,0 +1,126 @@
+<script type="text/javascript">
+    function show_success() {
+        $('div.alert-success').show();
+        if ($('div.alert-success').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-success').offset().top});
+        }
+    };
+
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null || err=='') {
+            $('div.alert-error').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('button[type=submit]').attr('disabled', 'disabled');
+            $('span.loading').show();
+        }
+        else {
+            $('button[type=submit]').removeAttr('disabled');
+            $('span.loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        show_loading(true);
+        $('input[name=use_tls]').val($('#use_tls:checked').length==0 ? '' : 'true');
+        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
+            if (result.error) {
+                show_error(result.message, result.data);
+            }
+            else {
+                show_error(null);
+                show_success();
+                $('a.brand').text($('input[name=name]').val())
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('{{ _('Server error') }}!', '');
+        }).complete(function() {
+            show_loading(false);
+        });
+        return false;
+    }
+
+    $(function() {
+        if ('{{ use_tls|e }}'.toLowerCase()=='true') {
+            $('#use_tls').attr('checked', 'checked');
+        }
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Mail Settings') }}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <div class="alert alert-success hide">Settings saved. <a href="?action=test">Validate the setting</a>.</div>
+        <div class="alert alert-error hide">ERROR</div>
+
+        <form name="x-form" action="/api/settings/smtp/update" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div class="field-host control-group">
+                    <label class="control-label">{{ _('Host') }}:</label>
+                    <div class="controls">
+                        <input name="host" type="text" value="{{ host|e }}" class="input-xlarge" maxlength="100" />
+                        <span class="help-inline">SMTP host name or IP address.</span>
+                    </div>
+                </div>
+                <div class="field-port control-group">
+                    <label class="control-label">{{ _('Port') }}:</label>
+                    <div class="controls">
+                        <input name="port" type="text" value="{{ port|e }}" class="input-xlarge" maxlength="100" />
+                        <span class="help-inline">Set 0 to use default port (25 or 465 if use tls).</span>
+                    </div>
+                </div>
+                <div class="field-from_addr control-group">
+                    <label class="control-label">{{ _('Sender Address') }}:</label>
+                    <div class="controls">
+                        <input name="from_addr" type="text" value="{{ from_addr|e }}" class="input-xlarge" maxlength="100" />
+                        <span class="help-inline">Email sender address.</span>
+                    </div>
+                </div>
+                <div class="field-username control-group">
+                    <label class="control-label">{{ _('Username') }}:</label>
+                    <div class="controls">
+                        <input name="username" type="text" value="{{ username|e }}" class="input-xlarge" maxlength="100" />
+                        <span class="help-inline">Leave it blank if no authentication.</span>
+                    </div>
+                </div>
+                <div class="field-passwd control-group">
+                    <label class="control-label">{{ _('Password') }}:</label>
+                    <div class="controls">
+                        <input name="passwd" type="password" value="{{ passwd|e }}" class="input-xlarge" maxlength="100" />
+                        <span class="help-inline">Leave it blank if no authentication.</span>
+                    </div>
+                </div>
+                <div class="field-use_tls control-group">
+                    <label class="control-label">{{ _('Use TLS') }}</label>
+                    <div class="controls">
+                        <label class="checkbox"><input type="checkbox" id="use_tls" /> <span class="example">Encrypt SMTP using TLS</span></label>
+                        <input type="hidden" name="use_tls" value="" />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
