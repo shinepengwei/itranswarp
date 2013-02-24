@@ -20,8 +20,8 @@ def boolean(s):
         return s
     return s.lower() in _TRUES
 
-TASK_MAIL_HIGH = 'mail-high'
-TASK_MAIL_LOW = 'mail-low'
+QUEUE_MAIL_HIGH = 'mail-high'
+QUEUE_MAIL_LOW = 'mail-low'
 
 ROLE_SUPER_ADMINS = 0
 ROLE_ADMINISTRATORS = 1
