@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-import re, time, logging, socket, struct, linecache
+import re, time, uuid, logging, socket, struct, linecache
 from datetime import datetime
 
 from transwarp.web import ctx, get, post, route, seeother, notfound, UTC, Template, Dict
@@ -11,9 +11,8 @@ from transwarp.mail import send_mail
 from transwarp import db, task
 
 from apiexporter import *
-import setting, loader
+import setting, loader, async, plugin
 
-import plugin
 from plugin import store
 
 from apps import menu
@@ -439,15 +438,56 @@ def _to_icon(s):
     return dict(executing='play', error='warning-sign', pending='pause', done='ok').get(s, 'question-sign')
 
 def tasks():
-    i = ctx.request.input(action='', tab='multiinsert', page='1')
+    i = ctx.request.input(action='', tab='', page='1')
     page = int(i.page)
-    tabs = (('multiinsert', 'Default'), ('mail-high', 'High Mail Queue'), ('mail-low', 'Low Mail Queue'))
-    tasks = task.get_tasks(i.tab, offset=100 * (page - 1), limit=51)
+    tabs = (('multiinsert', 'Test'), (QUEUE_MAIL_HIGH, 'High Mail Queue'), (QUEUE_MAIL_LOW, 'Low Mail Queue'))
+    selected = i.tab if i.tab else tabs[0][0]
+    tasks = task.get_tasks(selected, offset=100 * (page - 1), limit=51)
     next = len(tasks)==51
     if next:
         tasks = tasks[:-1]
     previous = page > 1
-    return Template('templates/tasks.html', to_icon=_to_icon, tabs=tabs, selected=i.tab, tasks=tasks, page=page, previous=previous, next=next)
+    return Template('templates/tasks.html', to_icon=_to_icon, tabs=tabs, selected=selected, tasks=tasks, page=page, previous=previous, next=next)
+
+def registrations():
+    i = ctx.request.input(action='', page='1')
+    if i.action=='decline':
+        registration = db.select_one('select * from registrations where id=?', i.id)
+        db.update('delete from registrations where id=?', i.id)
+        # send mail...
+        subject = 'Your Registration on iTranswarp was Declined'
+        body = '<html><body><p>We are sorry but your registration on iTranswarp was declined.</p><p>Please contact the <a href="mailto:webmaster@itranswarp.com">administrator</a> if you have any questions</p></body></html>'
+        async.send_mail(registration.email, subject, body)
+        raise seeother('registrations')
+    if i.action=='approve':
+        verification = uuid.uuid4().hex
+        registration = db.select_one('select * from registrations where id=?', i.id)
+        db.update('update registrations set checked=?, verification=? where id=?', True, verification, i.id)
+        # send mail...
+        subject = 'Activate Your Website on iTranswarp'
+        body = '<html><body><p>Hi,</p><p>Thank you for register your website on iTranswarp!</p><p>Please click the link below to activate your website:</p><p><a href="http://www.itranswarp.com/register/activate?id=%s&code=%s</a></p></body></html>' % (registration.id, verification)
+        async.send_mail(registration.email, subject, body)
+        raise seeother('registrations')
+    page = int(i.page)
+    previous = page > 1
+    registrations = db.select('select * from registrations order by id limit ?,?', 50 * (page - 1), 51)
+    next = len(registrations)==51
+    if next:
+        registrations = registrations[:-1]
+    return Template('templates/registrations.html', registrations=registrations, page=page, previous=previous, next=next)
+
+@get('/register/activate')
+def activate_registration():
+    i = ctx.request.input(id='', code='')
+    registration = db.select_one('select * from registrations where id=?', i.id)
+    if registration.checked and registration.verification==i.code:
+        # create website and send mail:
+        email = registration.email
+        subject = ''
+        body = ''
+        async.send_mail(email, subject, body)
+        return Template('templates/admin/activation_ok.html', domain=registration.domain)
+    return Template('templates/admin/activation_failed.html')
 
 def _debug_info():
     etype, evalue, tb = sys.exc_info()

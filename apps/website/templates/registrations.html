@@ -1,0 +1,90 @@
+<script type="text/javascript">
+function show_modal(rid, is_danger, href, header, body) {
+    var name = $('#tr-' + rid + ' td.td-name').html();
+    var email = $('#tr-' + rid + ' td.td-email').html();
+    var domain = $('#tr-' + rid + ' td.td-domain').html();
+    $('#modal-header-span').text(header);
+    $('#modal-body-div').html('<p>' + body + '</p>'
+        + '<dl class="dl-horizontal"><dt>Name</dt><dd>' + name + '</dd></dl>'
+        + '<dl class="dl-horizontal"><dt>Email</dt><dd>' + email + '</dd></dl>'
+        + '<dl class="dl-horizontal"><dt>Domain</dt><dd>' + domain + '</dd></dl>');
+    $('#modal-ok-button').attr('href', href);
+    if (is_danger) {
+        $('#modal-ok-button').addClass('btn-danger');
+        $('#modal-ok-button').removeClass('btn-primary');
+    }
+    else {
+        $('#modal-ok-button').addClass('btn-primary');
+        $('#modal-ok-button').removeClass('btn-danger');
+    }
+    $('#modal-div').modal('show');
+}
+
+function resend(rid) {
+    show_modal(rid, true, '?action=resend&id=' + rid, 'Confirm Resend', 'Are you sure you want to resend activation mail?')
+}
+
+function approve(rid) {
+    show_modal(rid, false, '?action=approve&id=' + rid, 'Confirm Approve', 'Are you sure you want to approve this registration?');
+}
+
+function decline(rid) {
+    show_modal(rid, true, '?action=decline&id=' + rid, 'Confirm Decline', 'Are you sure you want to approve this registration?');
+}
+</script>
+
+<div id="modal-div" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3><span id="modal-header-span"></span></h3>
+    </div>
+    <div class="modal-body">
+        <div id="modal-body-div"></div>
+    </div>
+    <div class="modal-footer">
+        <a id="modal-ok-button" href="#" class="btn">{{ _('OK') }}</a>
+        <a href="javascript:void(0)" data-dismiss="modal" class="btn">{{ _('Cancel') }}</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Registrations') }}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="25%">{{ _('Name') }}</th>
+                    <th width="25%">{{ _('Email') }}</th>
+                    <th width="20%">{{ _('Domain') }}</th>
+                    <th width="20%">{{ _('Creation Date') }}</th>
+                    <th width="10%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for r in registrations %}
+                <tr id="tr-{{ r.id }}">
+                    <td class="td-name">{{ r.name|e }}</td>
+                    <td class="td-email">{{ r.email }}</td>
+                    <td class="td-domain">{{ r.domain }}</td>
+                    <td>{{ r.creation_time|dt }}</td>
+                    <td>
+{% if r.checked %}
+                        <a href="javascript:resend('{{ r.id }}')" title="{{ _('Resend Email') }}" class="x-btn"><i class="icon-envelope"></i></a>
+{% else %}
+                        <a href="javascript:approve('{{ r.id }}')" title="{{ _('Approve') }}" class="x-btn"><i class="icon-ok"></i></a>
+                        <a href="javascript:decline('{{ r.id }}')" title="{{ _('Decline') }}" class="x-btn"><i class="icon-remove"></i></a>
+{% endif %}
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include 'templates/admin/inc_page.html' %}

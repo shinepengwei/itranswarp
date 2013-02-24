@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ _('Activation Failed') }}</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <script type="text/javascript" src="/static/js/jquery-1.9.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="height: 120px"></div>
+
+        <div class="row">
+            <div class="span1 offset3">
+                <img src="/static/img/logo.png" width="64" height="64" />
+            </div>
+            <div class="span5" style="padding-top:16px;">
+                <h1>{{ _('Activation Failed') }}</h1>
+            </div>
+        </div>
+
+        <div class="row sep"></div>
+        <div class="row">
+            <div class="span6 offset3">
+                <div class="alert alert-error">Sorry, but the activation link is invalid.</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span4 offset4">
+                <a href="/">{{ _('Home') }}</a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span10 offset1">
+                <div style="margin-top: 24px; padding: 12px 0px; text-align: center; border-top: 1px solid #ccc;">
+                    About iTranswarp &copy; 2013, <a href="https://github.com/michaelliao/itranswarp" target="_blank">iTranswarp on GitHub</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
