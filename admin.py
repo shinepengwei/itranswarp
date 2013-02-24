@@ -7,10 +7,10 @@ import os, re, time, json, uuid, base64, hashlib, logging
 from datetime import datetime
 
 from transwarp.web import ctx, view, get, post, route, Dict, UTC, Template, seeother, notfound, badrequest
-from transwarp import db, i18n, cache, task
+from transwarp import db, i18n, cache
 
 from apiexporter import *
-import loader
+import loader, async
 
 import util
 
@@ -105,7 +105,7 @@ def admin_post_register():
         checked=False, verified=False, verification=uuid.uuid4().hex, \
         creation_time=current, modified_time=current, version=0)
     db.insert('registrations', **registration)
-    task.create_task(queue='mail-high', name='Notification to super admin')
+    async.send_mail('webmaster@itranswarp.com', subject='New Registration from %s' % email, body='New registration is waiting for processing.')
     return email
 
 _module_dict = loader.scan_submodules('apps')
