@@ -10,34 +10,30 @@ import time, base64, logging
 from transwarp.web import ctx
 from transwarp import db
 
-def get_setting(kind, key, default=u''):
-    '''
-    Get setting by kind and key. Return default value u'' if not exist.
-    '''
-    ss = db.select('select value from settings where name=? and website_id=?', '%s:%s' % (kind, key), ctx.website.id)
+_GLOBAL = '__global__'
+
+def _get_setting(website_id, kind, key, default=u''):
+    ss = db.select('select value from settings where name=? and website_id=?', '%s:%s' % (kind, key), website_id)
     if ss:
         v = ss[0].value
         if v:
             return v
     return default
 
-def get_setting_as_int(kind, key, default=0):
+def get_setting(kind, key, default=u''):
     '''
-    Get setting as int.
+    Get setting by kind and key. Return default value u'' if not exist.
     '''
-    return int(get_setting(kind, key, default=u'0'))
+    return _get_setting(ctx.website.id, kind, key, default)
 
-def get_setting_as_boolean(kind, key, default=False):
-    '''
-    Get setting as boolean.
-    '''
-    return get_setting(kind, key, u'false').lower() == u'true'
+def get_global_setting(kind, key, default=u''):
+    return _get_setting(_GLOBAL, kind, key, default)
 
-def get_settings(kind, removePrefix=True):
+def _get_settings(website_id, kind, removePrefix=True):
     '''
     Return key, value as dict.
     '''
-    L = db.select('select name, value from settings where kind=? and website_id=?', kind, ctx.website.id)
+    L = db.select('select name, value from settings where kind=? and website_id=?', kind, website_id)
     d = {}
     if removePrefix:
         l = len(kind) + 1
@@ -48,7 +44,13 @@ def get_settings(kind, removePrefix=True):
             d[s.name] = s.value
     return d
 
-def set_setting(kind, key, value):
+def get_settings(kind, removePrefix=True):
+    return _get_settings(ctx.website.id, kind, removePrefix)
+
+def get_global_settings(kind, removePrefix=True):
+    return _get_settings(_GLOBAL, kind, removePrefix)
+
+def _set_setting(website_id, kind, key, value):
     '''
     Set setting by kind, key and value.
     '''
@@ -56,7 +58,6 @@ def set_setting(kind, key, value):
         raise ValueError('invalid setting name.')
     if not isinstance(value, (str, unicode)):
         value = str(value)
-    website_id = ctx.website.id
     name = '%s:%s' % (kind, key)
     settings = dict( \
         id = db.next_str(), \
@@ -69,20 +70,41 @@ def set_setting(kind, key, value):
     db.update('delete from settings where name=? and website_id=?', name, website_id)
     db.insert('settings', **settings)
 
+def set_setting(kind, key, value):
+    _set_setting(ctx.website.id, kind, key, value)
+
+def set_global_setting(kind, key, value):
+    _set_setting(_GLOBAL, kind, key, value)
+
 @db.with_transaction
-def set_settings(kind, **kw):
+def _set_settings(website_id, kind, **kw):
     '''
     set settings by kind and key-value pair.
     '''
     for k, v in kw.iteritems():
-        set_setting(kind, k, v)
+        _set_setting(website_id, kind, k, v)
 
-def delete_setting(kind, key):
+def set_settings(kind, **kw):
+    _set_settings(ctx.website.id, kind, **kw)
+
+def set_global_settings(kind, **kw):
+    _set_settings(_GLOBAL, kind, **kw)
+
+def _delete_setting(website_id, kind, key):
     name = '%s:%s' % (kind, key)
     db.update('delete from settings where name=? and website_id=?', name, website_id)
 
-def delete_settings(kind):
+def delete_setting(kind, key):
+    _delete_setting(ctx.website.id, kind, key)
+
+def delete_global_setting(kind, key):
+    _delete_setting(_GLOBAL, kind, key)
+
+def _delete_settings(website_id, kind):
     db.update('delete from settings where kind=? and website_id=?', kind, website_id)
+
+def delete_settings(kind):
+    _delete_settings(ctx.website.id, kind)
 
 KIND_WEBSITE = 'website'
 
@@ -188,7 +210,7 @@ SMTP_FROM_ADDR = 'from_addr'
 KEYS_SMTP = set([SMTP_HOST, SMTP_PORT, SMTP_USE_TLS, SMTP_USERNAME, SMTP_PASSWD, SMTP_FROM_ADDR])
 
 def get_smtp_settings():
-    d = get_settings(KIND_SMTP)
+    d = get_global_settings(KIND_SMTP)
     if not SMTP_HOST in d:
         d[SMTP_HOST] = u'localhost'
     if not SMTP_PORT in d:
@@ -208,7 +230,7 @@ def set_smtp_settings(**kw):
     for k, v in kw.iteritems():
         if k in KEYS_SMTP:
             d[k] = v
-    set_settings(KIND_SMTP, **d)
+    set_global_settings(KIND_SMTP, **d)
     return d
 
 if __name__=='__main__':
