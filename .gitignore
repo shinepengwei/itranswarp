@@ -41,6 +41,6 @@ Thumbs.db
 *.db
 static/upload/*
 
-conf.py
+conf_override.py
 transwarp
 
