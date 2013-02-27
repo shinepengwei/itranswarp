@@ -73,9 +73,9 @@ def get_plugin_instance(ptype, pname):
     return p.Plugin(**get_plugin_settings(ptype, pname))
 
 def get_plugin_settings(ptype, pname):
-    return setting.get_settings('plugin.%s.%s' % (ptype, pname))
+    return setting.get_global_settings('plugin.%s.%s' % (ptype, pname))
 
 def set_plugin_settings(ptype, pname, **kw):
     p = get_plugin(ptype, pname)
     p.Plugin.validate(**kw)
-    setting.set_settings('plugin.%s.%s' % (ptype, pname), **kw)
+    setting.set_global_settings('plugin.%s.%s' % (ptype, pname), **kw)
