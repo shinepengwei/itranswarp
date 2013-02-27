@@ -3,7 +3,7 @@
 
 __author__ = 'Michael Liao'
 
-' Util module '
+' generate thumbnail for uploaded images '
 
 import os, logging
 
