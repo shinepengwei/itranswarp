@@ -11,6 +11,18 @@ from transwarp.web import ctx, forbidden, notfound
 from transwarp import db, i18n
 
 from auth import extract_session_cookie, http_basic_auth
+from apiexporter import cached
+
+@cached(key='website')
+def _get_site(host):
+    wss = db.select('select * from websites where domain=?', host)
+    if wss:
+        ws = wss[0]
+        if ws.disabled:
+            logging.debug('website is disabled: %s' % host)
+            raise forbidden()
+        return ws
+    raise notfound()
 
 def load_site(func):
     @functools.wraps(func)
@@ -21,21 +33,12 @@ def load_site(func):
         if n!=(-1):
             host = host[:n]
         logging.debug('try load website: %s' % host)
-        # FIXME: improve speed:
-        wss = db.select('select * from websites where domain=?', host)
-        if wss:
-            ws = wss[0]
-            if ws.disabled:
-                logging.debug('website is disabled: %s' % host)
-                raise forbidden()
-            logging.info('bind ctx.website')
-            ctx.website = ws
-            try:
-                return func(*args, **kw)
-            finally:
-                del ctx.website
-        logging.debug('website not found: %s' % host)
-        raise notfound()
+        ws = _get_site(host)
+        ctx.website = ws
+        try:
+            return func(*args, **kw)
+        finally:
+            del ctx.website
     return _wrapper
 
 def load_user(func):

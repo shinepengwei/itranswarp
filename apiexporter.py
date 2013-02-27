@@ -11,7 +11,7 @@ except ImportError:
 import re, logging, functools
 
 from transwarp.web import ctx, get, post, forbidden, HttpError
-from transwarp import db
+from transwarp import db, cache
 
 _TRUES = set([u'1', u't', u'true', u'y', u'yes'])
 
@@ -48,6 +48,41 @@ class APIPermissionError(APIError):
     def __init__(self, message=''):
         super(APIPermissionError, self).__init__('permission:forbidden', 'permission', message)
 
+def cached(key=None, time=3600):
+    '''
+    Make function result cached.
+
+    >>> import time
+    >>> @cached(2)
+    ... def get_time():
+    ...     return int(time.time() * 1000)
+    >>> n1 = get_time()
+    >>> time.sleep(1.0)
+    >>> n2 = get_time()
+    >>> n1==n2
+    True
+    >>> time.sleep(2.0)
+    >>> n3 = get_time()
+    >>> n1==n3
+    False
+    '''
+    def _decorator(func):
+        @functools.wraps(func)
+        def _wrapper(*args):
+            s = key or func.__name__
+            if args:
+                L = [s]
+                L.extend(args)
+                s = '--'.join(L)
+            r = cache.client.get(s)
+            if r is None:
+                logging.info('Cache not found for key: %s' % s)
+                r = func(*args)
+                cache.client.set(s, r, time)
+            return r
+        return _wrapper
+    return _decorator
+
 def api(role=ROLE_ADMINISTRATORS):
     '''
     A decorator that makes a function to api, makes the return value as json.
@@ -61,8 +96,8 @@ def api(role=ROLE_ADMINISTRATORS):
         @functools.wraps(func)
         def _wrapper(*args, **kw):
             ctx.response.content_type = 'application/json; charset=utf-8'
-            auth = role==ROLE_GUESTS
-            if not auth:
+            is_guest = role==ROLE_GUESTS
+            if not is_guest:
                 if ctx.user:
                     if ctx.user.role_id > role:
                         return json.dumps(dict(error='permission:forbidden', data='permission', message='No permission for user: %s' % ctx.user.email))
@@ -159,6 +194,7 @@ def check_email(email):
     return e
 
 if __name__=='__main__':
+    cache.client = cache.RedisClient('localhost')
     import doctest
     doctest.testmod()
  
