@@ -14,6 +14,7 @@ from apiexporter import *
 import setting, loader, async, plugin
 
 from plugin import store
+from install import create_website
 
 from apps import menu
 
@@ -459,13 +460,13 @@ def registrations():
         body = '<html><body><p>We are sorry but your registration on iTranswarp was declined.</p><p>Please contact the <a href="mailto:webmaster@itranswarp.com">administrator</a> if you have any questions</p></body></html>'
         async.send_mail(registration.email, subject, body)
         raise seeother('registrations')
-    if i.action=='approve':
+    if i.action=='approve' or i.action=='resend':
         verification = uuid.uuid4().hex
         registration = db.select_one('select * from registrations where id=?', i.id)
         db.update('update registrations set checked=?, verification=? where id=?', True, verification, i.id)
         # send mail...
         subject = 'Activate Your Website on iTranswarp'
-        body = '<html><body><p>Hi,</p><p>Thank you for register your website on iTranswarp!</p><p>Please click the link below to activate your website:</p><p><a href="http://www.itranswarp.com/register/activate?id=%s&code=%s</a></p></body></html>' % (registration.id, verification)
+        body = '<html><body><p>Hi,</p><p>Thank you for register your website on iTranswarp!</p><p>Please click the link below to activate your website:</p><p><a href="http://www.itranswarp.com/register/activate?id=%s&code=%s">Activate</a></p></body></html>' % (registration.id, verification)
         async.send_mail(registration.email, subject, body)
         raise seeother('registrations')
     page = int(i.page)
@@ -483,8 +484,15 @@ def activate_registration():
     if registration.checked and registration.verification==i.code:
         # create website and send mail:
         email = registration.email
-        subject = ''
-        body = ''
+        name = registration.name
+        domain = registration.domain
+        passwd = create_website(email, name, domain)
+        subject = u'You Website %s is Ready' % name
+        body = '<html><body><p>Hi,</p><p>Your website is ready for use!</p>' \
+             + '<p>You can sign in from <a href="http://%s/auth/signin">http://%s/auth/signin</a></p>' % (domain, domain) \
+             + '<p>with email: <b>%s</b></p>' % email \
+             + '<p> password: <b>%s</b><p>' % passwd \
+             + '</body></html>'
         async.send_mail(email, subject, body)
         return Template('templates/admin/activation_ok.html', domain=registration.domain)
     return Template('templates/admin/activation_failed.html')
