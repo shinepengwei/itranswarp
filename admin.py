@@ -57,6 +57,10 @@ for the_name, the_mod in loader.scan_submodules('apps').iteritems():
         for the_fname in os.listdir(the_i18n):
             i18n.load_i18n(os.path.join(os.path.join(the_i18n, the_fname)))
 
+@route('/ab')
+def ab_test():
+    return ('<html><body><h1>Hello, world!</h1></body></html>',)
+
 @route('/')
 def website_index():
     raise seeother(loader.load_navigations()[0].url)
