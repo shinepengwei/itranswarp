@@ -3,14 +3,31 @@
 
 __author__ = 'Michael Liao'
 
-import re, sys, time, hashlib
+import re, sys, time, random, hashlib
 
 from transwarp.web import ctx, get, post, forbidden, Template
 from transwarp import db, task
 
-import util
+from apiexporter import *
 
 CREATE_TABLES = [
+r'''
+    create table registrations (
+        id varchar(50) not null,
+        domain varchar(100) not null,
+        name varchar(100) not null,
+        email varchar(100) not null,
+        checked bool not null,
+        verified bool not null,
+        verification varchar(50) not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        unique key uk_domain(domain),
+        index idx_creation_time(creation_time)
+    );
+''',
 r'''
     create table websites (
         id varchar(50) not null,
@@ -126,10 +143,9 @@ r'''
         modified_time real not null,
         version bigint not null,
         primary key(id),
-        unique key uk_name(name),
-        index idx_website_id(website_id),
-        index idx_kind(kind)
-    )
+        index idx_name_website_id(name, website_id),
+        index idx_kind_website_id(kind, website_id)
+    );
 ''',
 r'''
     create table categories (
@@ -143,8 +159,7 @@ r'''
         modified_time real not null,
         version bigint not null,
         primary key(id),
-        index idx_website_id(website_id),
-        index idx_display_order(display_order)
+        index idx_website_id(website_id)
     );
 ''',
 r'''
@@ -183,7 +198,7 @@ r'''
         index idx_website_id(website_id)
     );
 ''',
-r'''
+r'''-- not init in db yet
     create table albums (
         id varchar(50) not null,
         website_id varchar(50) not null,
@@ -202,7 +217,7 @@ r'''
         index idx_display_order(display_order)
     );
 ''',
-r'''
+r'''-- not init in db yet
     create table photos (
         id varchar(50) not null,
         website_id varchar(50) not null,
@@ -234,87 +249,84 @@ r'''
 task.__SQL__,
 ]
 
+def main():
+    print 'To install iTranswarp, type Y and press ENTER:'
+    if raw_input()!='Y':
+        print 'Install cancelled.'
+        exit(1)
+    print 'Prepare to install iTranswarp...'
+    try:
+        print 'Checking Python version...', _check_version()
+        print 'Checking Python Imaging Library...', _check_pil()
+        print 'Checking Redis...', _check_redis()
+    except Exception, e:
+        print 'Install failed:', e.message
+        exit(1)
+
 def _check_installed():
     L = db.select('show tables')
     tables = [x.values()[0] for x in L]
     return u'users' in tables
 
 def _check_version():
-    v = sys.version_info
-    return v[0], v[1]
+    v = '%d.%d' % (sys.version_info[0], sys.version_info[1])
+    if v=='2.7':
+        return v
+    raise StandardError('Expected version 2.7 but %s.' % v)
 
 def _check_redis():
     try:
         from redis import StrictRedis
-        return True
+        return 'OK'
     except ImportError:
         pass
-    return False
+    raise StandardError('Redis client is not installed.')
 
 def _check_memcached():
     try:
         import memcache
-        return True
+        return 'OK'
     except ImportError:
         pass
     try:
         import pylibmc
-        return True
+        return 'OK'
     except ImportError:
         pass
-    return False
+    raise StandardError('Memcache client is not installed.')
 
 def _check_pil():
     try:
         import Image
-        return True
+        return 'OK'
     except ImportError:
         pass
     try:
         from PIL import Image
-        return True
+        return 'OK'
     except ImportError:
         pass
-    return False
+    raise StandardError('PIL is not installed.')
 
-def _check_system():
-    return dict(pil=_check_pil())
-
-@get('/install')
-def install():
-    if _check_installed():
-        raise forbidden()
-    return Template('templates/install/welcome.html')
-
-@post('/install')
-def install_user():
-    if _check_installed():
-        return dict(error='CANNOT install because the web site was already installed.')
-    _check_system()
-    i = ctx.request.input()
-    name = i.name.strip()
-    if not name:
-        return dict(error='Name cannot be empty', error_field='name')
-    email = i.email.strip().lower()
-    if not email:
-        return dict(error='Email cannot be empty', error_field='email')
-    if not util.validate_email(email):
-        return dict(error='Bad email address', error_field='email')
-    passwd = str(i.passwd)
-    m = re.match(r'^[0-9a-f]{32}$', passwd)
-    if not m:
-        return dict(error='Bad password')
-    try:
-        for sql in CREATE_TABLES:
-            db.update(sql.replace('\n', ' '))
-    except BaseException:
-        return dict(error='CANNOT create table in MySQL. Please check the privileges of database user!')
+def create_website(email, name, domain):
+    # generate password:
+    L = []
+    for i in range(10):
+        n = int(random.random() * 62)
+        if n < 10:
+            L.append(chr(n + 48))
+        elif n < 36:
+            L.append(chr(n + 55))
+        else:
+            L.append(chr(n + 61))
+    passwd = ''.join(L)
+    md5passwd = hashlib.md5(passwd).hexdigest()
     current = time.time()
     website = dict(
             id=db.next_str(),
             disabled=False,
-            domain='localhost',
-            name='Localhost Sample Website',
+            domain=domain,
+            name=name,
             creation_time=current,
             modified_time=current,
             version=0)
@@ -323,13 +335,18 @@ def install_user():
             website_id=website['id'],
             locked=True,
             name=name,
-            role=0,
+            role_id=ROLE_ADMINISTRATORS,
             email=email,
             verified=False,
-            passwd=passwd,
+            passwd=md5passwd,
             image_url='http://www.gravatar.com/avatar/%s' % hashlib.md5(str(email)).hexdigest(),
             creation_time=current,
             modified_time=current,
             version=0)
-    db.insert('users', **user)
-    return user
+    with db.transaction():
+        db.insert('websites', **website)
+        db.insert('users', **user)
+    return passwd
+
+if __name__=='__main__':
+    main()
