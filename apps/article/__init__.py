@@ -510,6 +510,8 @@ def api_upload_attachment():
     fcontent = f.file.read()
     filename = f.filename
     fext = os.path.splitext(filename)[1]
+    if not name:
+        name = os.path.splitext(os.path.split(filename)[1])[0]
 
     preview = None
     w = h = 0
