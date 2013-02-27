@@ -12,8 +12,6 @@ from transwarp import db, i18n, cache
 from apiexporter import *
 import loader, async
 
-import util
-
 def _import_appmenus():
     
     def _load_appmenus(mod_name, mod):
@@ -93,7 +91,7 @@ def admin_post_register():
         raise APIValueError('domain', 'Domain cannot be empty')
     if not _RE_DOMAIN.match(pdomain):
         raise APIValueError('domain', 'Invalid domain')
-    domain = '%s.itranswarp.com' % pdomain
+    domain = '%s.web.itranswarp.com' % pdomain
     if len(db.select('select id from registrations where domain=?', domain)) > 0:
         raise APIValueError('domain', 'Domain is already in use')
     if len(db.select('select id from websites where domain=?', domain)) > 0:
