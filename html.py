@@ -3,6 +3,8 @@
 
 __author__ = 'Michael Liao'
 
+' parse html and generate summary '
+
 import re, logging
 
 from HTMLParser import HTMLParser
