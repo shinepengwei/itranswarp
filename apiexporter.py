@@ -25,12 +25,21 @@ QUEUE_MAIL_LOW = 'mail-low'
 
 ROLE_SUPER_ADMINS = 0
 ROLE_ADMINISTRATORS = 1
-ROLE_DESIGNERS = 2
-ROLE_EDITORS = 3
-ROLE_AUTHORS = 4
-ROLE_CONTRIBUTORS = 5
+ROLE_EDITORS = 2
+ROLE_AUTHORS = 3
+ROLE_CONTRIBUTORS = 4
+ROLE_SUBSCRIBERS = 100
 
 ROLE_GUESTS = 10000
+
+ROLE_NAMES = {
+    ROLE_SUPER_ADMINS: 'Super Admin',
+    ROLE_ADMINISTRATORS: 'Administrator',
+    ROLE_EDITORS: 'Editor',
+    ROLE_AUTHORS: 'Author',
+    ROLE_CONTRIBUTORS: 'Contributor',
+    ROLE_SUBSCRIBERS: 'Subscriber',
+}
 
 class APIError(StandardError):
 
@@ -116,17 +125,13 @@ def api(role=ROLE_ADMINISTRATORS):
         return _wrapper
     return _decorator
 
-_RE_MD5 = re.compile(r'^md5\:[0-9a-f]{32}$')
-_RE_SHA1 = re.compile(r'^sha1\:[0-9a-f]{40}$')
+_RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
+#_RE_SHA1 = re.compile(r'^[0-9a-f]{40}$')
 
-def check_passwd(passwd):
+def check_md5_passwd(passwd):
     pw = str(passwd)
-    if pw.startswith('md5:'):
-        if _RE_MD5.match(pw) is None:
-            raise APIError('argument:invalid', 'passwd', 'Invalid password.')
-    if pw.startswith('sha1:'):
-        if _RE_SHA1.match(pw) is None:
-            raise APIError('argument:invalid', 'passwd', 'Invalid password.')
+    if _RE_MD5.match(pw) is None:
+        raise APIValueError('passwd', 'Invalid password.')
     return pw
 
 _REG_EMAIL = re.compile(r'^[0-9a-z]([\-\.\w]*[0-9a-z])*\@([0-9a-z][\-\w]*[0-9a-z]\.)+[a-z]{2,9}$')

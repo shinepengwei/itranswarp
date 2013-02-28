@@ -1,0 +1,100 @@
+<script type="text/JavaScript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null) {
+            $('div.alert-error').text('').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('span.loading').show();
+        }
+        else {
+            $('span.loading').hide();
+        }
+    }
+
+    $(function() {
+        $('a.x-btn-delete').each(function() {
+            var aid = $(this).attr('id');
+            var rel = $(this).attr('rel');
+            $(this).popover({
+                placement:'top',
+                html:true,
+                title:'Confirm Deletion',
+                content:'<p>Are you sure you want to delete the user <strong>'
+                    + $(this).attr('prompt')
+                    + '</strong>?</p>'
+                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="location.assign(\'?action=delete&id='
+                    + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
+                    + aid + '\').popover(\'hide\')">Cancel</button></div>',
+            });
+        });
+        $('a[rel=tooltip]').tooltip();
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Users') }}</h3>
+    </div>
+</div>
+
+{% if __user__.role_id <= ROLE_ADMINISTRATORS %}
+<div class="row sep">
+    <div class="span10">
+        <a href="add_user" class="btn btn-primary pull-right">{{ _('Add User') }}</a>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="span10">
+        <div class="alert alert-error hide"></div>
+        <form id="x-form-sort" name="x-form-sort" action="/api/categories/sort" onsubmit="return false">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th width="20%">{{ _('Name') }}</th>
+                        <th width="30%">{{ _('Email') }}</th>
+                        <th width="20%">{{ _('Role') }}</th>
+                        <th width="20%">{{ _('Date') }}</th>
+                        <th width="10%">&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>
+{% for u in users %}
+                    <tr>
+                        <td>
+                            <a href="?action=edit&id={{ u.id }}" target="_blank">{{ u.name|e }}</a>
+    {% if u.locked %}
+                            <a href="javascript:void(0)" rel="tooltip" title="This user is locked and cannot be deleted"><i class="icon-lock"></i></a>
+    {% endif %}
+                        </td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ get_role_name(u.role_id) }}</td>
+                        <td>{{ u.creation_time|dt }}</td>
+                        <td>
+    {% if can_update_user(u) %}
+                            <a href="?action=edit&id={{ u.id }}" class="x-btn"><i class="icon-edit"></i></a>
+    {% endif %}
+    {% if can_delete_user(u) %}
+                            <a id="delete-{{ u.id }}" rel="{{ u.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ u.name|e }}"><i class="icon-trash"></i></a>
+    {% endif %}
+                        </td>
+                    </tr>
+{% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+

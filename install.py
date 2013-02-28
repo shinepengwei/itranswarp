@@ -308,6 +308,24 @@ def _check_pil():
         pass
     raise StandardError('PIL is not installed.')
 
+def create_user(website_id, email, passwd, name, role_id, locked=False):
+    current = time.time()
+    user = dict(
+        id=db.next_str(),
+        website_id=website_id,
+        locked=locked,
+        name=name,
+        role_id=role_id,
+        email=email,
+        verified=False,
+        passwd=passwd,
+        image_url='http://www.gravatar.com/avatar/%s' % hashlib.md5(str(email)).hexdigest(),
+        creation_time=current,
+        modified_time=current,
+        version=0)
+    db.insert('users', **user)
+    return user
+
 def create_website(email, name, domain):
     # generate password:
     L = []
@@ -330,22 +348,9 @@ def create_website(email, name, domain):
             creation_time=current,
             modified_time=current,
             version=0)
-    user = dict(
-            id=db.next_str(),
-            website_id=website['id'],
-            locked=True,
-            name=name,
-            role_id=ROLE_ADMINISTRATORS,
-            email=email,
-            verified=False,
-            passwd=md5passwd,
-            image_url='http://www.gravatar.com/avatar/%s' % hashlib.md5(str(email)).hexdigest(),
-            creation_time=current,
-            modified_time=current,
-            version=0)
     with db.transaction():
         db.insert('websites', **website)
-        db.insert('users', **user)
+        create_user(website['id'], email, md5passwd, name, ROLE_ADMINISTRATORS, locked=True)
     return passwd
 
 if __name__=='__main__':

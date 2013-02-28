@@ -1,0 +1,161 @@
+<script type="text/javascript">
+    function show_success() {
+        $('div.alert-success').show().delay(3000).slideUp(300);
+        if ($('div.alert-success').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-success').offset().top});
+        }
+    };
+
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null) {
+            $('div.alert-error').text('').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('button[type=submit]').attr('disabled', 'disabled');
+            $('span.loading').show();
+        }
+        else {
+            $('button[type=submit]').removeAttr('disabled');
+            $('span.loading').hide();
+        }
+    }
+
+    function check_password() {
+        var p1 = $('#password1').val();
+        var p2 = $('#password2').val();
+{% if passwd %}
+        if (p1=='' && p2=='') {
+            $('input[name=passwd]').attr('disabled', 'disabled');
+            return true;
+        }
+{% endif %}
+        if (p1.length < 6 || p1.length > 20) {
+            show_error('Password must be at least 6 characters.', 'passwd');
+            return false;
+        }
+        if (p1!=p2) {
+            show_error('Passwords not match.', 'passwd');
+            return false;
+        }
+        $('input[name=passwd]').val($.md5(p1)).removeAttr('disabled');
+        return true;
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        if (!check_password())
+            return false;
+        show_loading(true);
+        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
+            show_loading(false);
+            if (result.error) {
+                show_error(result.message, result.data);
+            }
+            else {
+                location.assign('{{ redirect }}');
+            }
+        }).error(function() {
+            show_loading(false);
+            show_error('{{ _('Server error') }}!', '');
+        });
+        return false;
+    }
+
+    $(function() {
+{% if info %}
+        show_success();
+{% endif %}
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ form_title }}</h3>
+        <form id="x-form" action="{{ form_action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div class="alert alert-error hide"></div>
+                <div class="alert alert-success hide">Profile updated successfully!</div>
+
+                <div class="field-email control-group">
+                    <label class="control-label">{{ _('Email') }}:</label>
+                    <div class="controls">
+                        <input type="text" name="email" value="{{ email }}" class="input-xlarge"
+    {% if email %}
+                            disabled="disabled"
+    {% endif %}
+                        />
+                        <span class="help-inline">Email address</span>
+                    </div>
+                </div>
+
+                <div class="field-name control-group">
+                    <label class="control-label">{{ _('Name') }}:</label>
+                    <div class="controls">
+                        <input name="name" type="text" value="{{ name|e }}" class="input-xlarge" />
+                        <span class="help-inline">User name</span>
+                    </div>
+                </div>
+
+                <div class="field-role_id control-group">
+                    <label class="control-label">{{ _('Role') }}:</label>
+                    <div class="controls">
+                        <select id="role_id" name="role_id" class="input-xlarge"
+    {% if not can_change_role %}
+                            disabled="disabled"
+    {% endif %}
+                        >
+    {% for r in roles %}
+                            <option value="{{ r.id }}"
+        {% if r.id==role_id %}
+                                selected="selected"
+        {% endif %}
+                            >{{ r.name|e }}</option>
+    {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+    {% if passwd %}
+                <div class="control-group">
+                    <div class="controls" style="font-style:italic">Leave the password empty if you do not want to change it</div>
+                </div>
+    {% endif %}
+
+                <div class="field-passwd control-group">
+                    <label class="control-label">{{ _('Password') }}:</label>
+                    <div class="controls">
+                        <input id="password1" type="password" value="" class="input-xlarge" />
+                        <span class="help-inline">Password</span>
+                    </div>
+                </div>
+
+                <div class="field-passwd control-group">
+                    <label class="control-label">{{ _('Retype') }}:</label>
+                    <div class="controls">
+                        <input id="password2" type="password" value="" class="input-xlarge" />
+                        <span class="help-inline">Password</span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <input type="hidden" name="id" value="{{ id }}" />
+                    <input type="hidden" name="passwd" value="" disabled="disabled" />
+                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('{{ redirect }}')">{{ _('Cancel') }}</button>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

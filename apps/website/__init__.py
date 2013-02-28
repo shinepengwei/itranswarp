@@ -14,7 +14,7 @@ from apiexporter import *
 import setting, loader, async, plugin
 
 from plugin import store
-from install import create_website
+from install import create_website, create_user
 
 from apps import menu
 
@@ -127,6 +127,121 @@ def navigations():
         db.update('delete from navigations where id=?', i.id)
         raise seeother('navigations?ts=%s' % time.time())
     return Template('templates/navigations.html', navigations=loader.load_navigations())
+
+################################################################################
+# Users
+################################################################################
+
+def _get_role_name(role_id):
+    return ROLE_NAMES.get(role_id, 'Invalid Role')
+
+def _get_users():
+    return db.select('select * from users where website_id=?', ctx.website.id)
+
+def _get_user(user_id):
+    u = db.select_one('select * from users where id=?', user_id)
+    if u.website_id != ctx.website.id:
+        raise APIValueError('id', 'Invalid user')
+    return u
+
+def _can_update_user(user):
+    if ctx.user.role_id > ROLE_ADMINISTRATORS:
+        # non-admin user can update its own profile:
+        return ctx.user.id==user.id
+    # admin user:
+    return True
+
+def _can_delete_user(user):
+    if user.locked:
+        return False
+    if ctx.user.role_id > ROLE_ADMINISTRATORS:
+        # non-admin user cannot delete:
+        return False
+    # admin user can delete others but not self:
+    return ctx.user.id != user.id
+
+def _can_change_role(user):
+    if user.locked:
+        # cannot change role of default ADMIN:
+        return False
+    if ctx.user.role_id > ROLE_ADMINISTRATORS:
+        # non-admin user cannot change role:
+        return False
+    return True
+
+@api(role=ROLE_ADMINISTRATORS)
+@post('/api/users/create')
+def api_create_user():
+    i = ctx.request.input()
+    email = check_email(i.email)
+    name = i.name.strip()
+    if not name:
+        raise APIValueError('name', 'Name cannot be empty.')
+    role_id = int(i.role_id)
+    if role_id==ROLE_SUPER_ADMINS or role_id not in ROLE_NAMES:
+        raise APIValueError('role_id', 'Invalid role.')
+    passwd = check_md5_passwd(i.passwd)
+    return create_user(ctx.website.id, email, passwd, name, role_id)
+
+@api(role=ROLE_ADMINISTRATORS)
+@post('/api/users/delete')
+def api_delete_user():
+    i = ctx.request.input(id='')
+    if i.id:
+        u = _get_user(i.id)
+        if not _can_delete_user(u):
+            raise APIPermissionError('Cannot delete locked user.')
+        db.update('delete from users where id=?', i.id)
+        return True
+    raise APIValueError('id', 'User not found.')
+
+@api(role=ROLE_CONTRIBUTORS)
+@post('/api/users/update')
+def api_update_user():
+    i = ctx.request.input(id='')
+    u = _get_user(i.id)
+    if not _can_update_user(u):
+        raise APIPermissionError('Cannot update user')
+    kw = {}
+    if 'name' in i:
+        name = i.name.strip()
+        if not name:
+            raise APIValueError('name', 'User name cannot be empty.')
+        kw['name'] = name
+    if 'role_id' in i:
+        role_id = int(i.role_id)
+        if role_id<=0 or role_id not in ROLE_NAMES:
+            raise APIValueError('role_id', 'Invalid role id')
+        if not _can_change_role(u):
+            raise APIPermissionError('Cannot change role of user')
+        kw['role_id'] = role_id
+    if 'passwd' in i:
+        passwd = i.passwd
+        check_md5_passwd(passwd)
+        kw['passwd'] = passwd
+    if kw:
+        db.update_kw('users', 'id=?', i.id, **kw)
+    return True
+
+def _get_role_list(starts_from=ROLE_ADMINISTRATORS):
+    ids = [r for r in ROLE_NAMES.keys() if r >= starts_from]
+    ids.sort()
+    return [Dict(id=rid, name=ROLE_NAMES[rid]) for rid in ids]
+
+def add_user():
+    return Template('templates/userform.html', form_title=_('Add User'), form_action='/api/users/create', redirect='users', roles=_get_role_list(), role_id=ROLE_SUBSCRIBERS, can_change_role=True)
+
+def users():
+    i = ctx.request.input(action='')
+    if i.action=='edit':
+        u = _get_user(i.id)
+        return Template('templates/userform.html', form_title=_('Edit User'), form_action='/api/users/update', redirect='users', can_change_role=_can_change_role(u), roles=_get_role_list(min(ROLE_ADMINISTRATORS, u.role_id)), **u)
+    return Template('templates/users.html', users=_get_users(), ROLE_ADMINISTRATORS=ROLE_ADMINISTRATORS, get_role_name=_get_role_name, can_update_user=_can_update_user, can_delete_user=_can_delete_user, can_change_role=_can_change_role)
+
+def profile():
+    i = ctx.request.input(info='')
+    u = _get_user(ctx.user.id)
+    return Template('templates/userform.html', form_title=_('My Profile'), form_action='/api/users/update', can_change_role=_can_change_role(u), redirect='profile?info=ok', roles=_get_role_list(min(ROLE_ADMINISTRATORS, u.role_id)), info=i.info, **u)
 
 ################################################################################
 # Settings
