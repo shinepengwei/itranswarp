@@ -50,7 +50,7 @@ _KIND = 'plugin.store'
 _KEY = 'enabled'
 
 def get_enabled_store_name():
-    pname = setting.get_setting(_KIND, _KEY)
+    pname = setting.get_global_setting(_KIND, _KEY)
     if not pname:
         pname = 'localfile'
     if not pname in plugin.get_plugins('store'):
@@ -60,7 +60,7 @@ def get_enabled_store_name():
 def set_enabled_store_name(pname):
     if not pname in plugin.get_plugins('store'):
         raise IOError('cannot find enabled store.')
-    setting.set_setting(_KIND, _KEY, pname)
+    setting.set_global_setting(_KIND, _KEY, pname)
 
 def get_store_instance(pname):
     return plugin.get_plugin_instance('store', pname)
