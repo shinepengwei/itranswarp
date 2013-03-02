@@ -65,6 +65,16 @@ def api_update_navigation():
     return True
 
 @api(role=ROLE_ADMINISTRATORS)
+@post('/api/navigations/delete')
+def api_delete_navigation():
+    i = ctx.request.input(id='')
+    if not i.id:
+        raise APIValueError('id', 'id cannot be empty')
+    nav = _get_navigation(i.id)
+    db.update('delete from navigations where id=?', i.id)
+    return True
+
+@api(role=ROLE_ADMINISTRATORS)
 @post('/api/navigations/create')
 def api_create_navigation():
     i = ctx.request.input(kind='', name='', value='')
@@ -118,14 +128,11 @@ def api_sort_navigations():
             db.update('update navigations set display_order=? where id=?', odict.get(n.id, l), n.id)
     return True
 
+@menu(ROLE_ADMINISTRATORS, 'Settings', 'Navigations', name_order=2)
 def navigations():
     i = ctx.request.input(action='')
     if i.action=='add':
         return Template('templates/navigationform.html', navigations=_get_all_nav_definitions())
-    if i.action=='delete':
-        nav = _get_navigation(i.id)
-        db.update('delete from navigations where id=?', i.id)
-        raise seeother('navigations?ts=%s' % time.time())
     return Template('templates/navigations.html', navigations=loader.load_navigations())
 
 ################################################################################
@@ -228,9 +235,7 @@ def _get_role_list(starts_from=ROLE_ADMINISTRATORS):
     ids.sort()
     return [Dict(id=rid, name=ROLE_NAMES[rid]) for rid in ids]
 
-def add_user():
-    return Template('templates/userform.html', form_title=_('Add User'), form_action='/api/users/create', redirect='users', roles=_get_role_list(), role_id=ROLE_SUBSCRIBERS, can_change_role=True)
-
+@menu(ROLE_SUBSCRIBERS, 'Users', 'Users', group_order=400, name_order=1)
 def users():
     i = ctx.request.input(action='')
     if i.action=='edit':
@@ -238,6 +243,11 @@ def users():
         return Template('templates/userform.html', form_title=_('Edit User'), form_action='/api/users/update', redirect='users', can_change_role=_can_change_role(u), roles=_get_role_list(min(ROLE_ADMINISTRATORS, u.role_id)), **u)
     return Template('templates/users.html', users=_get_users(), ROLE_ADMINISTRATORS=ROLE_ADMINISTRATORS, get_role_name=_get_role_name, can_update_user=_can_update_user, can_delete_user=_can_delete_user, can_change_role=_can_change_role)
 
+@menu(ROLE_ADMINISTRATORS, 'Users', 'Add User', name_order=2)
+def add_user():
+    return Template('templates/userform.html', form_title=_('Add User'), form_action='/api/users/create', redirect='users', roles=_get_role_list(), role_id=ROLE_SUBSCRIBERS, can_change_role=True)
+
+@menu(ROLE_SUBSCRIBERS, 'Users', 'Profile', name_order=3)
 def profile():
     i = ctx.request.input(info='')
     u = _get_user(ctx.user.id)
@@ -458,6 +468,7 @@ def _lookup_cname(domain):
             pass
     raise DNSError('Cannot lookup domain.')
 
+@menu(ROLE_ADMINISTRATORS, 'Settings', 'Domain', name_order=3)
 def domain():
     i = ctx.request.input(action='')
     error = None
@@ -494,6 +505,7 @@ def api_update_website_settings():
     db.update('update websites set name=? where id=?', name, ctx.website.id)
     return True
 
+@menu(ROLE_ADMINISTRATORS, 'Settings', 'General', group_order=500, name_order=1)
 def general():
     ss = setting.get_website_settings()
     # set website name from table 'website':
@@ -529,6 +541,7 @@ def api_update_smtp_settings():
     setting.set_smtp_settings(**i)
     return True
 
+@menu(ROLE_ADMINISTRATORS, 'Administration', 'Mail', name_order=2)
 def mail():
     i = ctx.request.input(action='')
     if i.action=='test':
@@ -553,6 +566,7 @@ def mail():
 def _to_icon(s):
     return dict(executing='play', error='warning-sign', pending='pause', done='ok').get(s, 'question-sign')
 
+@menu(ROLE_ADMINISTRATORS, 'Administration', 'Tasks', name_order=3)
 def tasks():
     i = ctx.request.input(action='', tab='', page='1')
     page = int(i.page)
@@ -565,6 +579,7 @@ def tasks():
     previous = page > 1
     return Template('templates/tasks.html', to_icon=_to_icon, tabs=tabs, selected=selected, tasks=tasks, page=page, previous=previous, next=next)
 
+@menu(ROLE_ADMINISTRATORS, 'Administration', 'Registrations', name_order=4)
 def registrations():
     i = ctx.request.input(action='', page='1')
     if i.action=='decline':
@@ -645,6 +660,7 @@ def api_update_plugin_store_settings():
     plugin.set_plugin_settings('store', i.id, **i)
     return True
 
+@menu(ROLE_ADMINISTRATORS, 'Administration', 'Storage', group_order=1000, name_order=1)
 def storages():
     i = ctx.request.input(action='')
     if i.action=='edit':

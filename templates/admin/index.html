@@ -54,31 +54,12 @@
             <div class="span2">
                 <div class="well" style="padding: 8px 0px;">
                     <ul class="nav nav-list">
-                        <li class="nav-header">{{ _('Overview') }}</li>
-                        <li id="menu-manage-overview"><a href="/admin/manage/overview">{{ _('Statistics') }}</a></li>
-                        <li class="nav-header">{{ _('Articles') }}</li>
-                        <li id="menu-article-categories"><a href="/admin/article/categories">{{ _('All Categories') }}</a></li>
-                        <li id="menu-article-articles"><a href="/admin/article/articles">{{ _('All Articles') }}</a></li>
-                        <li id="menu-article-add_article"><a href="/admin/article/add_article">{{ _('Add Article') }}</a></li>
-                        <li class="nav-header">{{ _('Pages') }}</li>
-                        <li id="menu-article-pages"><a href="/admin/article/pages">{{ _('All Pages') }}</a></li>
-                        <li id="menu-article-add_page"><a href="/admin/article/add_page">{{ _('Add Page') }}</a></li>
-                        <li class="nav-header">{{ _('Attachments') }}</li>
-                        <li id="menu-article-attachments"><a href="/admin/article/attachments">{{ _('All Attachments') }}</a></li>
-                        <li id="menu-article-add_attachment"><a href="/admin/article/add_attachment">{{ _('Add Attachment') }}</a></li>
-                        <li class="nav-header">{{ _('Users') }}</li>
-                        <li id="menu-website-users"><a href="/admin/website/users">{{ _('Users') }}</a></li>
-                        <li id="menu-website-add_user"><a href="/admin/website/add_user">{{ _('Add User') }}</a></li>
-                        <li id="menu-website-profile"><a href="/admin/website/profile">{{ _('My Profile') }}</a></li>
-                        <li class="nav-header">{{ _('Settings') }}</li>
-                        <li id="menu-website-general"><a href="/admin/website/general">{{ _('General') }}</a></li>
-                        <li id="menu-website-navigations"><a href="/admin/website/navigations">{{ _('Navigations') }}</a></li>
-                        <li id="menu-website-domain"><a href="/admin/website/domain">{{ _('Domain') }}</a></li>
-                        <li class="nav-header">{{ _('Administration') }}</li>
-                        <li id="menu-website-storages"><a href="/admin/website/storages">{{ _('Storage') }}</a></li>
-                        <li id="menu-website-mail"><a href="/admin/website/mail">{{ _('Mail') }}</a></li>
-                        <li id="menu-website-tasks"><a href="/admin/website/tasks">{{ _('Task') }}</a></li>
-                        <li id="menu-website-registrations"><a href="/admin/website/registrations">{{ _('Registrations') }}</a></li>
+{% for g in __menus__ %}
+                        <li id="group-{{ g.name }}" class="nav-header">{{ g.name }}</li>
+    {% for m in g.items %}
+                        <li id="menu-{{ m.modname }}-{{ m.funcname }}"><a href="/admin/{{ m.modname }}/{{ m.funcname }}">{{ _(m.name) }}</a></li>
+    {% endfor %}
+{% endfor %}
                         <li class="divider"></li>
                         <li><a href="http://www.itranswarp.com/" target="_blank">{{ _('Help') }}</a></li>
                     </ul>

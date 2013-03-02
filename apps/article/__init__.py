@@ -27,6 +27,7 @@ def _get_category(category_id):
         raise APIPermissionError('cannot get category that does not belong to current website.')
     return cat
 
+@menu(ROLE_SUBSCRIBERS, 'Articles', 'Categories', group_order=10, name_order=1)
 def categories():
     i = ctx.request.input(action='')
     if i.action=='add':
@@ -164,6 +165,7 @@ def theme_get_category_articles(category_id):
 # Articles
 ################################################################################
 
+@menu(ROLE_SUBSCRIBERS, 'Articles', 'Articles', name_order=2)
 def articles():
     i = ctx.request.input(action='', page='1')
     if i.action=='edit':
@@ -181,6 +183,7 @@ def articles():
         next = True
     return Template('templates/articles.html', page=page, previous=previous, next=next, categories=_get_categories(), articles=articles)
 
+@menu(ROLE_CONTRIBUTORS, 'Articles', 'Add Article', name_order=3)
 def add_article():
     return Template('templates/articleform.html', form_title=_('Add Article'), form_action='/api/articles/create', categories=_get_categories(), static=False)
 
@@ -370,6 +373,7 @@ def theme_get_articles():
 # Pages
 ################################################################################
 
+@menu(ROLE_SUBSCRIBERS, 'Pages', 'Pages', group_order=20, name_order=1)
 def pages():
     i = ctx.request.input(action='')
     if i.action=='edit':
@@ -380,6 +384,7 @@ def pages():
         raise seeother('pages')
     return Template('templates/pages.html', pages=_get_pages())
 
+@menu(ROLE_ADMINISTRATORS, 'Pages', 'Add Page', name_order=2)
 def add_page():
     return Template('templates/articleform.html', form_title=_('Add Page'), form_action='/api/pages/create', static=True)
 
@@ -555,9 +560,11 @@ def api_upload_attachment():
         attr.filelink = '/api/resources/url?id=%s' % attr.resource_id
     return attr
 
+@menu(ROLE_CONTRIBUTORS, 'Attachments', 'Add Attachment', name_order=2)
 def add_attachment():
     return Template('templates/attachmentform.html')
 
+@menu(ROLE_SUBSCRIBERS, 'Attachments', 'Attachments', group_order=40, name_order=1)
 def attachments():
     i = ctx.request.input(action='', page='1', size='20')
     if i.action=='delete':
