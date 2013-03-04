@@ -55,7 +55,7 @@
                 <div class="well" style="padding: 8px 0px;">
                     <ul class="nav nav-list">
 {% for g in __menus__ %}
-                        <li id="group-{{ g.name }}" class="nav-header">{{ g.name }}</li>
+                        <li id="group-{{ g.name }}" class="nav-header">{{ _(g.name) }}</li>
     {% for m in g.items %}
                         <li id="menu-{{ m.modname }}-{{ m.funcname }}"><a href="/admin/{{ m.modname }}/{{ m.funcname }}">{{ _(m.name) }}</a></li>
     {% endfor %}
