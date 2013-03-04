@@ -61,6 +61,22 @@
         }
     }
 
+    function delete_navigation(aid, nav_id) {
+        $('#' + aid).popover('hide');
+        $.postJSON('/api/navigations/delete', 'id=' + nav_id).success(function(result) {
+            if (result.error) {
+                show_error(result.message, result.data);
+            }
+            else {
+                location.assign('navigations');
+            }
+        }).error(function() {
+            show_error('Server error');
+        }).complete(function() {
+            $('span.loading-' + nav_id).hide();
+        });
+    }
+
     function save_name(nav_id, ahref_id, value) {
         if (value=='' || value==$('#' + ahref_id).text()) {
             return;
@@ -93,7 +109,7 @@
                 content:'<p>Are you sure you want to delete the <strong>'
                     + $(this).attr('prompt')
                     + '</strong>?</p>'
-                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="location.assign(\'?action=delete&id='
+                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="delete_navigation(\'' + aid + '\', \''
                     + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
                     + aid + '\').popover(\'hide\')">Cancel</button></div>',
             });
