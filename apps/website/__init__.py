@@ -4,9 +4,9 @@
 __author__ = 'Michael Liao'
 
 import re, time, uuid, logging, socket, struct, linecache
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from transwarp.web import ctx, get, post, route, seeother, notfound, UTC, Template, Dict
+from transwarp.web import ctx, get, post, route, seeother, notfound, UTC, UTC_0, Template, Dict
 from transwarp.mail import send_mail
 from transwarp import db, task
 
@@ -17,6 +17,36 @@ from plugin import store
 from install import create_website, create_user
 
 from apps import menu
+
+################################################################################
+# Overview
+################################################################################
+
+@menu(ROLE_ADMINISTRATORS, 'Dashboard', 'Overview', group_order=0)
+def overview():
+    # find timestamp at today's 00:00
+    ss = setting.get_website_settings()
+    utc = datetime.utcfromtimestamp(time.time()).replace(tzinfo=UTC_0)
+    now = utc.astimezone(UTC(ss[setting.WEBSITE_TIMEZONE]))
+    site_dateformat = ss[setting.WEBSITE_DATE_FORMAT]
+    start_date = now - timedelta(days=15)
+    end_date = now - timedelta(days=1)
+    h_end = int(time.mktime(now.replace(hour=0).timetuple())) // 3600
+    wid = ctx.website.id
+    keys = map(lambda x: 'counter_%s_%d' % (wid, x), range(h_end - 336, h_end))
+    results = map(lambda x: 0 if x is None else int(x), cache.client.gets(*keys))
+    rs = [(24 * n, 24 * n + 24) for n in range(14)]
+    days = [sum(results[l:h]) for l, h in rs]
+    d = dict(
+        articles = db.select_int('select count(id) from articles'),
+        pages = db.select_int('select count(id) from pages'),
+        attachments = db.select_int('select count(id) from attachments'),
+        users = db.select_int('select count(id) from users'),
+        two_weeks = str(days),
+        start_date = start_date.strftime(site_dateformat),
+        end_date = end_date.strftime(site_dateformat),
+    )
+    return Template('templates/overview.html', **d)
 
 ################################################################################
 # Navs
@@ -235,7 +265,7 @@ def _get_role_list(starts_from=ROLE_ADMINISTRATORS):
     ids.sort()
     return [Dict(id=rid, name=ROLE_NAMES[rid]) for rid in ids]
 
-@menu(ROLE_SUBSCRIBERS, 'Users', 'Users', group_order=400, name_order=1)
+@menu(ROLE_SUBSCRIBERS, 'Users', 'All Users', group_order=400, name_order=1)
 def users():
     i = ctx.request.input(action='')
     if i.action=='edit':
@@ -247,7 +277,7 @@ def users():
 def add_user():
     return Template('templates/userform.html', form_title=_('Add User'), form_action='/api/users/create', redirect='users', roles=_get_role_list(), role_id=ROLE_SUBSCRIBERS, can_change_role=True)
 
-@menu(ROLE_SUBSCRIBERS, 'Users', 'Profile', name_order=3)
+@menu(ROLE_SUBSCRIBERS, 'Users', 'My Profile', name_order=3)
 def profile():
     i = ctx.request.input(info='')
     u = _get_user(ctx.user.id)
@@ -541,7 +571,7 @@ def api_update_smtp_settings():
     setting.set_smtp_settings(**i)
     return True
 
-@menu(ROLE_ADMINISTRATORS, 'Administration', 'Mail', name_order=2)
+@menu(ROLE_SUPER_ADMINS, 'Administration', 'Mail', name_order=2)
 def mail():
     i = ctx.request.input(action='')
     if i.action=='test':
@@ -566,7 +596,7 @@ def mail():
 def _to_icon(s):
     return dict(executing='play', error='warning-sign', pending='pause', done='ok').get(s, 'question-sign')
 
-@menu(ROLE_ADMINISTRATORS, 'Administration', 'Tasks', name_order=3)
+@menu(ROLE_SUPER_ADMINS, 'Administration', 'Tasks', name_order=3)
 def tasks():
     i = ctx.request.input(action='', tab='', page='1')
     page = int(i.page)
@@ -579,7 +609,7 @@ def tasks():
     previous = page > 1
     return Template('templates/tasks.html', to_icon=_to_icon, tabs=tabs, selected=selected, tasks=tasks, page=page, previous=previous, next=next)
 
-@menu(ROLE_ADMINISTRATORS, 'Administration', 'Registrations', name_order=4)
+@menu(ROLE_SUPER_ADMINS, 'Administration', 'Registrations', name_order=4)
 def registrations():
     i = ctx.request.input(action='', page='1')
     if i.action=='decline':
@@ -660,7 +690,7 @@ def api_update_plugin_store_settings():
     plugin.set_plugin_settings('store', i.id, **i)
     return True
 
-@menu(ROLE_ADMINISTRATORS, 'Administration', 'Storage', group_order=1000, name_order=1)
+@menu(ROLE_SUPER_ADMINS, 'Administration', 'Storage', group_order=1000, name_order=1)
 def storages():
     i = ctx.request.input(action='')
     if i.action=='edit':

@@ -26,11 +26,14 @@ def ab_test():
 
 @route('/')
 def website_index():
-    raise seeother(loader.load_navigations()[0].url)
+    navs = loader.load_navigations()
+    if not navs:
+        return '<html><body><h1>It works!</h1><p>Now please goto <a href="/admin/">management console</a> to initialize your website!</p></body></html>'
+    raise seeother(navs[0].url)
 
 @route('/admin/')
 def admin_index():
-    raise seeother('/admin/manage/overview')
+    raise seeother('/admin/website/overview')
 
 @get('/register')
 def admin_get_register():
@@ -160,6 +163,6 @@ def admin_menu_item(mod, handler):
 def track_js():
     ctx.response.content_type = 'application/x-javascript'
     ctx.response.set_header('Cache-Control', 'private, no-cache, no-cache=Set-Cookie, proxy-revalidate')
-    key = '_TR_%d' % (int(time.time()) // 3600)
+    key = 'counter_%s_%d' % (ctx.website.id, int(time.time()) // 3600)
     cache.client.incr(key)
     return r'var __track_ok__ = true;'
