@@ -1,0 +1,13 @@
+Users = 用户
+All Users = 所有用户
+Add User = 添加用户
+My Profile = 我的个人资料
+Settings = 设置
+General = 通用
+Navigations = 导航
+Domain = 域名
+Administration = 管理
+Storage = 存储
+Mail = 邮件
+Tasks = 任务
+Registrations = 注册
