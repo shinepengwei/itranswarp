@@ -250,8 +250,7 @@ task.__SQL__,
 ]
 
 def main():
-    print 'To install iTranswarp, type Y and press ENTER:'
-    if raw_input()!='Y':
+    if raw_input('To install iTranswarp, type Y and press ENTER: ')!='Y':
         print 'Install cancelled.'
         exit(1)
     print 'Prepare to install iTranswarp...'
@@ -259,9 +258,34 @@ def main():
         print 'Checking Python version...', _check_version()
         print 'Checking Python Imaging Library...', _check_pil()
         print 'Checking Redis...', _check_redis()
+        host = raw_input('Database host (localhost): ')
+        port = raw_input('Database port (3306): ')
+        user = raw_input('Database user (root): ')
+        dbpass = raw_input('Database password: ')
+        if port=='':
+            port = '3306'
+        db.init(db_type='mysql', db_schema='itrans', \
+                db_host=host or 'localhost', db_port=int(port), \
+                db_user=user or 'root', db_password=dbpass, \
+                use_unicode=True, charset='utf8')
+        print 'Creating tables . . .',
+        for sql in CREATE_TABLES:
+            if not sql.startswith('--'):
+                db.update(sql)
+                print '.',
+        print '\nInit database ok.'
+        email = raw_input('Super admin email: ').strip().lower()
+        passwd = raw_input('Super admin password: ')
+        passwd = hashlib.md5(passwd).hexdigest()
+        create_website(email, 'iTranswarp', 'localhost')
+        if db.select_int('select count(*) from mysql.user where user=?', 'www-data')==0:
+            db.update('create user \'www-data\'@\'localhost\' identified by \'www-data\'')
+        db.update('grant select,insert,update,delete on itrans.* to \'www-data\'@\'localhost\' identified by \'www-data\'')
+        db.update('update users set role_id=0, passwd=? where email=?', passwd, email)
+        print 'Install successfully!'
     except Exception, e:
         print 'Install failed:', e.message
-        exit(1)
+        raise
 
 def _check_installed():
     L = db.select('show tables')
