@@ -1,0 +1,64 @@
+<script type="text/JavaScript">
+    $(function() {
+        $('a.x-btn-disable').each(function() {
+            var aid = $(this).attr('id');
+            var rel = $(this).attr('rel');
+            $(this).popover({
+                placement: 'top',
+                html: true,
+                title: 'Confirm Deletion',
+                content: '<p>Are you sure you want to disable the <strong>'
+                    + $(this).attr('prompt')
+                    + '</strong>?</p>'
+                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="location.assign(\'?action=disable&id='
+                    + rel + '\');">Disable</button> <button class="btn" onclick="$(\'#'
+                    + aid + '\').popover(\'hide\')">Cancel</button></div>'
+            });
+        });
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('All Websites') }}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="35%">{{ _('Name') }}</th>
+                    <th width="35%">{{ _('Domain') }}</th>
+                    <th width="20%">{{ _('Creation Date') }}</th>
+                    <th width="10%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for w in websites %}
+                <tr id="tr-{{ w.id }}">
+                    <td class="name">
+    {% if w.disabled %}
+                        {{ w.name|e }} <i class="icon-ban-circle"></i>
+    {% else %}
+                        <a href="{{ w.domain }}" target="_blank">{{ w.name|e }}</a>
+    {% endif %}
+                    </td>
+                    <td>{{ w.domain }}</td>
+                    <td>{{ w.creation_time|dt }}</td>
+                    <td>
+    {% if w.disabled %}
+                        <a href="?action=enable&id={{ w.id }}" class="x-btn"><i class="icon-ok"></i></a>
+    {% else %}
+                        <a id="disable-{{ w.id }}" rel="{{ w.id }}" href="javascript:void(0)" class="x-btn x-btn-disable" prompt="{{ w.name|e }}"><i class="icon-ban-circle"></i></a>
+    {% endif %}
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include 'templates/admin/inc_page.html' %}

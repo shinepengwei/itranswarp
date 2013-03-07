@@ -609,6 +609,21 @@ def tasks():
     previous = page > 1
     return Template('templates/tasks.html', to_icon=_to_icon, tabs=tabs, selected=selected, tasks=tasks, page=page, previous=previous, next=next)
 
+@menu(ROLE_SUPER_ADMINS, 'Administration', 'Websites', name_order=0)
+def websites():
+    i = ctx.request.input(action='', page='1')
+    if i.action=='disable' or i.action=='enable':
+        website = db.select_one('select * from websites where id=?', i.id)
+        db.update('update websites set disabled=? where id=?', i.action=='disable', i.id)
+        raise seeother('websites')
+    page = int(i.page)
+    websites = db.select('select * from websites order by id desc limit ?,?', 50*(page-1), 51)
+    next = len(websites)==51
+    if next:
+        websites = websites[:-1]
+    previous = page > 1
+    return Template('templates/websites.html', websites=websites, page=page, previous=previous, next=next)
+
 @menu(ROLE_SUPER_ADMINS, 'Administration', 'Registrations', name_order=4)
 def registrations():
     i = ctx.request.input(action='', page='1')
