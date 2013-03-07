@@ -90,5 +90,5 @@ def parse(s, maxchars):
     return h, summary
 
 if __name__=='__main__':
-    s = u'<p>paragrah 1</p> <p color=red><a>another papa</a></p> <br/> <img src="test.jpg" /> <div>END</div><h1>END</h1>'
+    s = u'<p>paragrah 1</p> <pre>hello, <span>world</span>!</pre> <p color=red><a>another papa</a></p> <br/> <img src="test.jpg" /> <div>END</div><h1>END</h1>'
     print parse(s, 12)
