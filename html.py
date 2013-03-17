@@ -10,6 +10,8 @@ import re, logging
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
 
+import markdown2
+
 class MyHTMLParser(HTMLParser):
 
     def __init__(self):
@@ -75,6 +77,11 @@ class MyHTMLParser(HTMLParser):
 
 _RE_END_PARA = re.compile(ur'(\<\/)(p)|(div)|(pre)(\>)')
 
+def to_html(obj):
+    if obj.content.startswith('<'):
+        return obj.content
+    return markdown2.markdown(obj.content)
+
 def parse(s, maxchars):
     L = _RE_END_PARA.split(s)
     parser = MyHTMLParser()
@@ -89,6 +96,12 @@ def parse(s, maxchars):
         summary = h
     return h, summary
 
+def parse_md(s, maxchars):
+    h = markdown2.markdown(s)
+    return parse(h, maxchars)
+
 if __name__=='__main__':
     s = u'<p>paragrah 1</p> <pre>hello, <span>world</span>!</pre> <p color=red><a>another papa</a></p> <br/> <img src="test.jpg" /> <div>END</div><h1>END</h1>'
     print parse(s, 12)
+    print parse_md(u'*Hello, 你好！*', 12)
+    print markdown2.markdown('*hello, world!')

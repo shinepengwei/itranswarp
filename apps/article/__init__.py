@@ -272,7 +272,7 @@ def api_create_article():
     if ctx.user.role_id < ROLE_CONTRIBUTORS:
         draft = True if i.draft else False
     current = time.time()
-    content, summary = html.parse(content, 1000)
+    html_content, summary = html.parse_md(content, 800)
     article = Dict( \
         id=db.next_str(), \
         website_id=ctx.website.id, \
@@ -308,7 +308,7 @@ def api_update_article():
         content = i.content.strip()
         if not content:
             raise APIValueError('content', 'content cannot be empty.')
-        content, summary = html.parse(content, 1000)
+        html_content, summary = html.parse_md(content, 1000)
         kw['content'] = content
         kw['summary'] = summary
     if 'category_id' in i:
@@ -324,6 +324,7 @@ def api_update_article():
         kw['draft'] = draft
     if kw:
         kw['modified_time'] = time.time()
+        kw['version'] = article.version + 1
         db.update_kw('articles', 'id=?', i.id, **kw)
     return True
 
@@ -343,6 +344,8 @@ def api_delete_article():
 @route('/article/<article_id>')
 def theme_get_article(article_id):
     article = _get_article(article_id)
+    # todo: cache article content:
+    article.content = html.to_html(article)
     categories = _get_categories()
     category_dict = dict()
     for cat in categories:
@@ -488,6 +491,7 @@ def api_delete_page():
 @route('/page/<page_id>')
 def theme_get_page(page_id):
     page = _get_page(page_id)
+    page.content = html.to_html(page)
     categories = _get_categories()
     return dict(__navigation__=('/page/%s' % page_id,), page=page, categories=categories)
 

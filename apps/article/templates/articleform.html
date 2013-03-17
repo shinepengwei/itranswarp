@@ -88,9 +88,18 @@ $('#category_id').val('{{ category_id }}');
                     </div>
                 </div>
                 <div class="field-content control-group">
-                    <textarea id="html-editor" name="content" class="redactor" style="width:780px;height=600px">
-                    {{ content|e }}
-                    </textarea>
+                    <div class="btn-group" style="margin-bottom: 6px;">
+                        <button type="button" class="btn"><i class="icon-envelope"></i></button>
+                        <button type="button" class="btn"><i class="icon-th-list"></i></button>
+                        <button type="button" class="btn"><i class="icon-bold"></i></button>
+                        <button type="button" class="btn"><i class="icon-italic"></i></button>
+                        <button type="button" class="btn"><i class="icon-picture"></i></button>
+                        <button type="button" class="btn"><i class="icon-facetime-video"></i></button>
+                    </div>
+                    <textarea id="markdown-editor" name="content" rows="20" style="width:780px;resize:none;">{{ content|e }}</textarea>
+                </div>
+                <div class="control-group">
+                    <div><a href="http://daringfireball.net/projects/markdown/" target="_blank">get full Markdown syntax</a></div>
                 </div>
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
