@@ -666,6 +666,7 @@ def _safe_str(s):
         return s.encode('utf-8')
     return str(s)
 
+@cached(key='article/feed', timeout=900)
 @get('/feed')
 def rss():
     ctx.response.content_type = 'application/rss+xml'
@@ -703,7 +704,7 @@ def rss():
         L.append(']]></author><pubDate>')
         L.append(_rss_datetime(a.creation_time))
         L.append('</pubDate><description><![CDATA[')
-        L.append(a.content)
+        L.append(html.to_html(a))
         L.append(']]></description></item>')
     L.append(r'</channel></rss>')
     return map(_safe_str, L)

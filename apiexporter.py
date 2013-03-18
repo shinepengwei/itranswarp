@@ -10,7 +10,7 @@ except ImportError:
 
 import re, logging, functools
 
-from transwarp.web import ctx, get, post, forbidden, HttpError
+from transwarp.web import ctx, get, post, forbidden, HttpError, Dict
 from transwarp import db, cache
 
 _TRUES = set([u'1', u't', u'true', u'y', u'yes'])
@@ -57,12 +57,12 @@ class APIPermissionError(APIError):
     def __init__(self, message=''):
         super(APIPermissionError, self).__init__('permission:forbidden', 'permission', message)
 
-def cached(key=None, time=3600):
+def cached(key=None, timeout=3600, use_ctx=True):
     '''
     Make function result cached.
 
     >>> import time
-    >>> @cached(2)
+    >>> @cached(timeout=2)
     ... def get_time():
     ...     return int(time.time() * 1000)
     >>> n1 = get_time()
@@ -78,16 +78,17 @@ def cached(key=None, time=3600):
     def _decorator(func):
         @functools.wraps(func)
         def _wrapper(*args):
-            s = key or func.__name__
+            sk = key or func.__name__
+            s = '%s--%s' % (ctx.website.id, sk) if use_ctx else sk
             if args:
                 L = [s]
                 L.extend(args)
                 s = '--'.join(L)
             r = cache.client.get(s)
             if r is None:
-                logging.info('Cache not found for key: %s' % s)
+                logging.debug('Cache not found for key: %s' % s)
                 r = func(*args)
-                cache.client.set(s, r, time)
+                cache.client.set(s, r, timeout)
             return r
         return _wrapper
     return _decorator
@@ -200,6 +201,7 @@ def check_email(email):
 
 if __name__=='__main__':
     cache.client = cache.RedisClient('localhost')
+    ctx.website = Dict(id='123000')
     import doctest
     doctest.testmod()
  

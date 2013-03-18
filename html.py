@@ -78,8 +78,6 @@ class MyHTMLParser(HTMLParser):
 _RE_END_PARA = re.compile(ur'(\<\/)(p)|(div)|(pre)(\>)')
 
 def to_html(obj):
-    if obj.content.startswith('<'):
-        return obj.content
     return markdown2.markdown(obj.content)
 
 def parse(s, maxchars):

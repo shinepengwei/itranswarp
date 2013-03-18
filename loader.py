@@ -13,7 +13,7 @@ from transwarp import db, i18n
 from auth import extract_session_cookie, http_basic_auth
 from apiexporter import cached
 
-@cached(key='website')
+@cached(key='website', use_ctx=False)
 def _get_site(host):
     wss = db.select('select * from websites where domain=?', host)
     if wss:
