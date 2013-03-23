@@ -11,7 +11,7 @@ from transwarp import db
 
 from apiexporter import *
 from plugin import store
-import html, thumbnail, setting
+import html, thumbnail, setting, counter
 
 from plugin.theme import theme
 
@@ -142,7 +142,7 @@ def api_sort_categories():
 
 @theme('category.html')
 @route('/category/<category_id>')
-def list_articles_by_category(category_id):
+def theme_articles_by_category(category_id):
     i = ctx.request.input(page='1', size='20')
     page = int(i.page)
     size = int(i.size)
@@ -282,6 +282,7 @@ def api_create_article():
         draft=draft, \
         name=name, \
         tags=_format_tags(i.tags), \
+        read_count=0, \
         summary=summary, \
         content=content, \
         creation_time=current, \
@@ -346,6 +347,8 @@ def theme_get_article(article_id):
     article = _get_article(article_id)
     # todo: cache article content:
     article.content = html.to_html(article)
+    # increase counter:
+    article.read_count = article.read_count + counter.inc(article.id)
     categories = _get_categories()
     category_dict = dict()
     for cat in categories:
@@ -443,6 +446,7 @@ def api_create_page():
         draft=draft, \
         name=name, \
         tags=_format_tags(i.tags), \
+        read_count=0, \
         content=content, \
         creation_time=current, \
         modified_time=current, \
@@ -492,6 +496,8 @@ def api_delete_page():
 def theme_get_page(page_id):
     page = _get_page(page_id)
     page.content = html.to_html(page)
+    # increase counter:
+    page.read_count = page.read_count + counter.inc(page.id)
     categories = _get_categories()
     return dict(__navigation__=('/page/%s' % page_id,), page=page, categories=categories)
 
@@ -618,9 +624,6 @@ def get_nav_definitions():
             get_url=lambda value: '/page/%s' % value,
             options=[(page.id, page.name) for page in _get_pages()]
         )]
-
-
-
 
 ################################################################################
 # RSS
