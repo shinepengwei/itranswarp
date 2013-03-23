@@ -102,7 +102,7 @@ def api_update_category():
         raise APIValueError('name', 'name cannot be empty')
     logging.info('update category...')
     cat = _get_category(i.id)
-    db.update_kw('categories', 'id=?', i.id, name=name, description=description, modified_time=time.time())
+    db.update_kw('categories', 'id=?', i.id, name=name, description=description, modified_time=time.time(), version=cat.version+1)
     return True
 
 @api(role=ROLE_ADMINISTRATORS)
@@ -116,7 +116,7 @@ def api_delete_category():
         raise APIError('operation:failed', 'category', 'cannot delete category that is locked.')
     uncategorized = db.select_one('select id from categories where website_id=? and locked=?', ctx.website.id, True)
     db.update('delete from categories where id=?', i.id)
-    db.update('update articles set category_id=? where category_id=?', uncategorized.id, i.id)
+    db.update('update articles set category_id=?, version=version + 1 where category_id=?', uncategorized.id, i.id)
     return True
 
 @api(role=ROLE_ADMINISTRATORS)
@@ -137,12 +137,12 @@ def api_sort_categories():
         n = n + 1
     with db.transaction():
         for c in cats:
-            db.update('update categories set display_order=? where id=?', odict.get(c.id, l), c.id)
+            db.update('update categories set display_order=?, version=version + 1 where id=?', odict.get(c.id, l), c.id)
     return True
 
 @theme('category.html')
 @route('/category/<category_id>')
-def theme_get_category_articles(category_id):
+def list_articles_by_category(category_id):
     i = ctx.request.input(page='1', size='20')
     page = int(i.page)
     size = int(i.size)
