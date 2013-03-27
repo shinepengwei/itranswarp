@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ __website__.name|e }}</title>
+    <!--[if lt IE 9]>
+        <script src="{{ __theme_path__ }}/static/js/html5.js"></script>
+    <![endif]-->
+    <link rel="alternate" type="application/rss+xml" title="{{ __website__.name|e }}" href="/feed" />
+    <link rel="stylesheet" href="{{ __theme_path__ }}/static/css/reset.css" />
+    <link rel="stylesheet" href="{{ __theme_path__ }}/static/css/custom.css" />
+
+    <script type="text/javascript" src="{{ __theme_path__ }}/static/js/jquery-1.9.0.min.js"></script>
+    <script type="text/javascript" src="{{ __theme_path__ }}/static/js/manifest.js"></script>
+    <script type="text/javascript">
+        function do_search() {
+            location.assign('http://www.google.com/search?q=' + encodeURIComponent($('form[name=search] input[name=q]').val() + ' site:{{ __website__.domain }}'));
+            return false;
+        }
+
+        $(function() {
+            $('#main hr:last').css('display', 'none');
+            var path = location.pathname;
+            var navs = [{% for nav in __navigation__ %} '{{ nav }}', {% endfor %}];
+            for (var i=0; i<navs.length; i++) {
+                var a = $('#navigation li a[href="' + navs[i] + '"]:first');
+                if (a.length > 0) {
+                    a.addClass('active');
+                    break;
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="header" class="container">
+        <div class="row">
+            <h1><a href="/">{{ __website__.name|e }}</a></h1>
+        </div>
+        <div class="navbar">
+                <ul id="navigation" class="nav">
+{% for nav in __navigations__ %}
+                    <li><a href="{{ nav.url }}">{{ nav.name|e }}</a></li>
+{% endfor %}
+                </ul>
+        </div>
+        <div class="row" style="text-align:center;">
+            <form name="search" method="get" action="#" class="text-align:center" onsubmit="return do_search()">
+                <input name="q" type="text" class="search" placeholder="Search">
+            </form>
+        </div>
+    </div>
+    <!-- end header -->

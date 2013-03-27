@@ -1,0 +1,22 @@
+{% include __get_theme_path__('_inc_header.html') %}
+
+    <div class="container">
+        <div class="row">
+            <div id="main">
+                <!-- begin main -->
+                <div class="entry">
+                    <h5 class="entry-date"><abbr>{{ article.creation_time|dt }}</abbr></h5>
+                    <h3 class="entry-title">{{ article.name|e }}</h3>
+                    <div class="entry-content">
+                        <p style="text-align:center">by {{ article.user_name|e }}</p>
+                        {{ article.content }}
+{% if article.tags %}
+                        <p style="text-align:center">Tags: {{ article.tags }}</p>
+{% endif %}
+                    </div>
+                    <div class="entry-link">
+                        {{ article.read_count }} reads | 0 comments
+                    </div>
+                </div>
+
+{% include __get_theme_path__('_inc_footer.html') %}
