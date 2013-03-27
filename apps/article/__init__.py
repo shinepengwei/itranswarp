@@ -373,7 +373,7 @@ def theme_get_articles():
     category_dict = dict()
     for cat in categories:
         category_dict[cat.id] = cat.name
-    return dict(__navigation__=('/articles',), articles=articles, page=page, previous=page>2, next=next, categories=categories, get_category_name=lambda cid: category_dict.get(cid, 'ERROR'))
+    return dict(__navigation__=('/articles',), articles=articles, page=page, previous=(page>1), next=next, categories=categories, get_category_name=lambda cid: category_dict.get(cid, 'ERROR'))
 
 ################################################################################
 # Pages
