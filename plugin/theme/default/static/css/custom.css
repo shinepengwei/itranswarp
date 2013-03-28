@@ -25,3 +25,7 @@
 .sidebar-body {
   padding: 15px;
 }
+
+#footer div.row div {
+  text-align: center;
+}
