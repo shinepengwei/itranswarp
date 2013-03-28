@@ -1,0 +1,67 @@
+<script type="text/javascript">
+    function cancel_popover(aid) {
+        $('#' + aid).popover('hide');
+    }
+
+    $(function() {
+        $('a.x-editable').each(function() {
+            var aid = $(this).attr('id');
+            var pid = $(this).attr('theme_id');
+
+            $(this).popover({
+                placement: 'top',
+                html: true,
+                title: 'Activation',
+                content: '<p>Activate this theme?</p><div style="text-align:center">'
+                    + '<button class="btn btn-primary" onclick="location.assign(\''
+                    + '?action=enable&id=' + pid + '&ts=' + new Date().getTime()
+                    + '\')">Yes</button> <button class="btn" onclick="cancel_popover(\''
+                    + aid + '\')">Cancel</button></div>'
+            });
+        });
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Themes') }}</h3>
+    </div>
+
+    <div class="span10">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="30%">{{ _('Preview') }}</th>
+                    <th width="60%">{{ _('Name') }}</th>
+                    <th width="10%">{{ _('Enabled') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for t in themes %}
+                <tr id="tr-{{ t.id }}">
+                    <td style="text-align:center;">
+                        <div style="margin:0 auto; width:210px; height:160px; background-image:url(/plugin/theme/{{ t.id }}/static/preview.png); background-position:top center; background-repeat:no-repeat; background-size:cover;"></div>
+                    <td>
+                        <p>{{ _('Name') }}:
+                    {% if t.url %}
+                            <a href="{{ t.url }}" target="_blank">{{ t.name|e }}</a>
+                    {% else %}
+                            {{ t.name|e }}
+                    {% endif %}
+                        </p>
+                        <p>{{ _('Author') }}: {{ t.author|e }}</p>
+                        <p>{{ _('Description') }}: {{ t.description|e }}</p>
+                    </td>
+                    <td>
+                    {% if enabled==t.id %}
+                        Enabled
+                    {% else %}
+                        <a href="javascript:void(0)" id="a-{{ t.id }}" theme_id="{{ t.id }}" class="x-editable">Disabled</a>
+                    {% endif %}
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

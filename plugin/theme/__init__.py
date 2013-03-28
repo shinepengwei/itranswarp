@@ -3,17 +3,49 @@
 
 __author__ = 'Michael Liao'
 
-import functools
+import os, logging, functools
 
 from transwarp.web import ctx, Template
 
 import setting, loader
 
+_KIND_THEME = 'theme'
+_KEY_THEME = 'active_theme'
+
+_themes = None
+
 def get_themes():
-    return ['default']
+    global _themes
+    if not _themes:
+        L = []
+        # scan folders:
+        init_path = os.path.abspath(__file__)
+        theme_dir = os.path.split(init_path)[0]
+        d = loader.scan_submodules('plugin.theme')
+        for k, v in d.iteritems():
+            if os.path.isdir(os.path.join(theme_dir, k)):
+                try:
+                    L.append(dict(id=k, \
+                                  name=getattr(v, 'name', k), \
+                                  description=getattr(v, 'description', 'No description'), \
+                                  author=getattr(v, 'author', 'unknown'), \
+                                  url=getattr(v, 'url', '')))
+                except BaseException:
+                    logging.warning('load theme %s failed.' % k)
+        logging.info('load themes: %s' % str(L))
+        _themes = L
+    return _themes
 
 def get_active_theme():
-    return 'default'
+    s = setting.get_setting(_KIND_THEME, _KEY_THEME)
+    return s or 'default'
+
+def set_active_theme(theme_id):
+    for t in get_themes():
+        if t['id'] == theme_id:
+            setting.set_setting(_KIND_THEME, _KEY_THEME, theme_id)
+            return
+    raise ValueError('Invalid theme id: %s' % theme_id)
 
 def _init_theme(path, model):
     theme = get_active_theme()
@@ -49,4 +81,3 @@ class ThemeTemplate(Template):
     def __init__(self, path, model=None, **kw):
         templ_path, m = _init_theme(path, r)
         super(ThemeTemplate, self).__init__(templ_path, m, **kw)
-

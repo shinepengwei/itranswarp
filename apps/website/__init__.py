@@ -13,7 +13,7 @@ from transwarp import db, task
 from apiexporter import *
 import setting, loader, async, plugin
 
-from plugin import store
+from plugin import store, theme
 from install import create_website, create_user
 
 from apps import menu
@@ -498,7 +498,7 @@ def _lookup_cname(domain):
             pass
     raise DNSError('Cannot lookup domain.')
 
-@menu(ROLE_ADMINISTRATORS, 'Settings', 'Domain', name_order=3)
+@menu(ROLE_ADMINISTRATORS, 'Settings', 'Domain', name_order=4)
 def domain():
     i = ctx.request.input(action='')
     error = None
@@ -552,6 +552,13 @@ def general():
         date_examples=date_examples, \
         time_examples=time_examples, \
         **ss)
+
+@menu(ROLE_ADMINISTRATORS, 'Settings', 'Themes', name_order=3)
+def themes():
+    i = ctx.request.input(action='')
+    if i.action=='enable':
+         theme.set_active_theme(i.id)
+    return Template('templates/themes.html', themes=theme.get_themes(), enabled=theme.get_active_theme())
 
 @api(role=ROLE_SUPER_ADMINS)
 @get('/api/settings/smtp/gets')
