@@ -1,0 +1,87 @@
+{% include __get_theme_path__('_inc_header.html') %}
+
+    <div class="container">
+        <div class="row sep">
+            <div class="span4">
+                <!-- start main content -->
+{% for article in articles %}
+                <div class="block color-default">
+                    <div class="block-inner">
+                        <h3 class="icon icon-article"><a href="/article/{{ article.id }}">{{ article.name|e }}</a></h3>
+                        <div class="entry">
+                            {{ article.content }}
+{% if article.tags %}
+                            <p class="info">Tags: {{ article.tags }}</p>
+{% endif %}
+                            <p class="info">{{ article.creation_time|dt }} | by {{ article.user_name|e }} | {{ article.read_count }} reads | 0 comments</p>
+                            <p class="info"><a href="/article/{{ article.id }}">read more</a></p>
+                        </div>
+                    </div>
+                </div>
+{% endfor %}
+
+                <div class="pagination">
+{% if previous %}
+                    <a class="button prev color-teal" href="?page={{ page - 1 }}">« Previous</a>
+{% endif %}
+{% if next %}
+                    <a class="button next color-teal" href="?page={{ page + 1 }}">Next »</a>
+{% endif %}
+                </div>
+                <!-- end main content -->
+            </div>
+            <div class="span2">
+                <!-- start side bar -->
+                <div class="row">
+                    <div class="span1">
+                        <div class="block block-1x1 color-teal">
+                            <a href="/" class="block-button button-facebook"></a>
+                        </div>
+                    </div>
+                    <div class="span1">
+                        <div class="block block-1x1 color-brown">
+                            <a href="/" class="block-button button-email"></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="span1">
+                        <div class="block block-1x1 color-green">
+                            <a href="/" class="block-button button-twitter"></a>
+                        </div>
+                    </div>
+                    <div class="span1">
+                        <div class="block block-1x1 color-teal">
+                            <a href="/" class="block-button button-pinterest"></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="span2">
+                        <div class="block block-2x1">
+                            <div class="image" style="background-image:url(http://ww4.sinaimg.cn/large/c188b2e6gw1e36qmpiea9j.jpg)"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block block-1x1">
+                    <div class="flip-container block-1x1">
+                        <div class="flipper">
+                            <div class="flip-front block-1x1 color-green">
+                                <div class="block-inner">
+                                    <p>3D flip</p>
+                                </div>
+                            </div>
+                            <div class="flip-back block-1x1 color-brown">
+                                <div class="block-inner">
+                                    <p>Hi</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end side bar -->
+            </div>
+        </div>
+    </div>
+
+{% include __get_theme_path__('_inc_footer.html') %}

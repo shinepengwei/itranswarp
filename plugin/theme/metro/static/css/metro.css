@@ -1,0 +1,341 @@
+/* metro.css */
+
+body {
+  background-image: url(../i/bg.png);
+  background-repeat: no-repeat;
+  background-position: top center;
+}
+
+div.sep {
+  margin-top: 20px;
+}
+
+div.header-sns-links a {
+  display: block;
+  width: 32px;
+  height: 32px;
+  float: right;
+  margin-left: 5px;
+}
+
+h1.h1-site-title {
+  float: left;
+  font-size: 34px;
+  line-height: 54px;
+  margin: 0;
+  padding: 0 12px 0 0;
+}
+
+h1.h1-site-title a,
+h1.h1-site-title a:link,
+h1.h1-site-title a:visited,
+h1.h1-site-title a:hover,
+h1.h1-site-title a:active {
+  text-decoration: none;
+}
+
+h2.h2-site-description {
+  float: left;
+  color: rgba(255, 255, 255, 0.7);
+  border-left: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  line-height: 54px;
+  font-variant: normal;
+  font-style: normal;
+  font-weight: normal;
+  margin: 0;
+  padding: 0 0 0 12px;
+}
+
+ul.nav {
+  padding: 0;
+  margin: 0;
+}
+
+ul.nav li {
+  float: left;
+  display: block;
+  list-style: none;
+  padding: 0;
+  margin: 0 2px 0 0;
+}
+
+ul.nav a {
+  display: block;
+  text-decoration: none;
+  padding: 12px 20px;
+  background-color: #f26522;
+}
+
+ul.nav a:hover,
+ul.nav a:active {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+ul.nav a.active {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+form.search {
+  display: block;
+  float: right;
+  width: 160px;
+  margin: 5px 0;
+  padding: 0 0 0 30px;
+  background-image: url(../i/search.png);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+input.search {
+  border: none;
+  display: block;
+  float: right;
+  width: 134px;
+  background-color: #fff;
+  color: rgba(0, 0, 0, 0.8);
+  padding: 8px;
+  margin: 0;
+}
+
+.icon {
+  padding-left: 26px;
+  height: 20px;
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+.icon-article {
+  background-image: url(../i/icon-article.png);
+}
+
+.icon-comment {
+  background-image: url(../i/icon-comment.png);
+}
+
+.icon-gallery {
+  background-image: url(../i/icon-gallery.png);
+}
+
+.icon-image {
+  background-image: url(../i/icon-image.png);
+}
+
+.icon-link {
+  background-image: url(../i/icon-link.png);
+}
+
+.icon-audio {
+  background-image: url(../i/icon-audio.png);
+}
+
+.icon-video {
+  background-image: url(../i/icon-video.png);
+}
+
+.icon-quote {
+  background-image: url(../i/icon-quote.png);
+}
+
+div.block {
+  display: block;
+  margin-bottom: 10px;
+}
+
+div.block-inner {
+  padding: 20px 20px;
+}
+
+div.block h1 {
+  font-size: 28px;
+}
+
+div.block h2 {
+  font-size: 24px;
+}
+
+div.block h3 {
+  font-size: 20px;
+}
+
+div.block h4 {
+  font-size: 18px;
+}
+
+div.block h5, div.block h6 {
+  font-size: 16px;
+}
+
+div.flip-container {
+  position: relative;
+  display: block;
+  -webkit-perspective: 1000;
+  -moz-perspective: 1000;
+  perspective: 1000;
+}
+
+div.flip-container:hover div.flipper {
+  -webkit-transform: rotateY(180deg);
+  -moz-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+div.flipper {
+  -webkit-transition: 1.2s;
+  -webkit-transform-style: preserve-3d;
+  -moz-transition: 1.2s;
+  -moz-transform-style: preserve-3d;
+  transition: 1.2s;
+  transform-style: preserve-3d;
+  position: relative;
+  cursor: pointer;
+}
+
+div.flip-front, div.flip-back {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+div.flip-front {
+  z-index: 2;
+}
+
+div.flip-back {
+  -webkit-transform: rotateY(180deg);
+  -moz-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+div.block-1x1 {
+  width: 150px;
+  height: 150px;
+}
+
+div.block-2x2 {
+  width: 310px;
+  height: 310px;
+}
+
+div.block-2x1 {
+  width: 310px;
+  height: 150px;
+}
+
+div.block-1x2 {
+  width: 150px;
+  height: 310px;
+}
+
+.entry {
+  margin-top: 10px;
+}
+
+.entry p {
+  margin: 8px 0;
+  line-height: 20px;
+}
+
+.entry pre {
+  margin: 1em;
+  padding: 0.5em;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.entry p.info {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.color-default {
+  background-color: rgb(242, 101, 34);
+}
+
+.color-blue {
+  background-color: rgb(9, 163, 226);
+}
+
+.color-teal {
+  background-color: rgb(0, 170, 169);
+}
+
+.color-green {
+  background-color: rgb(138, 187, 37);
+}
+
+.color-pink {
+  background-color: rgb(232, 120, 184);
+}
+
+.color-brown{
+  background-color: rgb(161, 81, 0);
+}
+
+.color-purple {
+  background-color: rgb(147, 32, 145);
+}
+
+a.button {
+  display: block;
+  padding: 12px 20px;
+  color: #fff;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+div.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+}
+
+.button-facebook {
+  background-image: url(../i/fb-icon.png);
+}
+
+.button-pinterest {
+  background-image: url(../i/pinterest-icon.png);
+}
+
+.button-twitter {
+  background-image: url(../i/twitter-icon.png);
+}
+
+.button-email {
+  background-image: url(../i/email-icon.png);
+}
+
+a.block-button {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.pagination a.prev {
+  float: left;
+}
+
+.pagination a.next {
+  float: right;
+}
+
+#footer p {
+  font-size: 12px;
+  line-height: 20px;
+  margin: 10px 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+#footer p a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: underline;
+}
