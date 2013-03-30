@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="{{ __theme_path__ }}/static/css/custom.css" />
 
     <script type="text/javascript" src="{{ __theme_path__ }}/static/js/jquery-1.9.0.min.js"></script>
-    <script type="text/javascript" src="{{ __theme_path__ }}/static/js/manifest.js"></script>
     <script type="text/javascript">
         function do_search() {
             location.assign('http://www.google.com/search?q=' + encodeURIComponent($('form[name=search] input[name=q]').val() + ' site:{{ __website__.domain }}'));
