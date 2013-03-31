@@ -248,6 +248,9 @@ div.block-1x2 {
 }
 
 .entry pre {
+  word-break: break-all;
+  word-wrap: break-word;
+  white-space: pre-wrap;
   margin: 1em;
   padding: 0.5em;
   border: 1px solid rgba(255, 255, 255, 0.7);

@@ -9,7 +9,7 @@
                     <div class="block-inner">
                         <h3 class="icon icon-article"><a href="/article/{{ article.id }}">{{ article.name|e }}</a></h3>
                         <div class="entry">
-                            {{ article.content }}
+                            {{ article.summary }}
 {% if article.tags %}
                             <p class="info">Tags: {{ article.tags }}</p>
 {% endif %}
