@@ -225,6 +225,14 @@ div.block-2x1 {
   height: 150px;
 }
 
+div.block-1xN {
+  width: 150px;
+}
+
+div.block-2xN {
+  width: 310px;
+}
+
 div.block-1x2 {
   width: 150px;
   height: 310px;
@@ -294,22 +302,6 @@ div.image {
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-}
-
-.button-facebook {
-  background-image: url(../i/fb-icon.png);
-}
-
-.button-pinterest {
-  background-image: url(../i/pinterest-icon.png);
-}
-
-.button-twitter {
-  background-image: url(../i/twitter-icon.png);
-}
-
-.button-email {
-  background-image: url(../i/email-icon.png);
 }
 
 a.block-button {
