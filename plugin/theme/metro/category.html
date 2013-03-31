@@ -9,11 +9,11 @@
                     <div class="block-inner">
                         <h3 class="icon icon-article"><a href="/article/{{ article.id }}">{{ article.name|e }}</a></h3>
                         <div class="entry">
-                            {{ article.content }}
+                            {{ article.summary }}
 {% if article.tags %}
                             <p class="info">Tags: {{ article.tags }}</p>
 {% endif %}
-                            <p class="info">{{ article.creation_time|dt }} | by {{ article.user_name|e }} | {{ article.read_count }} reads | 0 comments</p>
+                            <p class="info">{{ article.creation_time|dt }} | by {{ article.user_name|e }} | 0 comments</p>
                             <p class="info"><a href="/article/{{ article.id }}">read more</a></p>
                         </div>
                     </div>
