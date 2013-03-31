@@ -1,0 +1,42 @@
+                <!-- start side bar -->
+                <div class="row">
+                    <div class="span1">
+                        <div class="block block-1x1 color-teal">
+                            <a target="_blank" href="http://weibo.com/liaoxuefeng" class="block-button" style="background-image:url({{ __theme_path__ }}/static/i/weibo-icon.png)"></a>
+                        </div>
+                    </div>
+                    <div class="span1">
+                        <div class="block block-1x1 color-green">
+                            <a href="https://twitter.com/liaoxuefeng" class="block-button" style="background-image:url({{ __theme_path__ }}/static/i/twitter-icon.png)"></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="span2">
+                        <div class="flip-container block block-2x1">
+                            <div class="flipper">
+                                <div class="flip-front block-2x1">
+                                    <div class="image" style="background-image:url(http://ww4.sinaimg.cn/large/c188b2e6gw1e36qmpiea9j.jpg)"></div>
+                                </div>
+                                <div class="flip-back block-2x1 color-brown">
+                                    <div class="block-inner">
+                                        <p>关于互联网编程的一点笔记</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="span2">
+                        <div class="block block-2xN color-teal">
+                            <div class="block-inner">
+                                <h3>Categories</h3>
+{% for c in categories %}
+                                <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end side bar -->
