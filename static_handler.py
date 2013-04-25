@@ -26,7 +26,7 @@ def static_file_handler(pre, file):
     pathinfo = ctx.request.path_info
     if not pathinfo.startswith('/'):
         raise HttpError('403')
-    fpath = os.path.join(ctx.document_root, pathinfo[1:])
+    fpath = os.path.join(ctx.application.document_root, pathinfo[1:])
     logging.info('static file: %s' % fpath)
     if not os.path.isfile(fpath):
         raise HttpError(404)
