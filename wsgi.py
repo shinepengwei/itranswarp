@@ -35,7 +35,7 @@ def create_app(debug):
     if conf.cache['type']=='memcache':
         host = conf.cache.get('host', 'localhost')
         cache.client = cache.MemcacheClient(host)
-    scan = ['apps.article', 'apps.website', 'auth', 'admin']
+    scan = ['apps.article', 'apps.wiki', 'apps.website', 'auth', 'admin']
     if debug:
         scan.append('static_handler')
     return web.WSGIApplication(scan, \
