@@ -1,0 +1,74 @@
+<script type="text/javascript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null) {
+            $('div.alert-error').text('').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function show_loading(show) {
+        if (show) {
+            $('span.loading').show();
+        }
+        else {
+            $('span.loading').hide();
+        }
+    }
+
+    function ajax_post(form) {
+        show_error(null);
+        show_loading(true);
+        $('button[type=submit]').attr('disabled', 'disabled');
+        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
+            if (result.error) {
+                show_error(result.message, result.data);
+                $('button[type=submit]').removeAttr('disabled');
+            }
+            else {
+                location.assign('wikis');
+            }
+        }).error(function() {
+            show_error('{{ _('Server error') }}!', '');
+            $('button[type=submit]').removeAttr('disabled');
+        }).complete(function() {
+            show_loading(false);
+        });
+        return false;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ form_title }}</h3>
+        <form name="form-x" action="{{ form_action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div class="alert alert-error hide"></div>
+                <div class="field-name control-group">
+                    <label class="control-label">{{ _('Name') }}:</label>
+                    <div class="controls">
+                        <input id="name" name="name" type="text" value="{{ name|e }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div class="field-description control-group">
+                    <label class="control-label">{{ _('Description') }}:</label>
+                    <div class="controls">
+                        <input id="description" name="description" type="text" value="{{ description|e }}" class="input-xlarge" />
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <input type="hidden" name="id" value="{{ id }}" />
+                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('wikis')">{{ _('Cancel') }}</button>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>

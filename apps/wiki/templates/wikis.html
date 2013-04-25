@@ -1,0 +1,145 @@
+<script type="text/JavaScript">
+    function show_error(err, field_name) {
+        $('div.control-group').removeClass('error');
+        if (err==null) {
+            $('div.alert-error').text('').hide();
+            return false;
+        }
+        $('div.alert-error').text(err).show();
+        $('div.field-' + field_name).addClass('error');
+        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
+            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
+        }
+        return false;
+    }
+
+    function delete_wiki(id) {
+        $.postJSON('/api/wikis/delete', 'id=' + id).success(function(result) {
+            if (result.error) {
+                show_error(result.message, '');
+            }
+            else {
+                location.assign('wikis');
+            }
+        }).error(function() {
+            show_error('Server error.', '');
+        });
+    }
+
+    function move_to(article_id, category_id) {
+        var m = '#div-move-' + article_id;
+        if ($(m).attr('data')==category_id) {
+            return;
+        }
+        $(m + ' a.btn').removeClass('btn-warning').addClass('disabled');
+        $(m + ' span.loading').show();
+        $.postJSON('/api/articles/update', 'id=' + article_id + '&category_id=' + category_id).success(function(result) {
+            if (result.error) {
+                $(m + ' a.btn').addClass('btn-warning');
+            }
+            else {
+                $(m + ' a.btn span.name').text(CATEGORIES[category_id]);
+                $(m).attr('data', category_id);
+            }
+        }).error(function() {
+            $(m + ' a.btn').addClass('btn-warning');
+        }).complete(function() {
+            $(m + ' span.loading').hide();
+            $(m + ' a.btn').removeClass('disabled');
+        });
+    }
+
+    function move(article_id, ahref_id, value) {
+        if (value==$('#' + ahref_id).attr('rel')) {
+            return;
+        }
+        $('#' + ahref_id).removeClass('x-error').hide();
+        $('span.loading-' + article_id).show();
+        $.postJSON('/api/articles/update', 'id=' + article_id + '&category_id=' + value).success(function(result) {
+            if (result.error) {
+                $('#' + ahref_id).addClass('x-error');
+            }
+            else {
+                $('#' + ahref_id).attr('rel', value);
+                $('#' + ahref_id + ' span.name').text(CATEGORIES[value]);
+            }
+        }).error(function() {
+            $('#' + ahref_id).addClass('x-error');
+        }).complete(function() {
+            $('span.loading-' + article_id).hide();
+            $('#' + ahref_id).show();
+        });
+
+    }
+
+    function create_select(select_id, value) {
+        var s = '<select id="' + select_id + '" style="width:200px">';
+        for (var i=0; i<CATEGORIES_LIS.length; i++) {
+            var cid = CATEGORIES_LIS[i][0];
+            var cname = CATEGORIES_LIS[i][1];
+            var selected = value==cid ? ' selected' : '';
+            s = s + '<option value="' + cid + '"' + selected + '>' + $('<div/>').text(cname).html() + '</option>';
+        }
+        s = s + '</select>';
+        return s;
+    }
+
+    $(function() {
+        $('a.x-btn-delete').each(function() {
+            var aid = $(this).attr('id');
+            var rel = $(this).attr('rel');
+            $(this).popover({
+                placement: 'top',
+                html: true,
+                title: 'Confirm Deletion',
+                content: '<p>Are you sure you want to delete the <strong>'
+                    + $(this).attr('prompt')
+                    + '</strong>?</p>'
+                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="delete_wiki(\''
+                    + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
+                    + aid + '\').popover(\'hide\')">Cancel</button></div>'
+            });
+        });
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('All Wikis') }}</h3>
+    </div>
+</div>
+
+<div class="row sep">
+    <div class="span10">
+        <a href="add_wiki" class="btn btn-primary pull-right">{{ _('Add Wiki') }}</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="25%">{{ _('Name') }}</th>
+                    <th width="40%">{{ _('Description') }}</th>
+                    <th width="20%">{{ _('Creation Date') }}</th>
+                    <th width="15%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for w in wikis %}
+                <tr id="tr-{{ w.id }}">
+                    <td class="name"><a href="/wiki/{{ w.id }}" target="_blank">{{ w.name|e }}</a></td>
+                    <td>{{ w.description|e }}</td>
+                    <td>{{ w.creation_time|dt }}</td>
+                    <td>
+                        <a href="?action=pages&id={{ w.id }}" class="x-btn"><i class="icon-list"></i></a>
+                        <a href="?action=edit&id={{ w.id }}" class="x-btn"><i class="icon-edit"></i></a>
+                        <a id="delete-{{ w.id }}" rel="{{ w.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ w.name|e }}"><i class="icon-trash"></i></a>
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
