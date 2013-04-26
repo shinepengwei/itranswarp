@@ -219,6 +219,37 @@ r'''-- not init in db yet
         index idx_display_order(display_order)
     );
 ''',
+r'''
+    create table wikis (
+        id varchar(50) not null,
+        website_id varchar(50) not null,
+        name varchar(100) not null,
+        description varchar(100) not null,
+        content mediumtext not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        index idx_website_id(website_id)
+    );
+''',
+r'''
+    create table wiki_pages (
+        id varchar(50) not null,
+        website_id varchar(50) not null,
+        wiki_id varchar(50) not null,
+        parent_id varchar(50) not null,
+        display_order int not null,
+        name varchar(100) not null,
+        content mediumtext not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        index idx_website_id(website_id),
+        index idx_wiki_id(wiki_id)
+    );
+''',
 r'''-- not init in db yet
     create table photos (
         id varchar(50) not null,
