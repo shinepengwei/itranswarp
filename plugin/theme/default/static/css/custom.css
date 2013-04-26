@@ -26,6 +26,24 @@
   padding: 15px;
 }
 
+.wiki ul li a {
+  line-height: 24px;
+}
+
+.wiki ul li {
+  list-style-type: none;
+  padding: 0;
+}
+
+.wiki ul li.selected {
+  list-style-type: square;
+}
+
+.wiki ul {
+  padding: 0 0 0 1em;
+  margin: 0;
+}
+
 #footer div.row div {
   text-align: center;
 }
