@@ -270,16 +270,20 @@ def api_move_wikipages():
     # get the 2 pages:
     moving_page = _get_wikipage(i.id)
     wiki = _get_wiki(moving_page.wiki_id)
-    parent_page = _get_wikipage(i.move_to, wiki.id)
+    parent_page = None # root
+    if i.move_to:
+        parent_page = _get_wikipage(i.move_to, wiki.id)
     # check to prevent recursive:
     pages = _get_wikipages(wiki, returnDict=True)
-    p = parent_page
-    while p.parent_id != '':
-        if p.parent_id==moving_page.id:
-            raise APIValueError('move_to', 'Will cause recursive.')
-        p = pages[p.parent_id]
+    if parent_page:
+        p = parent_page
+        while p.parent_id != '':
+            if p.parent_id==moving_page.id:
+                raise APIValueError('move_to', 'Will cause recursive.')
+            p = pages[p.parent_id]
     # get current children:
-    L = [p for p in pages.itervalues() if p.parent_id==parent_page.id]
+    parent_id = parent_page.id if parent_page else ''
+    L = [p for p in pages.itervalues() if p.parent_id==parent_id and p.id!=moving_page.id]
     L.sort(cmp=lambda p1, p2: -1 if p1.display_order<p2.display_order else 1)
     # insert at index N:
     L.insert(index, moving_page)
@@ -289,7 +293,7 @@ def api_move_wikipages():
         for p in L:
             db.update('update wiki_pages set display_order=? where id=?', n, p.id)
             n = n + 1
-        db.update('update wiki_pages set parent_id=? where id=?', parent_page.id, moving_page.id)
+        db.update('update wiki_pages set parent_id=? where id=?', parent_id, moving_page.id)
     return True
 
 @api(role=ROLE_EDITORS)
