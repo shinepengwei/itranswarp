@@ -62,6 +62,17 @@
                         <input id="description" name="description" type="text" value="{{ description|e }}" class="input-xlarge" />
                     </div>
                 </div>
+                <div class="field-content control-group">
+                    <div class="btn-group" style="margin-bottom: 6px;">
+                        <button type="button" class="btn"><i class="icon-envelope"></i></button>
+                        <button type="button" class="btn"><i class="icon-th-list"></i></button>
+                        <button type="button" class="btn"><i class="icon-bold"></i></button>
+                        <button type="button" class="btn"><i class="icon-italic"></i></button>
+                        <button type="button" class="btn"><i class="icon-picture"></i></button>
+                        <button type="button" class="btn"><i class="icon-facetime-video"></i></button>
+                    </div>
+                    <textarea id="markdown-editor" name="content" rows="20" style="width:780px;resize:none;">{{ content|e }}</textarea>
+                </div>
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
                     <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>

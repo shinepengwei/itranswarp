@@ -10,7 +10,7 @@ from transwarp.web import ctx, get, post, route, seeother, notfound, Template, D
 from transwarp import db
 
 from apiexporter import *
-import setting, loader, plugin
+import setting, loader, plugin, html
 
 from plugin.theme import theme
 
@@ -49,7 +49,7 @@ def api_get_wiki():
 @api(role=ROLE_ADMINISTRATORS)
 @post('/api/wikis/update')
 def api_update_wiki():
-    ' update wiki name, description by id. '
+    ' update wiki name, description, content by id. '
     i = ctx.request.input(id='')
     if not i.id:
         raise APIValueError('id', 'id cannot be empty')
@@ -62,7 +62,11 @@ def api_update_wiki():
         kw['name'] = name
     if 'description' in i:
         kw['description'] = i.description.strip()
+    if 'content' in i:
+        kw['content'] = i.content.strip()
     if kw:
+        kw['version'] = wiki.version + 1
+        kw['modified_time'] = time.time()
         db.update_kw('wikis', 'id=?', i.id, **kw)
     return True
 
@@ -70,16 +74,20 @@ def api_update_wiki():
 @post('/api/wikis/create')
 def api_create_wiki():
     ' create a new wiki. '
-    i = ctx.request.input(name='', description='')
+    i = ctx.request.input(name='', description='', content='')
     name = i.name.strip()
     if not name:
         raise APIValueError('name', 'name cannot be empty')
+    content = i.content.strip()
+    if not content:
+        raise APIValueError('content', 'content cannot be empty')
     current = time.time()
     wiki = Dict( \
         id=db.next_str(), \
         website_id=ctx.website.id, \
         name=name, \
         description=i.description.strip(), \
+        content=content, \
         creation_time=current, \
         modified_time=current, \
         version=0)
@@ -191,7 +199,7 @@ def api_list_wikipages():
 def wiki_by_id(wiki_id):
     wiki = _get_wiki(wiki_id)
     pages = _get_wikipages(wiki)
-    return dict(__navigation__='/wiki/%s' % wiki_id, wiki=wiki, pages=pages)
+    return dict(__navigation__='/wiki/%s' % wiki_id, wiki=wiki, pages=pages, wiki_name=wiki.name, wiki_content=html.to_html(wiki))
 
 @theme('wiki.html')
 @route('/wiki/<wiki_id>/<page_id>')
@@ -199,7 +207,7 @@ def wiki_page_by_id(wiki_id, page_id):
     wiki = _get_wiki(wiki_id)
     page = _get_wikipage(page_id, wiki_id)
     pages = _get_wikipages(wiki)
-    return dict(__navigation__='/wiki/%s' % wiki_id, wiki=wiki, pages=pages, page=page)
+    return dict(__navigation__='/wiki/%s' % wiki_id, wiki=wiki, pages=pages, page=page, wiki_name=page.name, wiki_content=html.to_html(page))
 
 @api(role=ROLE_EDITORS)
 @post('/api/wikipages/create')
@@ -222,15 +230,23 @@ def api_create_wikipage():
 @api(role=ROLE_EDITORS)
 @post('/api/wikipages/update')
 def api_update_wikipage():
-    i = ctx.request.input(id='', name='', content='')
+    i = ctx.request.input(id='')
     if not i.id:
         raise APIValueError('id', 'bad parameter: id')
-    if not i.name.strip():
-        raise APIValueError('name', 'invalid name')
-    if not i.content.strip():
-        raise APIValueError('content', 'invalid content')
     page = _get_wikipage(i.id)
-    db.update('update wiki_pages set name=?, content=? where id=?', i.name.strip(), i.content.strip(), i.id)
+    kw = {}
+    if 'name' in i:
+        if not i.name.strip():
+            raise APIValueError('name', 'invalid name')
+        kw['name'] = i.name.strip()
+    if 'content' in i:
+        if not i.content.strip():
+            raise APIValueError('content', 'invalid content')
+        kw['content'] = i.content.strip()
+    if kw:
+        kw['modified_time'] = time.time()
+        kw['version'] = page.version + 1
+        db.update_kw('wiki_pages', 'id=?', i.id, **kw)
     return True
 
 @api(role=ROLE_EDITORS)
