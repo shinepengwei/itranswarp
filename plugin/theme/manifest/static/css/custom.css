@@ -130,6 +130,23 @@ div.pagination a.next {
   float: right;
 }
 
+.wiki-content ul li a {
+  line-height: 24px;
+}
+
+.wiki-content ul li {
+  list-style-type: none;
+  padding: 0;
+}
+
+.wiki-content ul li.selected {
+  list-style-type: disc;
+}
+
+.wiki-content ul {
+  padding: 0 0 0 1.5em;
+}
+
 #footer {
   border-top: 4px double #ccc;
   margin-top: 18px;
