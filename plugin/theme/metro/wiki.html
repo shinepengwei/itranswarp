@@ -1,0 +1,57 @@
+{% include __get_theme_path__('_inc_header.html') %}
+
+{% macro wiki_tree(nodes) %}
+    <ul>
+    {% for n in nodes %}
+        <li id="{{ n.id }}">
+            <a href="/wiki/{{ wiki.id }}/{{ n.id }}">{{ n.name|e }}</a>
+            {% if n.children %}
+                {{ wiki_tree(n.children) }}
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% if page %}
+<script type="text/javascript">
+$(function() {
+    $('#{{ page.id }}').addClass('selected');
+});
+</script>
+{% endif %}
+
+    <div class="container">
+        <div class="row sep">
+            <div class="span2">
+                <!-- wiki tree -->
+                <div class="block color-teal">
+                    <div class="block-inner">
+                        <h3><a href="/wiki/{{ wiki.id }}">{{ wiki.name|e }}</a></h3>
+                        <div class="wiki">{{ wiki_tree(pages) }}</div>
+                    </div>
+                </div>
+                <!-- // wiki tree -->
+            </div>
+            <div class="span4">
+                <!-- main content -->
+                <div class="block color-default">
+                    <div class="block-inner">
+                        <h3 class="icon icon-article">{{ wiki_name|e }}</h3>
+                        <div class="entry">
+                            {{ wiki_content }}
+                        </div>
+                    </div>
+                </div>
+                <div class="block color-green">
+                    <div class="block-inner">
+                        <h3 class="icon icon-comment">Comments</h3>
+                        <p>No comment.</p>
+                    </div>
+                </div>
+                <!-- // main content -->
+            </div>
+        </div>
+    </div>
+
+{% include __get_theme_path__('_inc_footer.html') %}
