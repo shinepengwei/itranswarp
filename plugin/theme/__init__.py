@@ -51,6 +51,8 @@ def _init_theme(path, model):
     theme = get_active_theme()
     model['__theme_path__'] = '/plugin/theme/%s' % theme
     model['__get_theme_path__'] = lambda _templpath: 'plugin/theme/%s/%s' % (theme, _templpath)
+    model['__custom_header__'] = setting.get_text(setting.KIND_WEBSITE, 'custom_header')
+    model['__custom_footer__'] = setting.get_text(setting.KIND_WEBSITE, 'custom_footer')
     model['__menus__'] = []
     model['__settings__'] = setting.get_website_settings()
     model['__navigations__'] = loader.load_navigations()
