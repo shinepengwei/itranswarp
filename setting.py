@@ -8,9 +8,50 @@ __author__ = 'Michael Liao'
 import time, base64, logging
 
 from transwarp.web import ctx
-from transwarp import db
+from transwarp import db, cache
 
 _GLOBAL = '__global__'
+
+def set_text(kind, key, value):
+    '''
+    Set text by kind, key and value.
+    '''
+    if len(kind)==0 or len(kind)>50 or len(key)==0 or len(key)>50:
+        raise ValueError('invalid setting name.')
+    if not isinstance(value, (str, unicode)):
+        value = str(value)
+    name = '%s:%s' % (kind, key)
+    text = dict( \
+        id = db.next_str(), \
+        website_id = ctx.website.id, \
+        kind = kind, \
+        name = name, \
+        value = value, \
+        creation_time = time.time(), \
+        version = 0)
+    db.update('delete from texts where name=? and website_id=?', name, ctx.website.id)
+    db.insert('texts', **text)
+    cache.client.delete('TEXT:%s:%s:%s' % (ctx.website.id, kind, key))
+
+def _get_text(website_id, kind, key, default):
+    ss = db.select('select value from texts where name=? and website_id=?', '%s:%s' % (kind, key), website_id)
+    if ss:
+        v = ss[0].value
+        if v:
+            return v
+    return default
+
+def get_text(kind, key, default=u''):
+    '''
+    Get text by kind and key. Return default value u'' if not exist.
+    '''
+    cache_key = 'TEXT:%s:%s:%s' % (ctx.website.id, kind, key)
+    r = cache.client.get(cache_key)
+    if r is not None:
+        return r
+    r = _get_text(ctx.website.id, kind, key, default)
+    cache.client.set(cache_key, r, 3600)
+    return r
 
 def _get_setting(website_id, kind, key, default=u''):
     ss = db.select('select value from settings where name=? and website_id=?', '%s:%s' % (kind, key), website_id)
