@@ -518,6 +518,20 @@ def domain():
                 raise seeother('http://%s/auth/signin' % domain)
     return Template('templates/domain.html', error=error, domain=ctx.website.domain)
 
+@menu(ROLE_ADMINISTRATORS, 'Settings', 'Advanced', name_order=5)
+def advanced():
+    i = ctx.request.input(action='')
+    if i.action=='update':
+        custom_header = i.custom_header
+        custom_footer = i.custom_footer
+        setting.set_text(setting.KIND_WEBSITE, 'custom_header', custom_header)
+        setting.set_text(setting.KIND_WEBSITE, 'custom_footer', custom_footer)
+        cache.client.delete('%s--%s--')
+    else:
+        custom_header = setting.get_text(setting.KIND_WEBSITE, 'custom_header')
+        custom_footer = setting.get_text(setting.KIND_WEBSITE, 'custom_footer')
+    return Template('templates/advanced.html', custom_header=custom_header, custom_footer=custom_footer)
+
 @api(role=ROLE_GUESTS)
 @get('/api/settings/website/gets')
 def api_get_website_settings():

@@ -1,0 +1,45 @@
+<script type="text/javascript">
+    function post(form) {
+        $('button[type=submit]').attr('disabled', 'disabled');
+        $('span.loading').show();
+        return true;
+    }
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Advanced Settings') }}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span10">
+
+        <div class="alert alert-info">
+            <a class="close" data-dismiss="alert" href="javascript:void(0)">&times;</a>
+            <strong>For professional users only</strong><br /><br />
+            You can add any HTML, JavaScript and CSS code in header and footer zone. If your webpage is broken by these code, just clear and save.
+        </div>
+
+        <form name="x-form" action="?action=update" method="post" class="form-horizontal" onsubmit="return post(this)">
+            <fieldset>
+                <div class="field-domain control-group">
+                    <label class="control-label">{{ _('Custom Header') }}:</label>
+                    <div class="controls">
+                        <textarea name="custom_header" rows="5" class="span6" style="resize:none">{{ custom_header|e }}</textarea>
+                    </div>
+                </div>
+                <div class="field-domain control-group">
+                    <label class="control-label">{{ _('Custom Footer') }}:</label>
+                    <div class="controls">
+                        <textarea name="custom_footer" rows="5" class="span6" style="resize:none">{{ custom_footer|e }}</textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+                    <span class="loading hide">{{ _('Processing') }}...</span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
