@@ -59,7 +59,9 @@ class APIPermissionError(APIError):
 
 def cached(key=None, timeout=3600, use_ctx=True):
     '''
-    Make function result cached.
+    Make function result cached. the cache key is:
+      non-arg function: 'WebsiteId--FunctionName'
+      args function: 'WebsiteId--FunctionName--Arg1--Arg2--ArgN'
 
     >>> import time
     >>> @cached(timeout=2)
