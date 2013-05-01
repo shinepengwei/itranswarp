@@ -199,7 +199,7 @@ def api_list_wikipages():
 def wiki_by_id(wiki_id):
     wiki = _get_wiki(wiki_id)
     pages = _get_wikipages(wiki)
-    return dict(__navigation__='/wiki/%s' % wiki_id, \
+    return dict(__navigation__=('/wiki/%s' % wiki_id,), \
         wiki=wiki, pages=pages, wiki_name=wiki.name, wiki_content=html.to_html(wiki), \
         read_count=counter.inc(wiki.id))
 
@@ -209,7 +209,7 @@ def wiki_page_by_id(wiki_id, page_id):
     wiki = _get_wiki(wiki_id)
     page = _get_wikipage(page_id, wiki_id)
     pages = _get_wikipages(wiki)
-    return dict(__navigation__='/wiki/%s' % wiki_id, \
+    return dict(__navigation__=('/wiki/%s' % wiki_id,), \
         wiki=wiki, pages=pages, page=page, wiki_name=page.name, wiki_content=html.to_html(page), \
         read_count=counter.inc(page.id))
 
