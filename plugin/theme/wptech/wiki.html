@@ -1,0 +1,42 @@
+{% include __get_theme_path__('_inc_header.html') %}
+
+{% macro wiki_tree(nodes) %}
+    <ul>
+    {% for n in nodes %}
+        <li id="{{ n.id }}">
+            <a href="/wiki/{{ wiki.id }}/{{ n.id }}">{{ n.name|e }}</a>
+            {% if n.children %}
+                {{ wiki_tree(n.children) }}
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% if page %}
+<script type="text/javascript">
+$(function() {
+    $('#{{ page.id }}').addClass('selected');
+});
+</script>
+{% endif %}
+
+            <div class="row">
+                <div class="sidebar v-line-l">
+                    <div class="inner">
+                        <h3><a href="/wiki/{{ wiki.id }}">{{ wiki.name|e }}</a></h3>
+                        <div class="wiki">{{ wiki_tree(pages) }}</div>
+                    </div>
+                </div>
+                <div class="main v-line-r">
+                    <div class="inner">
+                        <div class="entry">
+                            <h3>{{ wiki_name|e }}</h3>
+                            {{ wiki_content }}
+                            <p class="entry-info">{{ read_count }} reads | 0 comments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+{% include __get_theme_path__('_inc_footer.html') %}

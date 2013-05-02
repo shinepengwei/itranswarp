@@ -1,0 +1,44 @@
+{% include __get_theme_path__('_inc_header.html') %}
+
+            <div class="row">
+                <div class="main v-line-l">
+{% for article in articles %}
+                    <div class="inner">
+                        <div class="entry">
+                            <h3><a href="/article/{{ article.id }}">{{ article.name|e }}</a></h3>
+                            <p class="entry-info">{{ article.creation_time|dt }}. 0 comments.</p>
+                            {{ article.summary }}
+                            <p class="entry-more"><a href="/article/{{ article.id }}">Read More »</a></p>
+                        </div>
+                    </div>
+                    <div class="hr"></div>
+{% endfor %}
+                    <div class="inner">
+                        <div class="pagination">
+                            <ul>
+{% if previous %}
+                                <li><a href="?page={{ page - 1 }}">« Previous</a></li>
+{% else %}
+                                <li class="disabled"><a href="javascript:void(0);">« Previous</a></li>
+{% endif %}
+                                <li class="active"><a href="javascript:void(0);">{{ page }}</a></li>
+{% if next %}
+                                <li><a href="?page={{ page + 1 }}">Next »</a></li>
+{% else %}
+                                <li class="disabled"><a href="javascript:void(0);">Next »</a></li>
+{% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="sidebar v-line-r">
+                    <div class="inner">
+                        <h3>Categories</h3>
+                    {% for c in categories %}
+                        <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+{% include __get_theme_path__('_inc_footer.html') %}

@@ -1,0 +1,27 @@
+{% include __get_theme_path__('_inc_header.html') %}
+            <div class="row">
+                <div class="main v-line-l">
+                    <div class="inner">
+                        <div class="entry">
+                            <h3>{{ article.name|e }}</h3>
+                            <p class="entry-info">{{ article.creation_time|dt }}. {{ article.read_count }} reads. 0 comments.</p>
+                            {{ article.content }}
+                        </div>
+                    </div>
+                    <div class="hr"></div>
+                    <div class="inner">
+                        <h3>Comments</h3>
+                        <p>No comment.</p>
+                    </div>
+                </div>
+                <div class="sidebar v-line-r">
+                    <div class="inner">
+                        <h3>Categories</h3>
+                    {% for c in categories %}
+                        <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+{% include __get_theme_path__('_inc_footer.html') %}
