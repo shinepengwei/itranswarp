@@ -14,6 +14,23 @@
                     </div>
                     <div class="hr"></div>
 {% endfor %}
+                    <div class="inner">
+                        <div class="pagination">
+                            <ul>
+{% if previous %}
+                                <li><a href="?page={{ page - 1 }}">« Previous</a></li>
+{% else %}
+                                <li class="disabled"><a href="javascript:void(0);">« Previous</a></li>
+{% endif %}
+                                <li class="active"><a href="javascript:void(0);">{{ page }}</a></li>
+{% if next %}
+                                <li><a href="?page={{ page + 1 }}">Next »</a></li>
+{% else %}
+                                <li class="disabled"><a href="javascript:void(0);">Next »</a></li>
+{% endif %}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
                 <div class="sidebar v-line-r">
                     <div class="inner">

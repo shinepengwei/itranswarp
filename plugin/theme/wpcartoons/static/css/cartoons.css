@@ -111,6 +111,37 @@ ul.nav li a:hover {
   text-decoration: none;
 }
 
+.pagination ul {
+  display: block;
+}
+
+.pagination ul li {
+  display: inline-block;
+  margin: 0 4px;
+}
+
+.pagination ul li.disabled a {
+  color: rgb(220,216,210);
+  border: 1px solid rgb(220,216,210);
+  cursor: default;
+}
+
+.pagination ul li.active a {
+  color: #1b1b1b;
+  border: 1px solid transparent;
+  cursor: default;
+}
+
+.pagination ul li a {
+  display: block;
+  height: 24px;
+  padding: 0 6px;
+  line-height: 24px;
+  border: 1px solid #ec5300;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
 /*------------------------------ main ------------------------------*/
 
 #main .container {
