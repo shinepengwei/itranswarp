@@ -84,6 +84,10 @@ ul.nav li {
   margin: 0;
 }
 
+ul.nav li {
+  *display: inline; /* fix IE7 */
+}
+
 ul.nav li a {
   display: block;
   color: #fff;
