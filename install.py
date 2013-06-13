@@ -62,6 +62,24 @@ r'''
         index idx_creation_time(creation_time)
     );
 ''',
+r''' ???
+    create table auth_users (
+        id varchar(50) not null,
+        website_id varchar(50) not null,
+        source_id varchar(50) not null,
+        part_id varchar(50) not null,
+        locked bool not null,
+        name varchar(100) not null,
+        image_url varchar(1000) not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        unique key uk_website_(website_id, , ),
+        index idx_website_id(website_id),
+        index idx_creation_time(creation_time)
+    );
+''',
 r'''
     create table navigations (
         id varchar(50) not null,
@@ -140,7 +158,6 @@ r'''
         name varchar(50) not null,
         value text not null,
         creation_time real not null,
-        modified_time real not null,
         version bigint not null,
         primary key(id),
         index idx_name_website_id(name, website_id),
@@ -182,6 +199,16 @@ r'''
         index idx_website_id(website_id),
         index idx_category_id(category_id),
         index idx_user_id(user_id)
+    );
+''',
+r'''
+    create table category_articles (
+        id varchar(50) not null,
+        website_id varchar(50) not null,
+        category_id varchar(50) not null,
+        article_id varchar(50) not null,
+        creation_time real not null,
+        index idx_website_category_id(website_id, category_id),
     );
 ''',
 r'''
