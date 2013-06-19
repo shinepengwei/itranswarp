@@ -1,46 +1,17 @@
-<script type="text/javascript">
-    function show_error(err, field_name) {
-        $('div.control-group').removeClass('error');
-        if (err==null) {
-            $('div.alert-error').text('').hide();
-            return false;
-        }
-        $('div.alert-error').text(err).show();
-        $('div.field-' + field_name).addClass('error');
-        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
-        }
-        return false;
-    }
+<script>
 
-    function show_loading(show) {
-        if (show) {
-            $('button[type=submit]').attr('disabled', 'disabled');
-            $('span.loading').show();
-        }
-        else {
-            $('button[type=submit]').removeAttr('disabled');
-            $('span.loading').hide();
-        }
-    }
+function ajax_post(form) {
+    show_error(null);
+    show_loading(true);
+    $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        location.assign('all_categories');
+    }, function(e) {
+        show_loading(false);
+        show_error(e.message, e.data);
+    });
+    return false;
+}
 
-    function ajax_post(form) {
-        show_error(null);
-        show_loading(true);
-        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
-            show_loading(false);
-            if (result.error) {
-                show_error(result.message, result.data);
-            }
-            else {
-                location.assign('categories');
-            }
-        }).error(function() {
-            show_loading(false);
-            show_error('{{ _('Server error') }}!', '');
-        });
-        return false;
-    }
 </script>
 
 <div class="row">
@@ -53,21 +24,18 @@
                     <label class="control-label">{{ _('Name') }}:</label>
                     <div class="controls">
                         <input name="name" type="text" value="{{ name|e }}" class="input-xlarge" />
-                        <span class="help-inline">Category name</span>
                     </div>
                 </div>
                 <div class="field-description control-group">
                     <label class="control-label">{{ _('Description') }}:</label>
                     <div class="controls">
                         <input name="description" type="text" value="{{ description|e }}" class="input-xlarge" />
-                        <span class="help-inline">Category description</span>
                     </div>
                 </div>
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
-                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
-                    <button type="button" class="btn" onclick="location.assign('categories')">{{ _('Cancel') }}</button>
-                    <span class="loading hide">{{ _('Processing') }}...</span>
+                    <button type="submit" class="btn btn-primary"><i class="icon-ok icon-white"></i> {{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('all_categories')"><i class="icon-remove"></i> {{ _('Cancel') }}</button>
                 </div>
             </fieldset>
         </form>

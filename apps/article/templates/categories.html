@@ -1,102 +1,72 @@
-<script type="text/JavaScript">
-    function show_error(err, field_name) {
-        $('div.control-group').removeClass('error');
-        if (err==null) {
-            $('div.alert-error').text('').hide();
-            return false;
-        }
-        $('div.alert-error').text(err).show();
-        $('div.field-' + field_name).addClass('error');
-        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
-        }
-        return false;
-    }
+<script>
 
-    function show_loading(show) {
-        if (show) {
-            $('span.loading').show();
-        }
-        else {
-            $('span.loading').hide();
-        }
-    }
+function showSortButton() {
+    $('#sort').show();
+}
 
-    function showSortButton() {
-        if ($('span.loading:visible').length==0) {
-            $('#btn-sort').show();
-        }
-    }
+function ajax_post(form) {
+    show_error(null);
+    show_loading(true);
+    $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        refresh();
+    }, function(e) {
+        show_loading(false);
+        show_error(e.message, e.data);
+    });
+    return false;
+}
 
-    function saveOrders() {
-        $('#btn-sort').hide();
-        show_loading(true);
-        var f = $('#x-form-sort');
-        $.postJSON(f.attr('action'), f.serialize()).success(function(result) {
-            show_loading(false);
-            if (result.error) {
-                show_error(result.message);
-            }
-        }).error(function() {
-            show_loading(false);
-            show_error('{{ _('Server error') }}!', '');
-        });
+function moveUp(trid) {
+    var me = $('#tr-' + trid);
+    var x = me.prev();
+    if (x.length > 0) {
+        me.after(x);
+        showSortButton();
     }
+}
 
-    function moveUp(trid) {
-        var me = $('#tr-' + trid);
-        var x = me.prev();
-        if (x.length > 0) {
-            me.after(x);
-            showSortButton();
-        }
+function moveDown(trid) {
+    var me = $('#tr-' + trid);
+    var x = me.next();
+    if (x.length > 0) {
+        me.before(x);
+        showSortButton();
     }
+}
 
-    function moveDown(trid) {
-        var me = $('#tr-' + trid);
-        var x = me.next();
-        if (x.length > 0) {
-            me.before(x);
-            showSortButton();
-        }
-    }
-
-    $(function() {
-        $('a.x-btn-delete').each(function() {
-            var aid = $(this).attr('id');
+$(function() {
+    $('a.x-btn-delete').each(function() {
+        $(this).click(function() {
+            $btn = $(this);
+            var prompt = $btn.attr('prompt');
             var rel = $(this).attr('rel');
-            $(this).popover({
-                placement:'top',
-                html:true,
-                title:'Confirm Deletion',
-                content:'<p>Are you sure you want to delete the <strong>'
-                    + $(this).attr('prompt')
-                    + '</strong>?</p>'
-                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="location.assign(\'?action=delete&id='
-                    + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
-                    + aid + '\').popover(\'hide\')">Cancel</button></div>',
+
+            show_confirm('Deletion Confirm', 'Are you sure you want to delete the category "' + prompt + '"?', function(btn, fn_hide) {
+                $.postJSON('/api/category/delete', {'id': rel}, function(result) {
+                    refresh();
+                }, function(err) {
+                    fn_hide();
+                    show_error(err.message, err.data);
+                });
             });
         });
-        $('a[rel=tooltip]').tooltip();
     });
+});
+
 </script>
 
 <div class="row">
     <div class="span10">
         <h3>{{ _('All Categories') }}</h3>
     </div>
-</div>
-
-<div class="row sep">
     <div class="span10">
-        <a href="?action=add" class="btn btn-primary pull-right">{{ _('Add Category') }}</a>
+        <div class="btn-toolbar" style="text-align:right">
+            <a href="add_category" class="btn btn-primary"><i class="icon-plus icon-white"></i> {{ _('Add Category') }}</a>
+        </div>
     </div>
-</div>
-
-<div class="row">
     <div class="span10">
         <div class="alert alert-error hide"></div>
-        <form id="x-form-sort" name="x-form-sort" action="/api/categories/sort" onsubmit="return false">
+        <form id="x-form-sort" name="x-form-sort" action="/api/category/sort" onsubmit="return ajax_post(this)">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -111,7 +81,6 @@
                     <tr id="tr-{{ c.id }}">
                         <td class="name">
                             <a href="/category/{{ c.id }}" target="_blank">{{ c.name|e }}</a>
-                            {% if c.locked %} <a href="javascript:void(0)" rel="tooltip" title="This category is locked and cannot be deleted"><i class="icon-lock"></i></a> {% endif %}
                         </td>
                         <td>{{ c.description|e }}</td>
                         <td>{{ c.creation_time|dt }}</td>
@@ -119,22 +88,18 @@
                             <a href="javascript:moveUp('{{ c.id }}')" class="x-btn"><i class="icon-arrow-up"></i></a>
                             <a href="javascript:moveDown('{{ c.id }}')" class="x-btn"><i class="icon-arrow-down"></i></a>
                             <a href="?action=edit&id={{ c.id }}" class="x-btn"><i class="icon-edit"></i></a>
-    {% if not c.locked %}
                             <a id="delete-{{ c.id }}" rel="{{ c.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ c.name|e }}"><i class="icon-trash"></i></a>
-    {% endif %}
                             <input type="hidden" name="id" value="{{ c.id }}" />
                         </td>
                     </tr>
 {% endfor %}
                 </tbody>
             </table>
+            <div>
+                <div id="sort" class="btn-toolbar hide" style="text-align:right;">
+                    <button type="submit" class="btn btn-info"><i class="icon-list icon-white"></i> {{ _('Save Orders') }}</button>
+                </div>
+            </div>
         </form>
-    </div>
-</div>
-
-<div class="row sep">
-    <div class="span10">
-        <button id="btn-sort" onclick="saveOrders()" class="btn btn-info pull-right hide">{{ _('Save Orders') }}</button>
-        <span class="loading pull-right hide">{{ _('Saving') }}...</span>
     </div>
 </div>
