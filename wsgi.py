@@ -4,7 +4,7 @@
 __author__ = 'Michael Liao'
 
 '''
-A WSGI application.
+A WSGI application entry.
 '''
 
 import os, logging
@@ -14,7 +14,7 @@ import locale; locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 from transwarp import i18n; i18n.install_i18n(); i18n.load_i18n('i18n/zh_cn.txt')
 from transwarp import web, db, cache
 
-from loader import load_site, load_user, load_i18n
+from core.interceptors import load_site, load_user, load_i18n
 
 def create_app(debug):
     if debug:
@@ -35,7 +35,7 @@ def create_app(debug):
     if conf.cache['type']=='memcache':
         host = conf.cache.get('host', 'localhost')
         cache.client = cache.MemcacheClient(host)
-    scan = ['apps.article', 'apps.wiki', 'apps.website', 'auth', 'admin']
+    scan = ['apps.article', 'apps.website', 'core.auth', 'core.manage']
     if debug:
         scan.append('static_handler')
     return web.WSGIApplication(scan, \
