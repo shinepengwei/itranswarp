@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ __website__.name|e }}</title>
+    <!--[if lt IE 9]>
+        <script src="/static/js/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/custom.css" />
+    <link rel="stylesheet" href="/static/css/manage.css" />
+
+    <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/custom.js"></script>
+    <script type="text/javascript" src="/static/js/manage.js"></script>
+    <style>
+html, body {
+    height: 100%;
+}
+
+#main {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    margin-bottom: -178px;
+}
+
+#menus {
+    padding: 8px 0;
+    margin: 14px 14px 14px 0;
+}
+
+#footer {
+    height: 176px;
+}
+
+#push {
+    height: 178px;
+}
+
+#footer, #push {
+    clear: both;
+}
+
+.loading {
+    background-image: url(/static/img/loading.gif);
+    background-position: 0 0;
+}
+
+@-webkit-keyframes rotate {
+    from {
+        -webkit-transform: rotate(0deg);
+    }
+    to { 
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+.webkit-loading {  
+    -webkit-animation-name: rotate; 
+    -webkit-animation-duration: 2s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-timing-function: linear;
+}
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="navbar navbar-fixed-top navbar-blue">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="brand" href="/" target="_blank">{{ __website__.name|e }}</a>
+                    <ul class="nav">
+{% for app in __apps__ %}
+                        <li class="{{ 'active' if app==__app__ }}"><a href="/manage/{{ app.key }}/">{{ app.name }}</a></li>
+{% endfor %}
+                    </ul>
+                    <ul class="nav pull-right">
+                        <li class="navbar-text">Welcome,&nbsp;</li>
+                        <li class="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown">{{ __user__.name|e }} <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/manage/website/profile">{{ _('My Profile') }}</a></li>
+                                <li class="divider"></li>
+                                <li><a href="/signout?redirect=/">{{ _('Sign Out') }}</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div><!-- // header -->
+
+    <div id="main" class="container">
+        <div class="row" style="height:41px;"></div>
+        <div class="row" style="overflow:hidden;">
+            <div class="span2">
+                <div id="menus" class="well">
+                    <ul class="nav nav-list">
+{% for menu in __menus__ %}
+    {% if menu.key=='-' %}
+                        <li class="nav-header">{{ _(menu.name) }}</li>
+    {% else %}
+                        <li class="{{ 'active' if menu==__menu__ }}"><a href="/manage/{{ __app__.key }}/{{ menu.key }}">{{ _(menu.name) }}</a></li>
+    {% endif %}
+{% endfor %}
+                        <li class="divider"></li>
+                        <li><a href="http://www.itranswarp.com/" target="_blank">{{ _('Help') }}</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="span10">
+                <!-- BEGIN include -->
+{% include __include__ %}
+                <!-- END include -->
+            </div>
+        </div>
+        <div id="push"></div>
+    </div>
+
+    <div id="footer">
+        <div class="container">
+            <div class="row">
+                <div class="span4">
+                    <h4>About iTranswarp</h4>
+                    <p style="margin-right:14px;">iTranswarp is a SaaS, full-stacked CMS which also support iOS Apps.</p>
+                </div>
+                <div class="span2">
+                    <h4>Documentation</h4>
+                    <p><a href="#">User Guide</a></p>
+                    <p><a href="#">iOS Apps Guide</a></p>
+                    <p><a href="#">API Development</a></p>
+                </div>
+                <div class="span2">
+                    <h4>Services</h4>
+                    <p><a href="#">SaaS Services on AWS</a></p>
+                    <p><a href="#">Licensed Software</a></p>
+                    <p><a href="#">Help &amp; Support</a></p>
+                </div>
+                <div class="span2">
+                    <h4>Open Source</h4>
+                    <p><a href="https://github.com/michaelliao/itranswarp">Get Source on GitHub</a></p>
+                    <p>Plugin Development</p>
+                    <p>Bug Report</p>
+                </div>
+                <div class="span2">
+                    <h4>Contact</h4>
+                    <p><a href="mailto:contact@itranswarp.com">contact@itranswarp.com</a></p>
+                    <p>Facebook Page</p>
+                    <p><a href="#">Twitter</a></p>
+                </div>
+            </div>
+        </div>
+        <div class="hr"></div>
+        <div class="container">
+            <div class="row">
+                <div class="span12">
+                    <p>Copyright&copy;2013, <a href="http://www.itranswarp.com/" target="_blank">www.itranswarp.com</a>, all rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
