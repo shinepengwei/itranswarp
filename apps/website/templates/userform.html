@@ -1,76 +1,40 @@
-<script type="text/javascript">
-    function show_success() {
-        $('div.alert-success').show().delay(3000).slideUp(300);
-        if ($('div.alert-success').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('div.alert-success').offset().top});
-        }
-    };
-
-    function show_error(err, field_name) {
-        $('div.control-group').removeClass('error');
-        if (err==null) {
-            $('div.alert-error').text('').hide();
-            return false;
-        }
-        $('div.alert-error').text(err).show();
-        $('div.field-' + field_name).addClass('error');
-        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
-        }
-        return false;
-    }
-
-    function show_loading(show) {
-        if (show) {
-            $('button[type=submit]').attr('disabled', 'disabled');
-            $('span.loading').show();
-        }
-        else {
-            $('button[type=submit]').removeAttr('disabled');
-            $('span.loading').hide();
-        }
-    }
-
-    function check_password() {
-        var p1 = $('#password1').val();
-        var p2 = $('#password2').val();
+<script>
+function check_password() {
+    var p1 = $('#password1').val();
+    var p2 = $('#password2').val();
 {% if passwd %}
-        if (p1=='' && p2=='') {
-            $('input[name=passwd]').attr('disabled', 'disabled');
-            return true;
-        }
-{% endif %}
-        if (p1.length < 6 || p1.length > 20) {
-            show_error('Password must be at least 6 characters.', 'passwd');
-            return false;
-        }
-        if (p1!=p2) {
-            show_error('Passwords not match.', 'passwd');
-            return false;
-        }
-        $('input[name=passwd]').val($.md5(p1)).removeAttr('disabled');
+    if (p1=='' && p2=='') {
+        $('input[name=passwd]').attr('disabled', 'disabled');
         return true;
     }
-
-    function ajax_post(form) {
-        show_error(null);
-        if (!check_password())
-            return false;
-        show_loading(true);
-        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
-            show_loading(false);
-            if (result.error) {
-                show_error(result.message, result.data);
-            }
-            else {
-                location.assign('{{ redirect }}');
-            }
-        }).error(function() {
-            show_loading(false);
-            show_error('{{ _('Server error') }}!', '');
-        });
+{% endif %}
+    if (p1.length < 6 || p1.length > 20) {
+        show_error('Password must be at least 6 characters.', 'passwd');
         return false;
     }
+    if (p1!=p2) {
+        show_error('Passwords not match.', 'passwd');
+        return false;
+    }
+    $('input[name=passwd]').val($.md5(p1)).removeAttr('disabled');
+    return true;
+}
+
+function ajax_post(form) {
+    show_error();
+    if (! check_password()) {
+        return false;
+    }
+    show_loading(true);
+    $.postJSON($(form).attr('action'), $(form).serialize(),
+        function(result) {
+            location.assign('{{ redirect }}');
+        }, function(e) {
+            show_error(e.message, e.data);
+            show_loading(false);
+        });
+    return false;
+}
 
     $(function() {
 {% if info %}
@@ -82,7 +46,8 @@
 <div class="row">
     <div class="span10">
         <h3>{{ form_title }}</h3>
-        <form id="x-form" action="{{ form_action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+        <form id="x-form" action="{{ form_action }}" method="post" class="form-horizontal" style="position:relative;" onsubmit="return ajax_post(this)">
+            <img src="{{ image_url }}" style="position:absolute;width:120px;height:120px;right:10px;top:0px;" />
             <fieldset>
                 <div class="alert alert-error hide"></div>
                 <div class="alert alert-success hide">Profile updated successfully!</div>
@@ -95,7 +60,6 @@
                             disabled="disabled"
     {% endif %}
                         />
-                        <span class="help-inline">Email address</span>
                     </div>
                 </div>
 
@@ -103,7 +67,6 @@
                     <label class="control-label">{{ _('Name') }}:</label>
                     <div class="controls">
                         <input name="name" type="text" value="{{ name|e }}" class="input-xlarge" />
-                        <span class="help-inline">User name</span>
                     </div>
                 </div>
 
@@ -136,7 +99,6 @@
                     <label class="control-label">{{ _('Password') }}:</label>
                     <div class="controls">
                         <input id="password1" type="password" value="" class="input-xlarge" />
-                        <span class="help-inline">Password</span>
                     </div>
                 </div>
 
@@ -144,16 +106,14 @@
                     <label class="control-label">{{ _('Retype') }}:</label>
                     <div class="controls">
                         <input id="password2" type="password" value="" class="input-xlarge" />
-                        <span class="help-inline">Password</span>
                     </div>
                 </div>
 
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
                     <input type="hidden" name="passwd" value="" disabled="disabled" />
-                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
-                    <button type="button" class="btn" onclick="location.assign('{{ redirect }}')">{{ _('Cancel') }}</button>
-                    <span class="loading hide">{{ _('Processing') }}...</span>
+                    <button type="submit" class="btn btn-primary"><i class="icon-ok icon-white"></i> {{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('{{ redirect }}')"><i class="icon-remove"></i> {{ _('Cancel') }}</button>
                 </div>
             </fieldset>
         </form>

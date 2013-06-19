@@ -1,0 +1,71 @@
+<script>
+
+$(function() {
+    $('a.x-btn-delete').each(function() {
+        $(this).click(function() {
+            $btn = $(this);
+            show_confirm('Deletion Confirm', 'Are you sure you want to delete the user "' + $btn.attr('prompt') + '"?', function(btn, fn_hide) {
+                $.postJSON('/api/user/delete', {'id': $btn.attr('rel')}, function(result) {
+                    refresh();
+                }, function(err) {
+                    fn_hide();
+                    show_error(err.message, err.data);
+                });
+            });
+        });
+    });
+});
+
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('All Users') }}</h3>
+    </div>
+
+{% if __user__.role_id <= ROLE_ADMINISTRATORS %}
+    <div class="span10">
+        <div class="btn-toolbar" style="text-align:right;">
+            <a href="add_user" class="btn btn-primary"><i class="icon-plus icon-white"></i> {{ _('Add User') }}</a>
+        </div>
+    </div>
+{% endif %}
+
+    <div class="span10">
+        <div class="alert alert-error hide"></div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="20%">{{ _('Name') }}</th>
+                    <th width="30%">{{ _('Email') }}</th>
+                    <th width="20%">{{ _('Role') }}</th>
+                    <th width="20%">{{ _('Date') }}</th>
+                    <th width="10%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for u in users %}
+                <tr>
+                    <td>
+                        <a href="?action=edit&id={{ u.id }}" target="_blank">{{ u.name|e }}</a>
+    {% if u.locked %}
+                        <a href="javascript:void(0)" rel="tooltip" title="This user is locked and cannot be deleted"><i class="icon-lock"></i></a>
+    {% endif %}
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ get_role_name(u.role_id) }}</td>
+                    <td>{{ u.creation_time|dt }}</td>
+                    <td>
+    {% if can_update_user(u) %}
+                        <a href="?action=edit&id={{ u.id }}" class="x-btn"><i class="icon-edit"></i></a>
+    {% endif %}
+    {% if can_delete_user(u) %}
+                        <a rel="{{ u.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ u.name|e }}"><i class="icon-trash"></i></a>
+    {% endif %}
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
