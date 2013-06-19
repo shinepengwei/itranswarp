@@ -28,7 +28,7 @@ class Setting(db.Model):
     );
     '''
 
-    id = db.StringField(primary_key=True)
+    id = db.StringField(primary_key=True, default=db.next_str)
 
     website_id = db.StringField(nullable=False, updatable=False)
 
@@ -144,21 +144,22 @@ def _set_setting(website_id, kind, key, value):
         value = str(value)
     name = '%s:%s' % (kind, key)
     s = Setting( \
-        id = db.next_str(), \
         website_id = website_id, \
         kind = kind, \
         name = name, \
         value = value)
-    db.update('delete from setting where name=? and website_id=?', name, website_id)
     s.insert()
 
+@db.with_transaction
 def set_setting(kind, key, value):
+    _delete_setting(ctx.website.id, kind, key)
     _set_setting(ctx.website.id, kind, key, value)
 
+@db.with_transaction
 def set_global_setting(kind, key, value):
+    _delete_setting(_GLOBAL, kind, key)
     _set_setting(_GLOBAL, kind, key, value)
 
-@db.with_transaction
 def _set_settings(website_id, kind, **kw):
     '''
     set settings by kind and key-value pair.
@@ -166,10 +167,14 @@ def _set_settings(website_id, kind, **kw):
     for k, v in kw.iteritems():
         _set_setting(website_id, kind, k, v)
 
+@db.with_transaction
 def set_settings(kind, **kw):
+    _delete_settings(ctx.website.id, kind)
     _set_settings(ctx.website.id, kind, **kw)
 
+@db.with_transaction
 def set_global_settings(kind, **kw):
+    _delete_settings(_GLOBAL, kind)
     _set_settings(_GLOBAL, kind, **kw)
 
 def _delete_setting(website_id, kind, key):
