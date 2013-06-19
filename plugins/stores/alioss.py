@@ -16,6 +16,10 @@ from StringIO import StringIO
 
 class Plugin(object):
 
+    name = 'Aliyun OSS'
+
+    description = 'Aliyun Open Storage System'
+
     def __init__(self, **kw):
         bucket = kw.get('bucket')
         access_key_id = kw.get('access_key_id')
@@ -28,18 +32,14 @@ class Plugin(object):
             raise IOError('missing param: access_key_secret')
         self._client = Client(str(access_key_id), str(access_key_secret), str(bucket))
 
-    @staticmethod
-    def get_description():
-        return 'Aliyun Open Storage Service'
-
-    @staticmethod
-    def get_inputs():
+    @classmethod
+    def get_inputs(cls):
         return (dict(key='bucket', name='Bucket', description='Bucket'),
                 dict(key='access_key_id', name='Access Key ID', description='Access key id'),
                 dict(key='access_key_secret', name='Access Key Secret', description='Access key secret'))
 
-    @staticmethod
-    def validate(**kw):
+    @classmethod
+    def validate(cls, **kw):
         pass
 
     def delete(self, ref):

@@ -24,22 +24,22 @@ except ImportError:
 
 class Plugin(object):
 
+    name = 'SAE Storage'
+
+    description = 'Sina AppEngine Storage'
+
     def __init__(self, **kw):
         self._domain = kw.pop('domain', '')
         if not self._domain:
             raise ValueError('Missing param: domain.')
         self._client = storage.Client(accesskey=ACCESS_KEY, secretkey=SECRET_KEY, prefix=APP_NAME)
 
-    @staticmethod
-    def get_description():
-        return 'Sina AppEngine Storage'
-
-    @staticmethod
-    def get_inputs():
+    @classmethod
+    def get_inputs(cls):
         return (dict(key='domain', name='Domain', description='Website domain'),)
 
-    @staticmethod
-    def validate(**kw):
+    @classmethod
+    def validate(cls, **kw):
         pass
 
     def delete(self, ref):
