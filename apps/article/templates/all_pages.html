@@ -1,0 +1,62 @@
+<script>
+
+$(function() {
+    $('a.x-btn-delete').each(function() {
+        $(this).click(function() {
+            $btn = $(this);
+            show_confirm('Delete Confirm', 'Are you sure you want to delete "' + $btn.attr('prompt') + '"?', function(btn, fn_hide) {
+                $.postJSON('/api/page/delete', {'id': $btn.attr('rel') }, function(result) {
+                    refresh();
+                }, function(err) {
+                    fn_hide();
+                    show_error(err.message, err.data);
+                });
+            });
+        });
+    });
+});
+
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('All Pages') }}</h3>
+    </div>
+
+    <div class="span10">
+        <div class="btn-toolbar" style="text-align:right">
+            <a href="add_page" class="btn btn-primary"><i class="icon-plus icon-white"></i> {{ _('Add Page') }}</a>
+        </div>
+    </div>
+
+    <div class="span10">
+        <div class="alert alert-error hide"></div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="35%">{{ _('Name') }}</th>
+                    <th width="15%">{{ _('Status') }}</th>
+                    <th width="20%">{{ _('Tags') }}</th>
+                    <th width="20%">{{ _('Creation Date') }}</th>
+                    <th width="10%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for p in pages %}
+                <tr>
+                    <td class="name"><a href="/page/{{ p.id }}" target="_blank">{{ p.name|e }}</a></td>
+                    <td>
+                        {{ _(p.draft and 'Draft' or 'Published') }}
+                    </td>
+                    <td>{{ p.tags|e }}</td>
+                    <td>{{ p.creation_time|dt }}</td>
+                    <td>
+                        <a href="?action=edit&id={{ p.id }}" data-toggle="tooltip" title="Edit this page" class="x-btn"><i class="icon-edit"></i></a>
+                        <a data-toggle="tooltip" title="Delete this page" rel="{{ p.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ p.name|e }}"><i class="icon-trash"></i></a>
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
