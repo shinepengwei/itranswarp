@@ -5,6 +5,9 @@ __author__ = 'Michael Liao'
 
 ' store big text. '
 
+import time
+
+from transwarp.web import ctx
 from transwarp import db
 
 class BigText(db.Model):
@@ -32,11 +35,14 @@ class BigText(db.Model):
     creation_time = db.FloatField(nullable=False, updatable=False, default=time.time)
 
 def get(ref_id, default=''):
-    texts = BigText.select_one('where ref_id=? order by creation_time desc limit ?', ref_id, 1)
-    if texts:
-        return texts[0].value
+    t = BigText.select_one('where ref_id=? order by creation_time desc limit ?', ref_id, 1)
+    if t:
+        return t.value
     return default
 
-def set(ref_id, text):
-    t = BigText(website_id=ctx.website.id, ref_id=ref_id, value=text)
+def set(ref_id, content_id, text):
+    t = BigText(id=content_id, website_id=ctx.website.id, ref_id=ref_id, value=text)
     t.insert()
+
+def delete(ref_id):
+    db.update('delete from bigtext where ref_id=?', ref_id)
