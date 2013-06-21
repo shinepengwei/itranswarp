@@ -85,10 +85,10 @@ $(function() {
                         <td>{{ c.description|e }}</td>
                         <td>{{ c.creation_time|dt }}</td>
                         <td>
-                            <a href="javascript:moveUp('{{ c.id }}')" class="x-btn"><i class="icon-arrow-up"></i></a>
-                            <a href="javascript:moveDown('{{ c.id }}')" class="x-btn"><i class="icon-arrow-down"></i></a>
-                            <a href="?action=edit&id={{ c.id }}" class="x-btn"><i class="icon-edit"></i></a>
-                            <a id="delete-{{ c.id }}" rel="{{ c.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ c.name|e }}"><i class="icon-trash"></i></a>
+                            <a href="javascript:moveUp('{{ c.id }}')" data-toggle="tooltip" title="Move this category up" class="x-btn"><i class="icon-arrow-up"></i></a>
+                            <a href="javascript:moveDown('{{ c.id }}')" data-toggle="tooltip" title="Move this category down" class="x-btn"><i class="icon-arrow-down"></i></a>
+                            <a href="?action=edit&id={{ c.id }}" data-toggle="tooltip" title="Edit this category" class="x-btn"><i class="icon-edit"></i></a>
+                            <a data-toggle="tooltip" title="Delete this category" rel="{{ c.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ c.name|e }}"><i class="icon-trash"></i></a>
                             <input type="hidden" name="id" value="{{ c.id }}" />
                         </td>
                     </tr>
