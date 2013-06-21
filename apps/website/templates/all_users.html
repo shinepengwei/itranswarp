@@ -49,7 +49,7 @@ $(function() {
                     <td>
                         <a href="?action=edit&id={{ u.id }}" target="_blank">{{ u.name|e }}</a>
     {% if u.locked %}
-                        <a href="javascript:void(0)" rel="tooltip" title="This user is locked and cannot be deleted"><i class="icon-lock"></i></a>
+                        <a href="javascript:void(0)" data-toggle="tooltip" title="Locked user cannot be deleted"><i class="icon-lock"></i></a>
     {% endif %}
                     </td>
                     <td>{{ u.email }}</td>
@@ -57,10 +57,10 @@ $(function() {
                     <td>{{ u.creation_time|dt }}</td>
                     <td>
     {% if can_update_user(u) %}
-                        <a href="?action=edit&id={{ u.id }}" class="x-btn"><i class="icon-edit"></i></a>
+                        <a href="?action=edit&id={{ u.id }}" data-toggle="tooltip" title="Edit this user" class="x-btn"><i class="icon-edit"></i></a>
     {% endif %}
     {% if can_delete_user(u) %}
-                        <a rel="{{ u.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ u.name|e }}"><i class="icon-trash"></i></a>
+                        <a rel="{{ u.id }}" href="javascript:void(0)" data-toggle="tooltip" title="Delete this user" class="x-btn x-btn-delete" prompt="{{ u.name|e }}"><i class="icon-trash"></i></a>
     {% endif %}
                     </td>
                 </tr>
