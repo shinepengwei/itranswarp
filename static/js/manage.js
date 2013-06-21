@@ -6,8 +6,8 @@ function show_error(err, field_name) {
     $('div.control-group').removeClass('error');
     if (err) {
         $('.alert-error').text(err).show();
-        if ($('.alert-error').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('.alert-error').offset().top});
+        if ($('.alert-error').offset().top < ($(window).scrollTop() - 41)) {
+            $('html,body').animate({scrollTop: $('.alert-error').offset().top - 41});
         }
     }
     else {
@@ -63,5 +63,5 @@ function show_confirm(title, text_or_html, fn_ok, fn_cancel) {
 }
 
 $(function() {
-    $('a[rel=tooltip]').tooltip();
+    $('a[data-toggle=tooltip]').tooltip();
 });
