@@ -48,23 +48,17 @@ class Resource(db.Model):
     website_id = db.StringField(nullable=False, updatable=False)
 
     ref_id = db.StringField(nullable=False, updatable=False)
-
     ref_type = db.StringField(nullable=False, updatable=False)
-
     ref_store = db.StringField(nullable=False, updatable=False)
 
     deleted = db.BooleanField(nullable=False, default=False)
 
     size = db.IntegerField(nullable=False, updatable=False)
-
     filename = db.StringField(nullable=False, updatable=False)
-
     mime = db.StringField(nullable=False, updatable=False)
-
     url = db.StringField(nullable=False, updatable=False)
 
     creation_time = db.FloatField(nullable=False, updatable=False, default=time.time)
-
     version = db.VersionField()
 
 _KIND = 'plugins.stores'
@@ -84,7 +78,7 @@ def set_enabled_store_id(pid):
     settings.set_global_setting(_KIND, _KEY, pid)
 
 def get_store_instance(pid):
-    return plugin.get_plugin_instance('stores', pid)
+    return plugins.get_plugin_instance('stores', pid)
 
 def get_enabled_store_instance():
     return get_store_instance(get_enabled_store_id())
@@ -105,7 +99,7 @@ def delete_file(ref_store):
     name, ref = ss
     get_store_instance(name).delete(ref)
 
-def upload_file(ref_type, ref_id, filename, filecontent):
+def upload_file(ref_type, ref_id, filename, fcontent):
     '''
     upload file and return created Resource model. The uploaded file path depends on current store plugin.
     '''
@@ -114,7 +108,7 @@ def upload_file(ref_type, ref_id, filename, filecontent):
     dt = datetime.now()
     fpath = os.path.join(ctx.website.id, str(ref_type), str(dt.year), str(dt.month), str(dt.day), '%s%s' % (uuid.uuid4().hex, fileext))
     pid = get_enabled_store_id()
-    url, ref = get_store_instance(pid).upload(fpath, filecontent)
+    url, ref = get_store_instance(pid).upload(fpath, fcontent)
     logging.info('uploaded file: %s' % url)
     r = Resource( \
         website_id = ctx.website.id, \
