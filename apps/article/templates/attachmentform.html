@@ -3,6 +3,12 @@
         $('#file').change(function() {
             var f = $('#file').val();
             if (f!='') {
+                $('button[type=submit]').removeAttr('disabled');
+            }
+            else {
+                $('button[type=submit]').attr('disabled', 'disabled');
+            }
+            if (f!='') {
                 if ($('#name').val()=='') {
                     var pos = Math.max(f.lastIndexOf('\\'), f.lastIndexOf('/'));
                     if (pos>0)
@@ -78,40 +84,16 @@
             show_error(r.error, r.error_field);
         }
         else {
-            location.assign('attachments');
+            location.assign('all_attachments');
         }
     }
 
     function on_upload_failed(evt) {
         show_error('Upload failed.', '');
-
     }
 
     function on_upload_canceled(evt) {
         show_error('Upload has been canceled.', '');
-    }
-
-    function show_error(err, field_name) {
-        $('div.control-group').removeClass('error');
-        if (err==null) {
-            $('div.alert-error').text('').hide();
-            return false;
-        }
-        $('div.alert-error').text(err).show();
-        $('div.field-' + field_name).addClass('error');
-        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
-        }
-        return false;
-    }
-
-    function show_loading(show) {
-        if (show) {
-            $('span.loading').show();
-        }
-        else {
-            $('span.loading').hide();
-        }
     }
 
     function ajax_post_multipart(form) {
@@ -129,6 +111,7 @@
         catch(e) {
             fd = new FormData(form);
         }
+        show_loading(true);
         var xhr = new XMLHttpRequest();
         xhr.upload.addEventListener('progress', on_upload_progress, false);
         xhr.addEventListener('load', on_upload_complete, false);
@@ -136,7 +119,6 @@
         xhr.addEventListener('abort', on_upload_canceled, false);
         xhr.open('post', $(form).attr('action'));
         xhr.send(fd);
-        $('button[type=submit]').attr('disabled', 'disabled');
         return false;
     }
 </script>
@@ -148,7 +130,7 @@
 </div>
 <div class="row">
     <div class="span8">
-        <form id="form-x" action="/api/attachments/upload" method="post" enctype="multipart/form-data" class="form-horizontal" onsubmit="return ajax_post_multipart(this)">
+        <form id="form-x" action="/api/attachment/upload" method="post" enctype="multipart/form-data" class="form-horizontal" onsubmit="return ajax_post_multipart(this)">
             <fieldset>
                 <div id="div-name" class="control-group">
                     <label class="control-label">{{ _('Name') }}:</label>
@@ -184,9 +166,8 @@
                 </div>
                 <div class="form-actions">
                     <input type="hidden" name="id" value="{{ id }}" />
-                    <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
-                    <button type="button" class="btn" onclick="location.assign('resources')">{{ _('Cancel') }}</button>
-                    <span class="loading hide">{{ _('Processing, please wait') }}...</span>
+                    <button type="submit" disabled="disabled" class="btn btn-primary"><i class="icon-upload icon-white"></i> {{ _('Upload') }}</button>
+                    <button type="button" class="btn" onclick="location.assign('all_attachments')"><i class="icon-remove"></i> {{ _('Cancel') }}</button>
                 </div>
             </fieldset>
         </form>
