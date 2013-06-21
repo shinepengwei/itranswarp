@@ -14,6 +14,7 @@
     <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
     <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/markdown-editor.js"></script>
     <script type="text/javascript" src="/static/js/custom.js"></script>
     <script type="text/javascript" src="/static/js/manage.js"></script>
     <style>
@@ -114,6 +115,24 @@ html, body {
             </div>
 
             <div class="span10">
+{% macro pagination(page_obj, url) %}
+    {% set page_index = page_obj.page_index %}
+    {% set page_list = page_obj.page_list() %}
+                <div class="pagination pagination-centered">
+                    <ul>
+        {% for index in page_list %}
+            {% if index == page_index %}
+                        <li class="active"><span>{{ index }}</span></li>
+            {% elif index %}
+                        <li><a href="{{ url }}{{ index }}">{{ index }}</a></li>
+            {% else %}
+                        <li class="disabled"><span>...</span></li>
+            {% endif %}
+        {% endfor %}
+                    </ul>
+                </div>
+{% endmacro %}
+
                 <!-- BEGIN include -->
 {% include __include__ %}
                 <!-- END include -->
