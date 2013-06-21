@@ -11,7 +11,7 @@ import os, re, time, json, uuid, base64, hashlib, logging
 from datetime import datetime
 from collections import namedtuple
 
-from transwarp.web import ctx, view, get, post, route, Dict, UTC, Template, seeother, notfound, badrequest
+from transwarp.web import ctx, view, get, post, route, Dict, UTC, Template, seeother, notfound, badrequest, redirect
 from transwarp import db, i18n, cache
 
 from core.apis import api
@@ -167,6 +167,16 @@ def route_app(app_name):
 def manage_entry():
     app = __apps_list[0]
     raise seeother('/manage/%s/' % app.key)
+
+@get('/api/resource/url')
+def api_resource_url():
+    i = ctx.request.input(id='')
+    if i.id:
+        # should cached?
+        r = db.select_one('select url from resource where id=?', i.id)
+        if r:
+            raise redirect(r.url)
+    raise notfound()
 
 @get('/track/u.js')
 def track_js():
