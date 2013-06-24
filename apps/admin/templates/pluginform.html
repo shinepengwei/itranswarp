@@ -1,0 +1,61 @@
+<script>
+
+function ajax_post(form) {
+    show_error(null);
+    show_loading(true);
+    $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        location.assign('{{ cancel_url }}');
+    }, function(err) {
+        show_loading(false);
+        show_error(err.message, err.data);
+    });
+    return false;
+}
+
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Edit') }} {{ plugin.name }}</h3>
+    </div>
+
+    <div class="span10">
+        <div class="alert alert-error hide"></div>
+    </div>
+
+    <div class="span10">
+        <form action="{{ submit_url }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+            <fieldset>
+                <div class="field-id control-group">
+                    <label class="control-label">{{ _('ID') }}:</label>
+                    <div class="controls">
+                        <input name="id" type="text" value="{{ plugin.id }}" readonly="readonly" class="input-xlarge" />
+                        <span class="help-inline">Identifier of plugin.</span>
+                    </div>
+                </div>
+{% for ip in inputs %}
+  {% set t = ip.get('input', 'text') %}
+                <div class="field-{{ ip.key }} control-group">
+                {% if t=='checkbox' %}
+                    {% set ischecked = ' checked=\"checked\" ' if ip.value else '' %}
+                    <div class="controls">
+                        <label class="checkbox"><input id="{{ ip.key }}" name="{{ ip.key }}" type="checkbox" value="True" {{ ischecked }} class="input-xlarge" /> {{ ip.name }}</label>
+                    </div>
+                {% else %}
+                    <label class="control-label">{{ ip.name }}:</label>
+                    <div class="controls">
+                        <input id="{{ ip.key }}" name="{{ ip.key }}" type="text" value="{{ ip.value|e }}" class="input-xlarge" />
+                        <span class="help-inline">{{ ip.description }}</span>
+                    </div>
+                {% endif %}
+                </div>
+{% endfor %}
+                <div class="form-actions">
+                    <input type="hidden" name="type" value="{{ plugin_type }}" />
+                    <button type="submit" class="btn btn-primary"><i class="icon-ok icon-white"></i> {{ _('Save') }}</button>
+                    <a href="{{ cancel_url }}" class="btn"><i class="icon-remove"></i> {{ _('Cancel') }}</a>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
