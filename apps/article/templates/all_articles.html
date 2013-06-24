@@ -1,0 +1,153 @@
+<script>
+    var CATEGORIES = {
+// {% for c in category_list %}
+        '{{ c.id }}': '{{ c.name|jsstr }}',
+// {% endfor %}
+    };
+
+    function do_filter(category_id) {
+        $('#category-filter').attr('disabled', 'disabled');
+        location.assign('?category_id=' + category_id);
+    }
+
+    $(function() {
+        $('a.x-btn-delete').each(function() {
+            var aid = $(this).attr('id');
+            var rel = $(this).attr('rel');
+            $(this).popover({
+                placement: 'top',
+                html: true,
+                title: 'Confirm Deletion',
+                content: '<p>Are you sure you want to delete the <strong>'
+                    + $(this).attr('prompt')
+                    + '</strong>?</p>'
+                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="location.assign(\'?action=delete&id='
+                    + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
+                    + aid + '\').popover(\'hide\')">Cancel</button></div>'
+            });
+        });
+        $('a.x-btn-select').each(function() {
+            var ahref = $(this);
+            var aid = $(this).attr('id');
+            var sid = 'sel-' + aid;
+            var article_id = $(this).attr('prompt');
+            $('#' + aid + ' span.name').text(CATEGORIES[ahref.attr('rel')]);
+
+            function create_popover() {
+                var rel = ahref.attr('rel');
+                return '<div style="text-align:center">'
+                    + create_select(sid, rel)
+                    + '</div><div style="text-align:center"><button class="btn btn-primary" onclick="var v=$(\'#' + sid + '\').val();$(\'#'
+                    + aid + '\').popover(\'hide\');move(\''
+                    + article_id + '\',\'' + aid + '\',v);">OK</button> <button class="btn" onclick="$(\'#'
+                    + aid + '\').popover(\'hide\')">Cancel</button></div>'
+            }
+
+            $(this).popover({
+                placement: 'top',
+                html: true,
+                title: 'Move To Category',
+                content: create_popover
+            });
+        });
+    });
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('All Articles') }}</h3>
+
+        <div class="btn-toolbar">
+            <div class="btn-group">
+                <button id="category-filter" class="btn dropdown-toggle" data-toggle="dropdown">
+                    <i class="icon-filter"></i>
+{% if category %}
+                    {{ category.name|e }}
+{% else %}
+                    {{ _('All Articles') }}
+{% endif %}
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+    {% set selected = not category %}
+    {% if selected %}
+                    <li><a href="javascript:void(0)"><i class="icon-ok"></i> {{ _('All Articles') }}</a></li>
+    {% else %}
+                    <li><a href="javascript:do_filter('')"><i class="icon-x"></i> {{ _('All Articles') }}</a></li>
+    {% endif %}
+                    <li class="divider"></li>
+{% for c in category_list %}
+    {% set selected = category and category.id==c.id %}
+    {% if selected %}
+                    <li><a href="javascript:void(0)"><i class="icon-ok"></i> {{ c.name|e }}</a></li>
+    {% else %}
+                    <li><a href="javascript:do_filter('{{ c.id }}')"><i class="icon-x"></i> {{ c.name|e }}</a></li>
+    {% endif %}
+{% endfor %}
+                </ul>
+            </div>
+            <a href="add_article" class="btn btn-primary" style="float:right"><i class="icon-plus icon-white"></i> {{ _('Add Article') }}</a>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <div class="span10">
+        <div class="alert alert-error hide"></div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="5%"></th>
+                    <th width="50%">{{ _('Name') }}</th>
+                    <th width="20%">{{ _('Author') }}</th>
+                    <th width="15%">{{ _('Publish Date') }}</th>
+                    <th width="10%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for a in articles %}
+                <tr>
+                    <td rowspan="2">
+    {% if a.draft %}
+                        <a data-toggle="tooltip" title="Draft" href="javascript:void(0)"><i class="icon-lock"></i></a>
+    {% else %}
+                        <a data-toggle="tooltip" title="Published" href="javascript:void(0)"><i class="icon-ok"></i></a>
+    {% endif %}
+                    </td>
+                    <td>
+                        <b><a href="/article/{{ a.id }}" target="_blank">{{ a.name|e }}</a></b>
+                    </td>
+                    <td>{{ a.user_name|e }}</td>
+                    <td>{{ a.publish_time|dt }}</td>
+                    <td rowspan="2">
+                        <a data-toggle="tooltip" title="Edit this article" href="?action=edit&id={{ a.id }}" class="x-btn"><i class="icon-edit"></i></a>
+                        <a data-toggle="tooltip" title="Delete this article" rel="{{ a.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ a.name|e }}"><i class="icon-trash"></i></a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <i class="icon-tags"></i>
+    {% if a.tags %}
+        {% for tag in a.tags.split(',') %}
+                        {{ tag }}
+        {% endfor %}
+    {% else %}
+                        No tags
+    {% endif %}
+                    </td>
+                    <td colspan="2">
+    {% if a.categories %}
+                        <i class="icon-list"></i>
+        {% for cid in a.categories %}
+                        <a href="javascript:void(0)" class="x-category"><script> document.write(CATEGORIES['{{ cid }}']);</script></a>
+        {% endfor %}
+    {% else %}
+                        <i class="icon-warning-sign"></i> No category
+    {% endif %}
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+        {{ pagination(page, '?page=') }}
+    </div>
+</div>
