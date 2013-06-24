@@ -41,7 +41,7 @@ def api_authenticate():
     remember = i.remember
     if not email or not passwd:
         raise APIError('auth:failed', '', 'bad email or password.')
-    user = User.select_one('email=?', email)
+    user = User.select_one('where email=?', email)
     if not user or user.website_id != ctx.website.id or passwd != user.passwd:
         raise APIError('auth:failed', '', 'bad email or password.')
     expires = None
@@ -68,7 +68,7 @@ def http_basic_auth(auth):
         s = base64.b64decode(auth)
         logging.warn(s)
         u, p = s.split(':', 1)
-        user = User.select_one('email=?', u)
+        user = User.select_one('where email=?', u)
         if not user or user.website_id != ctx.website.id or user.passwd != hashlib.md5(p).hexdigest():
             return None
         logging.info('Basic auth ok: %s' % u)

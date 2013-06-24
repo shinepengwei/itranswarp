@@ -8,47 +8,23 @@
     <![endif]-->
     <link rel="stylesheet" href="/static/css/bootstrap.css" />
     <link rel="stylesheet" href="/static/css/custom.css" />
-    <script type="text/javascript" src="/static/js/jquery-1.9.0.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.min.js"></script>
     <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
     <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/manage.js"></script>
     <script type="text/javascript">
 var redirect = '{{ redirect }}';
-
-function show_loading(show) {
-    if (show) {
-        $('#span-loading').show();
-    }
-    else {
-        $('#span-loading').hide();
-    }
-}
-
-function show_error(msg) {
-    if (msg) {
-        $('#span-signin-error').text(msg);
-        $('#div-signin-error').show();
-    }
-    else {
-        $('#div-signin-error').hide();
-    }
-}
 
 function ajax_signin(form) {
     $('#md5-passwd').val($.md5($('#origin-passwd').val()));
     show_loading(true);
     show_error(null);
     $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        location.assign(redirect);
+    }, function(e) {
         show_loading(false);
-        if (result.error) {
-            show_error(result.message);
-        }
-        else {
-            location.assign(redirect);
-        }
-    }).error(function() {
-        show_loading(false);
-        show_error('{{ _('Server error') }}!');
+        show_error(e.message || e.error, e.data);
     });
     return false;
 }
@@ -67,14 +43,10 @@ function ajax_signin(form) {
             </div>
         </div>
 
-        <div class="row sep"></div>
-
         <div class="row">
             <form action="/api/authenticate" method="post" onsubmit="return ajax_signin(this)">
                 <div class="span4 offset4">
-                    <div id="div-signin-error" class="alert alert-error hide">
-                        <span id="span-signin-error"></span>
-                    </div>
+                    <div class="alert alert-error hide"></div>
                     <label class="control-label">{{ _('Email') }}:</label>
                     <input type="text" id="input-email" name="email" maxlength="50" class="input-xlarge" value="{{ email }}" />
                     <label class="control-label">{{ _('Password') }}:</label>
@@ -86,9 +58,7 @@ function ajax_signin(form) {
                     <div class="form-actions">
                         <div class="row">
                             <div class="span5 offset1">
-                                <button type="submit" class="btn btn-primary">{{ _('Sign In') }}</button>
-                                &nbsp;&nbsp;
-                                <span id="span-loading" class="loading hide">{{ _('Processing') }}...</span>
+                                <button type="submit" class="btn btn-primary"><i class="icon-lock icon-white"></i> {{ _('Sign In') }}</button>
                             </div>
                         </div>
                     </div>

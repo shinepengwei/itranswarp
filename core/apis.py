@@ -52,6 +52,7 @@ def api(func):
             time.sleep(1.5)
             return json.dumps(func(*args, **kw))
         except APIError, e:
+            logging.exception('API Error when calling api function.')
             return json.dumps(dict(error=e.error, data=e.data, message=e.message))
         except Exception, e:
             logging.exception('Error when calling api function.')
