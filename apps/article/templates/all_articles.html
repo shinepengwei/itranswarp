@@ -1,56 +1,34 @@
 <script>
-    var CATEGORIES = {
+var CATEGORIES = {
 // {% for c in category_list %}
-        '{{ c.id }}': '{{ c.name|jsstr }}',
+    '{{ c.id }}': '{{ c.name|jsstr }}',
 // {% endfor %}
-    };
+};
 
-    function do_filter(category_id) {
-        $('#category-filter').attr('disabled', 'disabled');
-        location.assign('?category_id=' + category_id);
-    }
+function do_filter(category_id) {
+    $('#category-filter').attr('disabled', 'disabled');
+    location.assign('?category_id=' + category_id);
+}
 
-    $(function() {
-        $('a.x-btn-delete').each(function() {
-            var aid = $(this).attr('id');
-            var rel = $(this).attr('rel');
-            $(this).popover({
-                placement: 'top',
-                html: true,
-                title: 'Confirm Deletion',
-                content: '<p>Are you sure you want to delete the <strong>'
-                    + $(this).attr('prompt')
-                    + '</strong>?</p>'
-                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="location.assign(\'?action=delete&id='
-                    + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
-                    + aid + '\').popover(\'hide\')">Cancel</button></div>'
-            });
-        });
-        $('a.x-btn-select').each(function() {
-            var ahref = $(this);
-            var aid = $(this).attr('id');
-            var sid = 'sel-' + aid;
-            var article_id = $(this).attr('prompt');
-            $('#' + aid + ' span.name').text(CATEGORIES[ahref.attr('rel')]);
+$(function() {
+    $('a.x-btn-delete').each(function() {
+        $(this).click(function() {
+            var $btn = $(this);
+            var prompt = $btn.attr('prompt');
+            var rel = $btn.attr('rel');
 
-            function create_popover() {
-                var rel = ahref.attr('rel');
-                return '<div style="text-align:center">'
-                    + create_select(sid, rel)
-                    + '</div><div style="text-align:center"><button class="btn btn-primary" onclick="var v=$(\'#' + sid + '\').val();$(\'#'
-                    + aid + '\').popover(\'hide\');move(\''
-                    + article_id + '\',\'' + aid + '\',v);">OK</button> <button class="btn" onclick="$(\'#'
-                    + aid + '\').popover(\'hide\')">Cancel</button></div>'
-            }
-
-            $(this).popover({
-                placement: 'top',
-                html: true,
-                title: 'Move To Category',
-                content: create_popover
+            show_confirm('Deletion Confirm', 'Are you sure you want to delete the article "' + prompt + '"?', function(btn, fn_hide) {
+                $.postJSON('/api/article/delete', {'id': rel}, function(result) {
+                    refresh();
+                }, function(err) {
+                    fn_hide();
+                    show_error(err.message, err.data);
+                });
             });
         });
     });
+});
+
 </script>
 
 <div class="row">
@@ -86,7 +64,9 @@
 {% endfor %}
                 </ul>
             </div>
+{% if can_create %}
             <a href="add_article" class="btn btn-primary" style="float:right"><i class="icon-plus icon-white"></i> {{ _('Add Article') }}</a>
+{% endif %}
             <div class="clearfix"></div>
         </div>
     </div>
@@ -118,9 +98,13 @@
                     </td>
                     <td>{{ a.user_name|e }}</td>
                     <td>{{ a.publish_time|dt }}</td>
-                    <td rowspan="2">
+                    <td>
+{% if can_edit(a) %}
                         <a data-toggle="tooltip" title="Edit this article" href="?action=edit&id={{ a.id }}" class="x-btn"><i class="icon-edit"></i></a>
+{% endif %}
+{% if can_delete(a) %}
                         <a data-toggle="tooltip" title="Delete this article" rel="{{ a.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ a.name|e }}"><i class="icon-trash"></i></a>
+{% endif %}
                     </td>
                 </tr>
                 <tr>
@@ -142,6 +126,16 @@
         {% endfor %}
     {% else %}
                         <i class="icon-warning-sign"></i> No category
+    {% endif %}
+                    </td>
+                    <td>
+                        <a data-toggle="tooltip" title="Comments of this article" href="javascript:comments(this)" rel="{{ a.id }}" class="x-btn"><i class="icon-comment"></i></a>
+    {% if can_publish %}
+        {% if a.draft %}
+                        <a data-toggle="tooltip" title="Publish this article" href="javascript:publish(this, true)" rel="{{ a.id }}" class="x-btn"><i class="icon-eye-open"></i></a>
+        {% else %}
+                        <a data-toggle="tooltip" title="Unpublish this article" href="javascript:publish(this, false)" rel="{{ a.id }}" class="x-btn"><i class="icon-ban-circle"></i></a>
+        {% endif %}
     {% endif %}
                     </td>
                 </tr>

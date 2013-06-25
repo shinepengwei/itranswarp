@@ -110,7 +110,7 @@ class Article(db.Model):
     cover_id = db.StringField(nullable=False, default='')
     content_id = db.StringField(nullable=False)
 
-    draft = db.BooleanField(nullable=False, updatable=False)
+    draft = db.BooleanField(nullable=False)
     user_name = db.StringField(nullable=False)
     name = db.StringField(nullable=False)
     tags = db.StringField(nullable=False, default='')
@@ -424,14 +424,14 @@ def all_articles():
     if i.action=='edit':
         a = _get_article(i.id)
         a.content = texts.get(a.id)
-        return Template('articleform.html', form_title=_('Edit Article'), form_action='/api/article/update', redirect='all_articles', static=False, category_list=_get_categories(), **a)
+        return Template('articleform.html', form_title=_('Edit Article'), form_action='/api/article/update', redirect='all_articles', static=False, category_list=_get_categories(), can_publish=_can_publish_article(), **a)
     page_index = int(i.page)
     category_id = i.category_id
     category = _get_category(category_id) if category_id else None
     count = _get_articles_count(category_id)
     page = Pagination(count, page_index)
     articles = _get_articles(page, category_id)
-    return Template('all_articles.html', articles=articles, page=page, category=category, category_list=_get_categories())
+    return Template('all_articles.html', articles=articles, page=page, category=category, category_list=_get_categories(), can_create=_can_create_article(), can_edit=_can_edit_article, can_delete=_can_delete_article, can_publish=_can_publish_article())
 
 @api
 @get('/api/article/get')
@@ -441,18 +441,41 @@ def api_article_get():
         raise APIValueError('id', 'id is empty.')
     return _get_article(i.id)
 
+def _can_create_article():
+    return ctx.user.role_id <= ROLE_CONTRIBUTORS
+
+def _can_delete_article(article):
+    if ctx.user.role_id <= ROLE_EDITORS:
+        return True
+    if article.user_id == ctx.user.id and article.draft:
+        return True
+    return False
+
+def _can_edit_article(article):
+    if ctx.user.role_id <= ROLE_EDITORS:
+        return True
+    if article.user_id == ctx.user.id and article.draft:
+        return True
+    return False
+
+def _can_publish_article():
+    return ctx.user.role_id <= ROLE_EDITORS
+
 @api
 @allow(ROLE_CONTRIBUTORS)
 @post('/api/article/create')
 def api_article_create():
     i = ctx.request.input(name='', content='', tags='', draft='')
+    if not _can_create_article():
+        raise APIPermissionError('cannot create article.')
+
     name = i.name.strip()
     content = i.content
     if not name:
         raise APIValueError('name', 'name cannot be empty.')
     if not content:
         raise APIValueError('content', 'content cannot be empty.')
-    draft = i.draft.lower() == 'true'
+    draft = i.draft.strip().lower() == 'true' and _can_publish_article()
     cat_ids = i.gets('category_id')
     cat_dict = _get_categories(return_dict=True)
     category_list = []
@@ -491,6 +514,13 @@ def api_article_update():
     if not i.id:
         raise APIValueError('id', 'id is empty.')
     article = _get_article(i.id)
+    if not _can_edit_article(article):
+        raise APIPermissionError('cannot edit article.')
+    if 'draft' in i:
+        draft = i.draft.strip().lower()=='true'
+        if draft==False and not _can_publish_article():
+            raise APIPermissionError('cannot publish article')
+        article.draft = draft
     if 'name' in i:
         name = i.name.strip()
         if not name:
@@ -517,16 +547,34 @@ def api_article_update():
             article.content_id = content_id
             texts.set(article.id, content_id, content)
         article.update()
+        if cat_ids:
+            # update Article_Category:
+            db.update('delete from article_category where article_id=?', article.id)
+            if category_list:
+                for category in category_list:
+                    Article_Category(article, category).insert()
+    return True
+
+@api
+@allow(ROLE_AUTHORS)
+@post('/api/article/delete')
+def api_article_delete():
+    i = ctx.request.input(id='')
+    if not i.id:
+        raise APIValueError('id', 'id is empty.')
+    article = _get_article(i.id)
+    if not _can_delete_article(article):
+        raise APIPermissionError('cannot delete article.')
+    with db.transaction():
+        article.delete()
+        texts.delete(i.id)
         # update Article_Category:
-        db.update('delete from article_category where article_id=?', article.id)
-        if category_list:
-            for category in category_list:
-                Article_Category(article, category).insert()
+        db.update('delete from article_category where article_id=?', i.id)
     return True
 
 @allow(ROLE_CONTRIBUTORS)
 def add_article():
-    return Template('articleform.html', form_title=_('Add Article'), form_action='/api/article/create', redirect='all_articles', static=False, categories=frozenset(), category_list=_get_categories())
+    return Template('articleform.html', form_title=_('Add Article'), form_action='/api/article/create', redirect='all_articles', static=False, categories=frozenset(), category_list=_get_categories(), can_publish=_can_publish_article())
 
 ################################################################################
 # Pages

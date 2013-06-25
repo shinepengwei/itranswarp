@@ -65,6 +65,20 @@ $(function() {
                         <span class="help-inline">Tags seperated by ,</span>
                     </div>
                 </div>
+{% if not static and can_publish %}
+                <div class="field-draft control-group">
+                    <label class="control-label">{{ _('Draft') }}:</label>
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input name="draft" type="checkbox" value="true"
+        {% if draft %}
+                                checked="checked"
+        {% endif %}
+                            > {{ _('Save article as draft') }}
+                        </label>
+                    </div>
+                </div>
+{% endif %}
                 <div class="field-content control-group">
                     <label class="control-label">{{ _('Content') }}:</label>
                     <div class="controls">
