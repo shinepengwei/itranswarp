@@ -35,6 +35,25 @@ menus = (
     ('add_attachment', 'Add Attachment'),
 )
 
+navigations = (
+        dict(
+            key='category',
+            input='select',
+            prompt='Category',
+            description='Show articles of category',
+            fn_get_url=lambda value: '/category/%s' % value,
+            fn_get_options=lambda: [(cat.id, cat.name) for cat in _get_categories()]
+        ),
+        dict(
+            key='page',
+            input='select',
+            prompt='Page',
+            description='Show a static page',
+            fn_get_url=lambda value: '/page/%s' % value,
+            fn_get_options=lambda: [(page.id, page.name) for page in _get_pages()]
+        ),
+)
+
 class Category(db.Model):
     '''
     create table category (
@@ -308,7 +327,7 @@ def api_category_get():
     return _get_category(i.id)
 
 @api
-@allow(ROLE_ADMINISTRATORS)
+@allow(ROLE_EDITORS)
 @post('/api/category/create')
 def api_category_create():
     i = ctx.request.input(name='', description='')
@@ -756,6 +775,20 @@ def api_attachment_upload():
     if i.return_link==u't':
         atta.filelink = '/api/resource/url?id=%s' % atta.resource_id
     return atta
+
+@api
+@allow(ROLE_EDITORS)
+@post('/api/attachment/delete')
+def api_attachment_delete():
+    i = ctx.request.input(id='')
+    if not i.id:
+        raise APIValueError('id', 'id is empty')
+    atta = Attachment.get_by_id(i.id)
+    if not atta or atta.website_id != ctx.website.id:
+        raise APIValueError('id', 'not found')
+    stores.delete_resources(atta.id)
+    atta.delete()
+    return True
 
 if __name__=='__main__':
     import doctest
