@@ -140,6 +140,39 @@ def api_navigation_update():
     nav.update()
     return True
 
+@api
+@allow(ROLE_ADMINISTRATORS)
+@post('/api/navigation/delete')
+def api_navigation_delete():
+    i = ctx.request.input(id='')
+    if not i.id:
+        raise APIValueError('id', 'id cannot be empty')
+    nav = _get_navigation(i.id)
+    nav.delete()
+    return True
+
+@api
+@allow(ROLE_ADMINISTRATORS)
+@post('/api/navigation/sort')
+def api_navigation_sort():
+    ids = ctx.request.gets('id')
+    navs = _get_navigations()
+    l = len(navs)
+    if l != len(ids):
+        raise APIValueError('id', 'bad id list.')
+    sets = set([n.id for n in navs])
+    odict = dict()
+    n = 0
+    for o in ids:
+        if not o in sets:
+            raise APIValueError('id', 'some id was invalid.')
+        odict[o] = n
+        n = n + 1
+    with db.transaction():
+        for n in navs:
+            db.update('update navigation set display_order=? where id=?', odict.get(n.id, l), n.id)
+    return True
+
 @allow(ROLE_ADMINISTRATORS)
 def navigation():
     from core import manage
