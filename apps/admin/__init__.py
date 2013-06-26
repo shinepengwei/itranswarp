@@ -47,6 +47,17 @@ def admin_stores():
         return Template('pluginform.html', plugin=p, plugin_type='stores', inputs=inputs, submit_url='/api/admin/plugin/update', cancel_url='?action=')
     return Template('stores.html', plugins=plugins.get_plugins('stores', True), enabled=plugins.stores.get_enabled_store_id())
 
+@api
+@allow(ROLE_SUPER_ADMINS)
+@post('/api/admin/store/enable')
+def api_admin_store_enable():
+    i = ctx.request.input(id='')
+    if not i.id:
+        raise APIValueError('id', 'id is empty.')
+    p = plugins.get_plugin('stores', i.id)
+    plugins.stores.set_enabled_store_id(i.id)
+    return True
+
 @allow(ROLE_SUPER_ADMINS)
 def admin_signins():
     plugins.get_plugins('stores', True)

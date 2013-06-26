@@ -1,18 +1,17 @@
 <script>
 
-
 $(function() {
     $('a.x-enable').each(function() {
         $(this).click(function() {
             $btn = $(this);
             var rel = $btn.attr('rel');
             var prompt = $btn.attr('prompt');
-            show_confirm('Enable Plugin', 'Are you sure you want to activate the plugin "' + prompt + '"?', function(btn, fn_hide) {
+            show_confirm('Enable Storage', 'Are you sure you want to activate the storage "' + prompt + '"?', function(btn, fn_hide) {
                 $.postJSON('/api/admin/store/enable', {'id': rel}, function(result) {
                     refresh();
                 }, function(err) {
                     fn_hide();
-                    show_error(err.message, err.data);
+                    show_error(err.message || err.error, err.data);
                 });
             });
         });
