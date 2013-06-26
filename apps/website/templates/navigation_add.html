@@ -30,48 +30,18 @@
         }
     }
 
-    function show_error(err, field_name) {
-        $('div.control-group').removeClass('error');
-        if (err==null) {
-            $('div.alert-error').text('').hide();
-            return false;
-        }
-        $('div.alert-error').text(err).show();
-        $('div.field-' + field_name).addClass('error');
-        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
-        }
-        return false;
-    }
+function ajax_post(form) {
+    show_error(null);
+    show_loading(true);
+    $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        refresh();
+    }, function(err) {
+        show_loading(false);
+        show_error(err.message || err.error, err.data);
+    });
+    return false;
+}
 
-    function show_loading(show) {
-        if (show) {
-            $('button[type=submit]').attr('disabled', 'disabled');
-            $('span.loading').show();
-        }
-        else {
-            $('button[type=submit]').removeAttr('disabled');
-            $('span.loading').hide();
-        }
-    }
-
-    function ajax_post(form) {
-        show_error(null);
-        show_loading(true);
-        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
-            if (result.error) {
-                show_error(result.message, result.data);
-            }
-            else {
-                location.assign('navigations');
-            }
-        }).error(function() {
-            show_error('{{ _('Server error') }}', '');
-        }).complete(function() {
-            show_loading(false);
-        });
-        return false;
-    }
 </script>
 
 <div class="row">
@@ -79,7 +49,7 @@
         <h3>Add Navigation</h3>
     </div>
     <div class="span10">
-        <form id="form-x" action="/api/navigations/create" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+        <form id="form-x" action="/api/navigation/create" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div class="alert alert-error hide"></div>
                 <div class="field-name control-group">
@@ -93,18 +63,18 @@
                     <label class="control-label">{{ _('Type') }}:</label>
                     <div class="controls">
                         <select id="select-navigation" name="kind" class="input-xlarge">
-{% for nav in navigations %}
-                            <option value="{{ nav.id }}" help="{{ nav.description|e }}">{{ nav.prompt|e }}</option>
+{% for nav in definitions %}
+                            <option value="{{ nav.key }}" help="{{ nav.description|e }}">{{ nav.prompt|e }}</option>
 {% endfor %}
                         </select>
                         <span class="help-inline"></span>
                     </div>
                 </div>
 
-{% for nav in navigations %}
+{% for nav in definitions %}
                 <!-- navigation input -->
     {% if nav.input=='text' %}
-                <div class="nav nav-{{ nav.id }} input-text control-group">
+                <div class="nav nav-{{ nav.key }} input-text control-group">
                     <label class="control-label">{{ nav.prompt|e }}</label>
                     <div class="controls">
                         <input type="text" name="value" value="" class="input-xlarge" />
@@ -112,11 +82,11 @@
                     </div>
                 </div>
     {% elif nav.input=='select' %}
-                <div class="nav nav-{{ nav.id }} input-select control-group">
+                <div class="nav nav-{{ nav.key }} input-select control-group">
                     <label class="control-label">{{ nav.prompt|e }}</label>
                     <div class="controls">
-                        <select id="select-{{ nav.id }}" name="value" class="input-xlarge">
-        {% for k, v in nav.options %}
+                        <select id="select-{{ nav.key }}" name="value" class="input-xlarge">
+        {% for k, v in nav.fn_get_options() %}
                             <option value="{{ k|e }}">{{ v|e }}</option>
         {% endfor %}
                         </select>
@@ -124,15 +94,14 @@
                     </div>
                 </div>
     {% else %}
-                <div class="nav nav-{{ nav.id }} input-none"><input type="hidden" name="value" value="" /></div>
+                <div class="nav nav-{{ nav.key }} input-none"><input type="hidden" name="value" value="" /></div>
     {% endif %}
                 <!-- // navigation input -->
 {% endfor %}
                 <div class="form-actions">
                     <input type="hidden" name="action" value="add" />
-                    <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
-                    <button type="button" class="btn" onclick="location.assign('navigations')">{{ _('Cancel') }}</button>
-                    <span class="loading hide">{{ _('Processing, please wait') }}...</span>
+                    <button type="submit" class="btn btn-primary"><i class="icon-ok icon-white"></i> {{ _('Save') }}</button>
+                    <button type="button" class="btn" onclick="refresh()"><i class="icon-remove"></i> {{ _('Cancel') }}</button>
                 </div>
             </fieldset>
         </form>

@@ -20,15 +20,16 @@ from core.utils import load_module, scan_submodules
 
 class App(object):
 
-    __slots__ = ('key', 'order', 'module', 'name', 'menu_list', 'menu_dict')
+    __slots__ = ('key', 'order', 'module', 'name', 'menu_list', 'menu_dict', 'navigations')
 
-    def __init__(self, key, order, module, name, menus):
+    def __init__(self, key, order, module, name, menus, navigations):
         self.key = key
         self.order = order
         self.module = module
         self.name = name
         self.menu_list = menus
         self.menu_dict = dict([(m.key, m) for m in menus if m.key!='-'])
+        self.navigations = [NavigationItem(**nav) for nav in (navigations if navigations else [])]
 
 class MenuItem(object):
 
@@ -38,6 +39,14 @@ class MenuItem(object):
         self.key = key
         self.name = name
         self.role = role
+
+class NavigationItem(object):
+
+    __slots__ = ('key', 'input', 'prompt', 'description', 'fn_get_url', 'fn_get_options')
+
+    def __init__(self, **kw):
+        for k, v in kw.iteritems():
+            setattr(self, k, v)
 
 def scan_app(app_key, mod):
     if not hasattr(mod, 'menus'):
@@ -61,8 +70,9 @@ def scan_app(app_key, mod):
         if L:
             name = getattr(mod, 'name', app_key)
             order = getattr(mod, 'order', 10000)
+            navs = getattr(mod, 'navigations', None)
             logging.info('add app %s with menus: %s' % (name, str(L)))
-            return App(app_key, order, mod, name, L)
+            return App(app_key, order, mod, name, L, navs)
     except:
         logging.exception('Error when scan menus.')
     return None
@@ -83,8 +93,18 @@ def scan_apps():
                 i18n.load_i18n(os.path.join(os.path.join(the_i18n, the_fname)))
     return apps
 
+def _get_nav_definitions(apps):
+    navs = []
+    for app in apps:
+        navs.extend(app.navigations)
+    return navs
+
 __apps = scan_apps()
 __apps_list = sorted(__apps.values(), cmp=lambda x,y: cmp((x.order, x.name), (y.order, y.name)))
+__nav_definitions = _get_nav_definitions(__apps_list)
+
+def get_nav_definitions():
+    return __nav_definitions
 
 @get('/register')
 def admin_get_register():

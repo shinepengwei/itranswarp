@@ -11,7 +11,7 @@ from transwarp.mail import send_mail
 from transwarp import db, task
 
 from core.models import Website, User, create_user
-from core.apis import api, APIValueError
+from core.apis import *
 from core.roles import *
 from core import utils, settings
 
@@ -22,11 +22,134 @@ order = 1000000
 menus = [
     ('-', 'Website'),
     ('general', 'General'),
+    ('navigation', 'Navigation'),
     ('-', 'Users'),
     ('all_users', 'All Users'),
     ('add_user', 'Add User'),
     ('profile', 'My Profile'),
 ]
+
+navigations = (
+        dict(
+            key='custom',
+            input='text',
+            prompt='Custom Link',
+            description='Custom link like http://www.google.com',
+            fn_get_url=lambda value: value,
+        ),
+)
+
+class Navigation(db.Model):
+    '''
+    create table navigation (
+        id varchar(50) not null,
+        website_id varchar(50) not null,
+        display_order int not null,
+        kind varchar(50) not null,
+        name varchar(50) not null,
+        description varchar(100) not null,
+        ref varchar(1000) not null,
+        url varchar(1000) not null,
+        creation_time real not null,
+        modified_time real not null,
+        version bigint not null,
+        primary key(id),
+        index idx_website_id(website_id)
+    );
+    '''
+
+    id = db.StringField(primary_key=True, default=db.next_str)
+
+    website_id = db.StringField(nullable=False, updatable=False)
+
+    display_order = db.IntegerField(nullable=False, default=0)
+    kind = db.StringField(nullable=False, updatable=False)
+    name = db.StringField(nullable=False)
+    description = db.StringField(nullable=False, default='')
+
+    ref = db.StringField(nullable=False, updatable=False, default='')
+    url = db.StringField(nullable=False)
+
+    creation_time = db.FloatField(nullable=False, updatable=False, default=time.time)
+    modified_time = db.FloatField(nullable=False, default=time.time)
+    version = db.VersionField()
+
+    def pre_update(self):
+        self.modified_time = time.time()
+        self.version = self.version + 1
+
+################################################################################
+# Navigation
+################################################################################
+
+def _get_navigation(nav_id):
+    nav = Navigation.get_by_id(nav_id)
+    if not nav or nav.website_id!=ctx.website.id:
+        raise APIValueError('id', 'invalid id')
+    return nav
+
+def _get_navigations():
+    return Navigation.select('where website_id=? order by display_order, name', ctx.website.id)
+
+@api
+@allow(ROLE_ADMINISTRATORS)
+@post('/api/navigation/create')
+def api_navigation_create():
+    from core import manage
+    i = ctx.request.input(kind='', name='', value='')
+    if not i.kind:
+        raise APIValueError('kind', 'kind cannot be empty')
+    name = i.name.strip()
+    if not name:
+        raise APIValueError('name', 'name cannot be empty')
+    for navdef in manage.get_nav_definitions():
+        if navdef.key == i.kind:
+            url = navdef.fn_get_url(i.value)
+            if not url:
+                raise APIValueError('url', 'url cannot be empty')
+            max_disp = db.select_int('select max(display_order) from navigation where website_id=?', ctx.website.id)
+            if max_disp is None:
+                max_disp = 0
+            nav = Navigation(
+                website_id = ctx.website.id,
+                display_order = 1 + max_disp,
+                kind = i.kind,
+                name = name,
+                description = '',
+                url = url)
+            nav.insert()
+            return nav
+    raise ValueError('kind', 'invalid kind')
+
+@api
+@allow(ROLE_ADMINISTRATORS)
+@post('/api/navigation/update')
+def api_navigation_update():
+    i = ctx.request.input(id='')
+    if not i.id:
+        raise APIValueError('id', 'id cannot be empty')
+    nav = _get_navigation(i.id)
+    if 'name' in i:
+        name = i.name.strip()
+        if not name:
+            raise APIValueError('name', 'name cannot be empty')
+        nav.name = name
+    if 'description' in i:
+        description = i.description.strip()
+        nav.description = description
+    nav.update()
+    return True
+
+@allow(ROLE_ADMINISTRATORS)
+def navigation():
+    from core import manage
+    i = ctx.request.input(action='', id='')
+    if i.action=='add':
+        return Template('navigation_add.html', definitions=manage.get_nav_definitions())
+    if i.action=='edit':
+        nav = _get_navigation(i.id)
+        return Template('navigation_edit.html', **nav)
+    return Template('navigations.html', navigations=_get_navigations())
 
 ################################################################################
 # Website
