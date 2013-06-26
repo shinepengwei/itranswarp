@@ -73,7 +73,7 @@ def get_enabled_store_id():
     return pid
 
 def set_enabled_store_id(pid):
-    if not pid in plugin.get_plugins('stores'):
+    if not pid in plugins.get_plugins('stores'):
         raise IOError('cannot find store: %s' % pid)
     settings.set_global_setting(_KIND, _KEY, pid)
 
