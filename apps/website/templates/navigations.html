@@ -1,24 +1,19 @@
 <script>
 
 function showSortButton() {
-    if ($('#btn-sort:visible').length==0) {
-        $('#btn-sort').show();
-    }
+    $('#sort').show();
 }
 
-function saveOrders() {
-    $('#btn-sort').hide();
+function ajax_post(form) {
+    show_error(null);
     show_loading(true);
-    var f = $('#x-form-sort');
-        $.postJSON(f.attr('action'), f.serialize()).success(function(result) {
-            show_loading(false);
-            if (result.error) {
-                show_error(result.message);
-            }
-        }).error(function() {
-            show_loading(false);
-            show_error('{{ _('Server error') }}!', '');
-        });
+    $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        refresh();
+    }, function(e) {
+        show_loading(false);
+        show_error(e.message || e.error, e.data);
+    });
+    return false;
 }
 
 function moveUp(trid) {
@@ -34,69 +29,31 @@ function moveDown(trid) {
     var me = $('#tr-' + trid);
     var x = me.next();
     if (x.length > 0) {
-            me.before(x);
-            showSortButton();
-        }
+        me.before(x);
+        showSortButton();
     }
-
-    function delete_navigation(aid, nav_id) {
-        $('#' + aid).popover('hide');
-        $.postJSON('/api/navigations/delete', 'id=' + nav_id).success(function(result) {
-            if (result.error) {
-                show_error(result.message, result.data);
-            }
-            else {
-                location.assign('navigations');
-            }
-        }).error(function() {
-            show_error('Server error');
-        }).complete(function() {
-            $('span.loading-' + nav_id).hide();
-        });
-    }
+}
 
 
-    $(function() {
-        $('a.x-btn-delete').each(function() {
-            var aid = $(this).attr('id');
-            var rel = $(this).attr('rel');
-            $(this).popover({
-                placement:'top',
-                html:true,
-                title:'Confirm Deletion',
-                content:'<p>Are you sure you want to delete the <strong>'
-                    + $(this).attr('prompt')
-                    + '</strong>?</p>'
-                    + '<div style="text-align:center"><button class="btn btn-danger" onclick="delete_navigation(\'' + aid + '\', \''
-                    + rel + '\');">Delete</button> <button class="btn" onclick="$(\'#'
-                    + aid + '\').popover(\'hide\')">Cancel</button></div>',
-            });
-        });
+$(function() {
+    $('a.x-btn-delete').each(function() {
+        $(this).click(function() {
+            $btn = $(this);
+            var prompt = $btn.attr('prompt');
+            var rel = $btn.attr('rel');
 
-        $('a.x-btn-name').each(function() {
-            var ahref = $(this);
-            var aid = $(this).attr('id');
-            function create_popover() {
-                var text = ahref.text();
-                var rel = ahref.attr('rel');
-                var tid = 'text-' + rel;
-                return '<div style="text-align:center">'
-                    + '<input type="text" id="' + tid + '" value="'
-                    + $('<div/>').text(text).html() + '" style="width:190px" />'
-                    + '</div><div style="text-align:center"><button class="btn btn-primary" onclick="var v=$(\'#' + tid + '\').val();$(\'#'
-                    + aid + '\').popover(\'hide\');save_name(\''
-                    + rel + '\',\'' + aid + '\',v);">OK</button> <button class="btn" onclick="$(\'#'
-                    + aid + '\').popover(\'hide\')">Cancel</button></div>'
-            }
-
-            $(this).popover({
-                placement: 'top',
-                html: true,
-                title: 'Edit Name',
-                content: create_popover
+            show_confirm('Deletion Confirm', 'Are you sure you want to delete the navigation "' + prompt + '"?', function(btn, fn_hide) {
+                $.postJSON('/api/navigation/delete', {'id': rel}, function(result) {
+                    refresh();
+                }, function(err) {
+                    fn_hide();
+                    show_error(err.message || err.error, err.data);
+                });
             });
         });
     });
+});
+
 </script>
 
 <div class="row">
@@ -110,7 +67,7 @@ function moveDown(trid) {
     </div>
     <div class="span10">
         <div class="alert alert-error hide"></div>
-        <form id="x-form-sort" name="x-form-sort" action="/api/navigation/sort" onsubmit="return ajax_sort(this)">
+        <form name="form" action="/api/navigation/sort" onsubmit="return ajax_post(this)">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -137,13 +94,9 @@ function moveDown(trid) {
 {% endfor %}
                 </tbody>
             </table>
+            <div id="sort" class="btn-toolbar hide" style="text-align:right">
+                <button type="submit" class="btn btn-info"><i class="icon-list icon-white"></i> {{ _('Save Orders') }}</button>
+            </div>
         </form>
-    </div>
-</div>
-
-<div class="row sep">
-    <div class="span10">
-        <button id="btn-sort" onclick="saveOrders()" class="btn btn-info pull-right hide">{{ _('Save Orders') }}</button>
-        <span class="loading pull-right hide">{{ _('Saving') }}...</span>
     </div>
 </div>
