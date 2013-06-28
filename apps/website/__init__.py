@@ -11,6 +11,7 @@ from transwarp.mail import send_mail
 from transwarp import db, task
 
 from core.models import Website, User, create_user
+from core.navs import Navigation, get_navigations
 from core.apis import *
 from core.roles import *
 from core import utils, settings
@@ -39,45 +40,6 @@ navigations = (
         ),
 )
 
-class Navigation(db.Model):
-    '''
-    create table navigation (
-        id varchar(50) not null,
-        website_id varchar(50) not null,
-        display_order int not null,
-        kind varchar(50) not null,
-        name varchar(50) not null,
-        description varchar(100) not null,
-        ref varchar(1000) not null,
-        url varchar(1000) not null,
-        creation_time real not null,
-        modified_time real not null,
-        version bigint not null,
-        primary key(id),
-        index idx_website_id(website_id)
-    );
-    '''
-
-    id = db.StringField(primary_key=True, default=db.next_str)
-
-    website_id = db.StringField(nullable=False, updatable=False)
-
-    display_order = db.IntegerField(nullable=False, default=0)
-    kind = db.StringField(nullable=False, updatable=False)
-    name = db.StringField(nullable=False)
-    description = db.StringField(nullable=False, default='')
-
-    ref = db.StringField(nullable=False, updatable=False, default='')
-    url = db.StringField(nullable=False)
-
-    creation_time = db.FloatField(nullable=False, updatable=False, default=time.time)
-    modified_time = db.FloatField(nullable=False, default=time.time)
-    version = db.VersionField()
-
-    def pre_update(self):
-        self.modified_time = time.time()
-        self.version = self.version + 1
-
 ################################################################################
 # Navigation
 ################################################################################
@@ -87,9 +49,6 @@ def _get_navigation(nav_id):
     if not nav or nav.website_id!=ctx.website.id:
         raise APIValueError('id', 'invalid id')
     return nav
-
-def _get_navigations():
-    return Navigation.select('where website_id=? order by display_order, name', ctx.website.id)
 
 @api
 @allow(ROLE_ADMINISTRATORS)
@@ -156,7 +115,7 @@ def api_navigation_delete():
 @post('/api/navigation/sort')
 def api_navigation_sort():
     ids = ctx.request.gets('id')
-    navs = _get_navigations()
+    navs = get_navigations()
     l = len(navs)
     if l != len(ids):
         raise APIValueError('id', 'bad id list.')
@@ -182,7 +141,7 @@ def navigation():
     if i.action=='edit':
         nav = _get_navigation(i.id)
         return Template('navigation_edit.html', **nav)
-    return Template('navigations.html', navigations=_get_navigations())
+    return Template('navigations.html', navigations=get_navigations())
 
 ################################################################################
 # Website
