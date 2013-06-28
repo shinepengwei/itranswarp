@@ -8,9 +8,14 @@ __author__ = 'Michael Liao'
 import time, base64, logging
 
 from transwarp.web import ctx
-from transwarp import db, cache
+from transwarp import db
 
 _GLOBAL = ''
+
+KIND_WEBSITE = 'website'
+
+KEY_CUSTOM_HEADER = 'custom_header'
+KEY_CUSTOM_FOOTER = 'custom_footer'
 
 class Setting(db.Model):
     '''
