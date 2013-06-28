@@ -6,7 +6,7 @@ __author__ = 'Michael Liao'
 import os, time, logging, mimetypes
 from datetime import datetime
 
-from transwarp.web import ctx, get, post, route, seeother, Template, Dict, UTC_0
+from transwarp.web import ctx, get, post, route, seeother, badrequest, Template, Dict, UTC_0
 from transwarp import db
 
 from core.apis import *
@@ -15,6 +15,8 @@ from core.roles import *
 from core import utils, thumbnails, texts
 
 from plugins import stores
+
+from themes import theme
 
 name = 'Article'
 
@@ -298,6 +300,27 @@ def _format_tags(tags):
 ################################################################################
 # Categories
 ################################################################################
+
+@get('/category/<cid>')
+@theme('category.html')
+def web_category(cid):
+    return _web_category_p(cid, '1')
+
+@get('/category/<cid>/<p>')
+@theme('category.html')
+def web_category_page(cid, p):
+    return _web_category_p(cid, p)
+
+def _web_category_p(cid, p):
+    page_index = int(p)
+    if p < 1:
+        raise badrequest()
+    category = _get_category(cid)
+    categories = _get_categories()
+    count = _get_articles_count(cid)
+    page = Pagination(count, page_index)
+    articles = _get_articles(page, category_id=cid)
+    return dict(category=category, categories=categories, articles=articles, page=page)
 
 def _get_category(category_id):
     cat = Category.get_by_id(category_id)
