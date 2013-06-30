@@ -20,6 +20,7 @@ def _get_active_theme():
 def _init_theme(path, model):
     theme = _get_active_theme()
     model['__theme_path__'] = '/themes/%s' % theme
+    model['__get_theme_file__'] = lambda f: '/themes/%s/%s' % (theme, f)
     model['__custom_header__'] = settings.get_text(settings.KIND_WEBSITE, settings.KEY_CUSTOM_HEADER)
     model['__custom_footer__'] = settings.get_text(settings.KIND_WEBSITE, settings.KEY_CUSTOM_FOOTER)
     model['__menus__'] = []
