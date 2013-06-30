@@ -1,0 +1,80 @@
+{% macro pagination(page_obj, url) %}
+    {% set page_index = page_obj.page_index %}
+    {% set page_list = page_obj.page_list() %}
+                <div class="pagination pagination-centered">
+                    <ul>
+        {% for index in page_list %}
+            {% if index == page_index %}
+                        <li class="active"><span>{{ index }}</span></li>
+            {% elif index %}
+                        <li><a href="{{ url }}{{ index }}">{{ index }}</a></li>
+            {% else %}
+                        <li class="disabled"><span>...</span></li>
+            {% endif %}
+        {% endfor %}
+                    </ul>
+                </div>
+{% endmacro %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ __website__.name|e }}</title>
+    <!--[if lt IE 9]>
+        <script src="{{ __theme_path__ }}/static/js/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="{{ __theme_path__ }}/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="{{ __theme_path__ }}/static/css/bootstrap-ex.css" />
+    <link rel="stylesheet" href="{{ __theme_path__ }}/static/css/custom.css" />
+<!--[if IE 6]>
+    <link rel="stylesheet" href="{{ __theme_path__ }}/static/css/ie6.min.css" />
+<![endif]-->
+    <script src="{{ __theme_path__ }}/static/js/jquery.min.js"></script>
+    <script src="{{ __theme_path__ }}/static/js/bootstrap.min.js"></script>
+    <script>
+$(function() {
+    var path = location.pathname;
+    var navs = [path, {% for nav in __navigations__ %} '{{ nav.url }}', {% endfor %}];
+    for (var i=0; i<navs.length; i++) {
+        var a = $('#navigations li a[href="' + navs[i] + '"]:first');
+        if (a.length > 0) {
+            a.parent().addClass('active');
+            break;
+        }
+    }
+});
+</script>
+    {{ __header__ }}
+</head>
+<body>
+    <div id="header">
+        <div class="v-top"></div>
+        <div class="container">
+            <div class="row">
+                <div class="span8" style="padding:10px 0;">
+                    <h3><a href="/">{{ __website__.name|e }}</a></h3>
+                    <p>{{ __website__.description|e }}</p>
+                </div>
+                <div class="span4" style="padding:15px 0; text-align:right;">
+                        <a href="#">Sign In</a> or <a href="#">Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="navbar navbar-static-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <ul id="navigations" class="nav">
+                    {% for n in __navigations__ %}
+                        <li><a href="{{ n.url }}">{{ n.name|e }}</a></li>
+                    {% endfor %}
+                    </ul>
+                    <form class="navbar-form pull-right">
+                        <input type="text" name="q" maxlength="50" class="span3" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- begin main -->

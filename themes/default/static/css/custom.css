@@ -1,0 +1,11 @@
+.x-ext-info {
+  opacity: 0.75;
+}
+
+.x-ext-info i {
+  margin-left: 1em;
+}
+
+.x-ext-info i:first-child {
+  margin-left: 0;
+}
