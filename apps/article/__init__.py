@@ -642,21 +642,20 @@ def _get_pages():
     return Page.select('where website_id=? order by id desc', ctx.website.id)
 
 @api
-@get('/api/page/list')
+@get('/api/pages')
 def api_page_list():
     return _get_pages()
 
 @api
-@get('/api/page/get')
-def api_page_get():
-    i = ctx.request.input(id='')
-    if not i.id:
+@get('/api/pages/<pid>')
+def api_page_get(pid):
+    if not pid:
         raise APIValueError('id', 'id is empty.')
-    return _get_page(i.id)
+    return _get_page(pid)
 
 @api
 @allow(ROLE_ADMINISTRATORS)
-@post('/api/page/create')
+@post('/api/pages/create')
 def api_page_create():
     i = ctx.request.input(name='', tags='', content='', draft='false')
     name = i.name.strip()
@@ -681,24 +680,23 @@ def api_page_create():
 
 @api
 @allow(ROLE_ADMINISTRATORS)
-@post('/api/page/delete')
-def api_page_delete():
-    i = ctx.request.input(id='')
-    if not i.id:
+@post('/api/pages/<pid>/delete')
+def api_page_delete(pid):
+    if not pid:
         raise APIValueError('id', 'id is empty.')
-    p = _get_page(i.id)
+    p = _get_page(pid)
     p.delete()
-    texts.delete(p.id)
+    texts.delete(pid)
     return True
 
 @api
 @allow(ROLE_ADMINISTRATORS)
-@post('/api/page/update')
-def api_page_update():
-    i = ctx.request.input(id='')
-    if not i.id:
+@post('/api/pages/<pid>/update')
+def api_page_update(pid):
+    i = ctx.request.input()
+    if not pid:
         raise APIValueError('id', 'id is empty.')
-    p = _get_page(i.id)
+    p = _get_page(pid)
     if 'name' in i:
         name = i.name.strip()
         if not name:
@@ -724,12 +722,12 @@ def all_pages():
     if i.action=='edit':
         p = _get_page(i.id)
         p.content = texts.get(p.id)
-        return Template('articleform.html', form_title=_('Edit Page'), form_action='/api/page/update', redirect='all_pages', static=True, **p)
+        return Template('articleform.html', form_title=_('Edit Page'), form_action='/api/pages/%s/update' % p.id, redirect='all_pages', static=True, **p)
     return Template('all_pages.html', pages=_get_pages())
 
 @allow(ROLE_ADMINISTRATORS)
 def add_page():
-    return Template('articleform.html', form_title=_('Add Page'), form_action='/api/page/create', redirect='all_pages', static=True)
+    return Template('articleform.html', form_title=_('Add Page'), form_action='/api/pages/create', redirect='all_pages', static=True)
 
 ################################################################################
 # Attachments

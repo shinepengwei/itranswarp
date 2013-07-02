@@ -7,7 +7,7 @@ $(function() {
             var rel = $btn.attr('rel');
             var prompt = $btn.attr('prompt');
             show_confirm('Enable Storage', 'Are you sure you want to activate the storage "' + prompt + '"?', function(btn, fn_hide) {
-                $.postJSON('/api/admin/store/enable', {'id': rel}, function(result) {
+                $.postJSON('/api/admin/stores/' + rel + '/enable', {}, function(result) {
                     refresh();
                 }, function(err) {
                     fn_hide();
