@@ -476,7 +476,7 @@ def all_articles():
     if i.action=='edit':
         a = _get_article(i.id)
         a.content = texts.get(a.id)
-        return Template('articleform.html', form_title=_('Edit Article'), form_action='/api/article/update', redirect='all_articles', static=False, category_list=_get_categories(), can_publish=_can_publish_article(), **a)
+        return Template('articleform.html', form_title=_('Edit Article'), form_action='/api/articles/%s/update' % a.id, redirect='all_articles', static=False, category_list=_get_categories(), can_publish=_can_publish_article(), **a)
     page_index = int(i.page)
     category_id = i.category_id
     category = _get_category(category_id) if category_id else None
@@ -486,12 +486,11 @@ def all_articles():
     return Template('all_articles.html', articles=articles, page=page, category=category, category_list=_get_categories(), can_create=_can_create_article(), can_edit=_can_edit_article, can_delete=_can_delete_article, can_publish=_can_publish_article())
 
 @api
-@get('/api/article/get')
-def api_article_get():
-    i = ctx.request.input(id='')
-    if not i.id:
+@get('/api/articles/<aid>')
+def api_article_get(aid):
+    if not aid:
         raise APIValueError('id', 'id is empty.')
-    return _get_article(i.id)
+    return _get_article(aid)
 
 def _can_create_article():
     return ctx.user.role_id <= ROLE_CONTRIBUTORS
@@ -515,7 +514,7 @@ def _can_publish_article():
 
 @api
 @allow(ROLE_CONTRIBUTORS)
-@post('/api/article/create')
+@post('/api/articles/create')
 def api_article_create():
     i = ctx.request.input(name='', content='', tags='', draft='')
     if not _can_create_article():
@@ -560,12 +559,12 @@ def api_article_create():
 
 @api
 @allow(ROLE_CONTRIBUTORS)
-@post('/api/article/update')
-def api_article_update():
-    i = ctx.request.input(id='')
-    if not i.id:
+@post('/api/articles/<aid>/update')
+def api_article_update(aid):
+    i = ctx.request.input()
+    if not aid:
         raise APIValueError('id', 'id is empty.')
-    article = _get_article(i.id)
+    article = _get_article(aid)
     if not _can_edit_article(article):
         raise APIPermissionError('cannot edit article.')
     if 'draft' in i:
@@ -609,24 +608,23 @@ def api_article_update():
 
 @api
 @allow(ROLE_AUTHORS)
-@post('/api/article/delete')
-def api_article_delete():
-    i = ctx.request.input(id='')
-    if not i.id:
+@post('/api/articles/<aid>/delete')
+def api_article_delete(aid):
+    if not aid:
         raise APIValueError('id', 'id is empty.')
-    article = _get_article(i.id)
+    article = _get_article(aid)
     if not _can_delete_article(article):
         raise APIPermissionError('cannot delete article.')
     with db.transaction():
         article.delete()
-        texts.delete(i.id)
+        texts.delete(aid)
         # update Article_Category:
-        db.update('delete from article_category where article_id=?', i.id)
+        db.update('delete from article_category where article_id=?', aid)
     return True
 
 @allow(ROLE_CONTRIBUTORS)
 def add_article():
-    return Template('articleform.html', form_title=_('Add Article'), form_action='/api/article/create', redirect='all_articles', static=False, categories=frozenset(), category_list=_get_categories(), can_publish=_can_publish_article())
+    return Template('articleform.html', form_title=_('Add Article'), form_action='/api/articles/create', redirect='all_articles', static=False, categories=frozenset(), category_list=_get_categories(), can_publish=_can_publish_article())
 
 ################################################################################
 # Pages
