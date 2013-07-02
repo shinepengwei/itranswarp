@@ -322,6 +322,13 @@ def _web_category_p(cid, p):
     articles = _get_articles(page, category_id=cid)
     return dict(category=category, categories=categories, articles=articles, page=page)
 
+@get('/article/<aid>')
+@theme('article.html')
+def _web_article(aid):
+    article = _get_full_article(aid)
+    categories = _get_categories()
+    return dict(categories=categories, article=article)
+
 def _get_category(category_id):
     cat = Category.get_by_id(category_id)
     if not cat:
@@ -337,21 +344,20 @@ def _get_categories(return_dict=False):
     return cats
 
 @api
-@get('/api/category/list')
-def api_category_list():
+@get('/api/categories')
+def api_categoris_list():
     return _get_categories()
 
 @api
-@get('/api/category/get')
-def api_category_get():
-    i = ctx.request.input(id='')
-    if not i.id:
+@get('/api/categories/<cid>')
+def api_category_get(cid):
+    if not cid:
         raise APIValueError('id', 'id cannot be empty')
-    return _get_category(i.id)
+    return _get_category(cid)
 
 @api
 @allow(ROLE_EDITORS)
-@post('/api/category/create')
+@post('/api/categories/create')
 def api_category_create():
     i = ctx.request.input(name='', description='')
     if not i.name.strip():
@@ -367,17 +373,17 @@ def api_category_create():
 
 @api
 @allow(ROLE_ADMINISTRATORS)
-@post('/api/category/update')
-def api_category_update():
-    i = ctx.request.input(id='', name='', description='')
+@post('/api/categories/<cid>/update')
+def api_category_update(cid):
+    i = ctx.request.input(name='', description='')
     name = i.name.strip()
     description = i.description.strip()
-    if not i.id:
+    if not cid:
         raise APIValueError('id', 'id cannot be empty')
     if not name:
         raise APIValueError('name', 'name cannot be empty')
     logging.info('update category...')
-    cat = _get_category(i.id)
+    cat = _get_category(cid)
     cat.name = name
     cat.description = description
     cat.update()
@@ -385,19 +391,18 @@ def api_category_update():
 
 @api
 @allow(ROLE_ADMINISTRATORS)
-@post('/api/category/delete')
-def api_category_delete():
-    i = ctx.request.input(id='')
-    if not i.id:
+@post('/api/categories/<cid>/delete')
+def api_category_delete(cid):
+    if not cid:
         raise APIValueError('id', 'id is empty.')
-    c = _get_category(i.id)
+    c = _get_category(cid)
     c.delete()
-    db.update('delete from article_category where category_id=?', i.id)
+    db.update('delete from article_category where category_id=?', cid)
     return True
 
 @api
 @allow(ROLE_ADMINISTRATORS)
-@post('/api/category/sort')
+@post('/api/categories/sort')
 def api_sort_categories():
     ids = ctx.request.gets('id')
     cats = _get_categories()
@@ -422,12 +427,12 @@ def all_categories():
     i = ctx.request.input(action='')
     if i.action=='edit':
         c = _get_category(i.id)
-        return Template('categoryform.html', form_title=_('Edit Category'), form_action='/api/category/update', **c)
+        return Template('categoryform.html', form_title=_('Edit Category'), form_action='/api/categories/%s/update' % c.id, **c)
     return Template('categories.html', categories=_get_categories())
 
 @allow(ROLE_ADMINISTRATORS)
 def add_category():
-    return Template('categoryform.html', form_title=_('Add Category'), form_action='/api/category/create')
+    return Template('categoryform.html', form_title=_('Add Category'), form_action='/api/categories/create')
 
 ################################################################################
 # Articles
@@ -436,6 +441,11 @@ def add_category():
 def _get_article_categories(article_id):
     acs = db.select('select category_id from article_category where article_id=?', article_id)
     return [ac.category_id for ac in acs]
+
+def _get_full_article(article_id):
+    a = _get_article(article_id)
+    a.content = utils.markdown2html(texts.get(a.id))
+    return a
 
 def _get_article(article_id):
     a = Article.get_by_id(article_id)
