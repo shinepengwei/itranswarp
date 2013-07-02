@@ -23,7 +23,7 @@ $(function() {
             var rel = $btn.attr('rel');
 
             show_confirm('Deletion Confirm', 'Are you sure you want to delete the attachment "' + prompt + '"?', function(btn, fn_hide) {
-                $.postJSON('/api/attachment/delete', {'id': rel}, function(result) {
+                $.postJSON('/api/attachments/' + rel + '/delete', {}, function(result) {
                     refresh();
                 }, function(err) {
                     fn_hide();

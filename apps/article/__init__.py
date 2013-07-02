@@ -753,7 +753,7 @@ def add_attachment():
 
 @api
 @allow(ROLE_CONTRIBUTORS)
-@post('/api/attachment/upload')
+@post('/api/attachments/create')
 def api_attachment_upload():
     i = ctx.request.input(name='', description='', return_link='', file=None)
     if not i.file:
@@ -809,15 +809,14 @@ def api_attachment_upload():
 
 @api
 @allow(ROLE_EDITORS)
-@post('/api/attachment/delete')
-def api_attachment_delete():
-    i = ctx.request.input(id='')
-    if not i.id:
+@post('/api/attachments/<aid>/delete')
+def api_attachment_delete(aid):
+    if not aid:
         raise APIValueError('id', 'id is empty')
-    atta = Attachment.get_by_id(i.id)
+    atta = Attachment.get_by_id(aid)
     if not atta or atta.website_id != ctx.website.id:
         raise APIValueError('id', 'not found')
-    stores.delete_resources(atta.id)
+    stores.delete_resources(aid)
     atta.delete()
     return True
 
