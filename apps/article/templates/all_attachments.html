@@ -65,13 +65,13 @@ $(function() {
                     <td>
                         <div style="display:block;width:90px;text-align:center">
     {% if a.preview_resource_id %}
-                            <img src="/api/resource/url?id={{ a.preview_resource_id }}" />
+                            <img src="/api/resources/{{ a.preview_resource_id }}/url" />
     {% else %}
                             <p>{{ a.mime }}</p>
     {% endif %}
                         </div>
                     </td>
-                    <td><a href="/api/resource/url?id={{ a.resource_id }}" target="_blank">{{ a.name|e }}</a></td>
+                    <td><a href="/api/resources/{{ a.resource_id }}/url" target="_blank">{{ a.name|e }}</a></td>
                     <td><script type="text/javascript"> document.write(filesize({{ a.size }})); </script></td>
                     <td>{{ a.creation_time|dt }}</td>
                     <td>
