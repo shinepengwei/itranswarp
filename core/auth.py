@@ -17,6 +17,7 @@ from transwarp import db
 
 from core.models import User
 from core.apis import api, APIError
+from plugins import signins
 
 _SESSION_COOKIE_NAME = '_auth_session_cookie_'
 _SESSION_COOKIE_SALT = '_Auth-SalT_'
@@ -30,7 +31,7 @@ def signin():
         redirect = ctx.request.header('REFERER')
     if not redirect or redirect.find('/signin')!=(-1):
         redirect = '/'
-    return dict(website=ctx.website, redirect=redirect)
+    return dict(website=ctx.website, redirect=redirect, signins=signins.get_enabled_signins())
 
 @api
 @post('/api/authenticate')
