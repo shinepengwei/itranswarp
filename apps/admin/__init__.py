@@ -20,6 +20,7 @@ from core.roles import *
 from core import utils, settings
 
 import plugins
+from plugins import signins, stores
 
 name = 'Global'
 
@@ -45,25 +46,25 @@ def admin_stores():
         for ip in inputs:
             ip['value'] = ss.get(ip['key'], '')
         return Template('pluginform.html', plugin=p, plugin_type='stores', inputs=inputs, submit_url='/api/admin/stores/%s/update' % p.id, cancel_url='?action=')
-    return Template('stores.html', plugins=plugins.get_plugins('stores', True), enabled=plugins.stores.get_enabled_store_id())
+    return Template('stores.html', plugins=plugins.get_plugins('stores', True), enabled=stores.get_enabled_store_id())
 
 @api
 @allow(ROLE_SUPER_ADMINS)
 @post('/api/admin/stores/<pid>/enable')
-def api_admin_store_enable(pid):
+def api_admin_stores_enable(pid):
     if not pid:
         raise APIValueError('id', 'id is empty.')
     p = plugins.get_plugin('stores', pid)
-    plugins.stores.set_enabled_store_id(pid)
+    stores.set_enabled_store_id(pid)
     return True
 
 @api
 @allow(ROLE_SUPER_ADMINS)
 @post('/api/admin/stores/<pid>/update')
-def api_admin_plugins_stores_update(pid):
+def api_admin_stores_update(pid):
     if not pid:
         raise APIValueError('id', 'invalid plugin id.')
-    i = ctx.request.input(type='')
+    i = ctx.request.input()
     plugins.set_plugin_settings('stores', pid, is_global=True, **i)
     return True
 
@@ -73,7 +74,40 @@ def api_admin_plugins_stores_update(pid):
 
 @allow(ROLE_ADMINISTRATORS)
 def admin_signins():
-    plugins=plugins.get_plugins('signins', True)
-    for p in plugins:
-        pass
-    return Template('signins.html', plugins=plugins)
+    i = ctx.request.input(action='', id='')
+    if i.action=='edit':
+        p = plugins.get_plugin('signins', i.id)
+        ss = plugins.get_plugin_settings('signins', i.id)
+        inputs = p.Plugin.get_inputs()
+        for ip in inputs:
+            ip['value'] = ss.get(ip['key'], '')
+        return Template('pluginform.html', plugin=p, plugin_type='signins', inputs=inputs, submit_url='/api/admin/signins/%s/update' % p.id, cancel_url='?action=')
+    return Template('signins.html', plugins=signins.get_signins())
+
+@api
+@allow(ROLE_ADMINISTRATORS)
+@post('/api/admin/signins/<pid>/enable')
+def api_admin_signins_enable(pid):
+    if not pid:
+        raise APIValueError('id', 'id is empty.')
+    signins.set_signin_enabled(pid, True)
+    return True
+
+@api
+@allow(ROLE_ADMINISTRATORS)
+@post('/api/admin/signins/<pid>/disable')
+def api_admin_signins_disable(pid):
+    if not pid:
+        raise APIValueError('id', 'id is empty.')
+    signins.set_signin_enabled(pid, False)
+    return True
+
+@api
+@allow(ROLE_ADMINISTRATORS)
+@post('/api/admin/signins/<pid>/update')
+def api_admin_signins_update(pid):
+    if not pid:
+        raise APIValueError('id', 'invalid plugin id.')
+    i = ctx.request.input()
+    plugins.set_plugin_settings('signins', pid, **i)
+    return True
