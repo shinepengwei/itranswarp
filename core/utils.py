@@ -9,6 +9,8 @@ Utils.
 
 import os, re, json, time, logging, functools
 
+import markdown2
+
 from transwarp import cache
 
 def load_module(module_name):
@@ -161,6 +163,9 @@ def check_email(email):
     if _REG_EMAIL.match(e) is None:
         raise APIValueError('email', 'Invalid email address.')
     return e
+
+def markdown2html(md):
+    return markdown2.markdown(md)
 
 if __name__=='__main__':
     cache.client = cache.MemcacheClient('localhost')
