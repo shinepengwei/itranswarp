@@ -6,9 +6,12 @@ function show_error(err, field_name) {
     $('div.control-group').removeClass('error');
     if (err) {
         $('.alert-error').text(err).show();
-        if ($('.alert-error').offset().top < ($(window).scrollTop() - 41)) {
-            $('html,body').animate({scrollTop: $('.alert-error').offset().top - 41});
+        try {
+            if ($('.alert-error').offset().top < ($(window).scrollTop() - 41)) {
+                $('html,body').animate({scrollTop: $('.alert-error').offset().top - 41});
+            }
         }
+        catch (e) {}
     }
     else {
         $('div.alert-error').text('').hide();
