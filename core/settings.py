@@ -10,7 +10,7 @@ import time, base64, logging
 from transwarp.web import ctx
 from transwarp import db
 
-_GLOBAL = ''
+_GLOBAL = '__global__'
 
 KIND_WEBSITE = 'website'
 
