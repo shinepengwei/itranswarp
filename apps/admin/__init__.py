@@ -32,7 +32,7 @@ menus = [
 ]
 
 ################################################################################
-# Global
+# Global - Stores
 ################################################################################
 
 @allow(ROLE_SUPER_ADMINS)
@@ -40,11 +40,11 @@ def admin_stores():
     i = ctx.request.input(action='')
     if i.action=='edit':
         p = plugins.get_plugin('stores', i.id)
-        ss = plugins.get_plugin_settings('stores', i.id)
+        ss = plugins.get_plugin_settings('stores', i.id, is_global=True)
         inputs = p.Plugin.get_inputs()
         for ip in inputs:
             ip['value'] = ss.get(ip['key'], '')
-        return Template('pluginform.html', plugin=p, plugin_type='stores', inputs=inputs, submit_url='/api/admin/plugins/%s/update' % p.id, cancel_url='?action=')
+        return Template('pluginform.html', plugin=p, plugin_type='stores', inputs=inputs, submit_url='/api/admin/stores/%s/update' % p.id, cancel_url='?action=')
     return Template('stores.html', plugins=plugins.get_plugins('stores', True), enabled=plugins.stores.get_enabled_store_id())
 
 @api
@@ -57,19 +57,23 @@ def api_admin_store_enable(pid):
     plugins.stores.set_enabled_store_id(pid)
     return True
 
-@allow(ROLE_SUPER_ADMINS)
-def admin_signins():
-    return Template('signins.html', plugins=plugins.get_plugins('signins', True))
-
 @api
 @allow(ROLE_SUPER_ADMINS)
-@post('/api/admin/plugins/<pid>/update')
-def api_admin_plugin_update(pid):
+@post('/api/admin/stores/<pid>/update')
+def api_admin_plugins_stores_update(pid):
     if not pid:
         raise APIValueError('id', 'invalid plugin id.')
     i = ctx.request.input(type='')
-    if not i.type:
-        raise APIValueError('type', 'invalid plugin type.')
-    ptype = i.pop('type')
-    plugins.set_plugin_settings(ptype, pid, **i)
+    plugins.set_plugin_settings('stores', pid, is_global=True, **i)
     return True
+
+################################################################################
+# Global - Signins
+################################################################################
+
+@allow(ROLE_ADMINISTRATORS)
+def admin_signins():
+    plugins=plugins.get_plugins('signins', True)
+    for p in plugins:
+        pass
+    return Template('signins.html', plugins=plugins)
