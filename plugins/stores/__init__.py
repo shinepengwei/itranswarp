@@ -62,10 +62,10 @@ class Resource(db.Model):
     version = db.VersionField()
 
 _KIND = 'plugins.stores'
-_KEY = 'enabled'
+_KEY_ENABLED = 'enabled'
 
 def get_enabled_store_id():
-    pid = settings.get_global_setting(_KIND, _KEY)
+    pid = settings.get_global_setting(_KIND, _KEY_ENABLED)
     if not pid:
         pid = 'localfile'
     if not pid in plugins.get_plugins('stores'):
@@ -75,10 +75,10 @@ def get_enabled_store_id():
 def set_enabled_store_id(pid):
     if not pid in plugins.get_plugins('stores'):
         raise IOError('cannot find store: %s' % pid)
-    settings.set_global_setting(_KIND, _KEY, pid)
+    settings.set_global_setting(_KIND, _KEY_ENABLED, pid)
 
 def get_store_instance(pid):
-    return plugins.get_plugin_instance('stores', pid)
+    return plugins.get_plugin_instance('stores', pid, is_global=True)
 
 def get_enabled_store_instance():
     return get_store_instance(get_enabled_store_id())
