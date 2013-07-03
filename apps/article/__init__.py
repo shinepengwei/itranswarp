@@ -470,6 +470,18 @@ def _get_articles(page, category_id=''):
     ats = db.select('select id from article where website_id=? order by publish_time desc limit ?,?', ctx.website.id, page.offset, page.limit)
     return [_get_article(a.id) for a in ats]
 
+@api
+@get('/api/articles')
+def api_articles_list():
+    i = ctx.request.input(category_id='', page='1')
+    page_index = int(i.page)
+    category_id = i.category_id
+    category = _get_category(category_id) if category_id else None
+    count = _get_articles_count(category_id)
+    page = Pagination(count, page_index)
+    # FIXME: return page:
+    return _get_articles(page, category_id)
+
 @allow(ROLE_CONTRIBUTORS)
 def all_articles():
     i = ctx.request.input(action='', id='', category_id='', page='1')
@@ -802,7 +814,7 @@ def api_attachment_upload():
         mime = res.mime)
     atta.insert()
     if i.return_link==u't':
-        atta.filelink = '/api/resource/url?id=%s' % atta.resource_id
+        atta.filelink = '/api/resources/%s/url' % atta.resource_id
     return atta
 
 @api
