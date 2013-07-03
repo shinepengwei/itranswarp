@@ -188,12 +188,11 @@ def manage_entry():
     app = __apps_list[0]
     raise seeother('/manage/%s/' % app.key)
 
-@get('/api/resource/url')
-def api_resource_url():
-    i = ctx.request.input(id='')
-    if i.id:
+@get('/api/resources/<rid>/url')
+def api_resource_url(rid):
+    if rid:
         # should cached?
-        r = db.select_one('select url from resource where id=?', i.id)
+        r = db.select_one('select url from resource where id=?', rid)
         if r:
             raise redirect(r.url)
     raise notfound()
