@@ -50,6 +50,9 @@ def _load_plugins(ptype):
     return D
 
 def get_plugins(ptype, return_list=False):
+    '''
+    Get plugins by type, return plugin class as dict or list.
+    '''
     ps = _PLUGIN_CACHE.get(ptype)
     if not ps:
         ps = _load_plugins(ptype)
@@ -59,17 +62,38 @@ def get_plugins(ptype, return_list=False):
     return ps
 
 def get_plugin(ptype, pid):
+    '''
+    Get the specified plugin class by type and module name.
+    '''
     return get_plugins(ptype)[pid]
 
-def get_plugin_instance(ptype, pid):
+def get_plugin_instance(ptype, pid, is_global=False):
+    '''
+    Get an instance of plugin by type, module name. The settings are loaded from 
+    website's or global settings depends on argument 'is_global'.
+    '''
     # FIXME: not cached:
     p = get_plugin(ptype, pid)
-    return p.Plugin(**get_plugin_settings(ptype, pid))
+    return p.Plugin(**get_plugin_settings(ptype, pid, is_global))
 
-def get_plugin_settings(ptype, pid):
-    return settings.get_global_settings('plugins.%s.%s' % (ptype, pid))
+def get_plugin_settings(ptype, pid, is_global=False):
+    '''
+    Get settings of plugin by type, module name. The settings are loaded from 
+    website's or global settings depends on argument 'is_global'.
+    '''
+    if is_global:
+        return settings.get_global_settings('plugins.%s.%s' % (ptype, pid))
+    else:
+        return settings.get_settings('plugins.%s.%s' % (ptype, pid))
 
-def set_plugin_settings(ptype, pid, **kw):
+def set_plugin_settings(ptype, pid, is_global=False, **kw):
+    '''
+    Set settings of plugin by type, module name. The settings are saved in  
+    website's or global settings depends on argument 'is_global'.
+    '''
     p = get_plugin(ptype, pid)
     p.Plugin.validate(**kw)
-    settings.set_global_settings('plugins.%s.%s' % (ptype, pid), **kw)
+    if is_global:
+        settings.set_global_settings('plugins.%s.%s' % (ptype, pid), **kw)
+    else:
+        settings.set_settings('plugins.%s.%s' % (ptype, pid), **kw)
