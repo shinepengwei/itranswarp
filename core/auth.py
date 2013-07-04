@@ -19,6 +19,8 @@ from core.models import User
 from core.apis import api, APIError
 from plugins import signins
 
+_LOCAL_SIGNIN = 'local.pwd'
+
 _SESSION_COOKIE_NAME = '_auth_session_cookie_'
 _SESSION_COOKIE_SALT = '_Auth-SalT_'
 _SESSION_COOKIE_EXPIRES = 604800.0 # 24 hours
@@ -36,6 +38,9 @@ def signin():
 @api
 @post('/api/authenticate')
 def api_authenticate():
+    '''
+    Authenticate user by email and password.
+    '''
     i = ctx.request.input(email='', passwd='', remember='')
     email = i.email.strip().lower()
     passwd = i.passwd
@@ -48,7 +53,7 @@ def api_authenticate():
     expires = None
     if remember:
         expires = time.time() + _SESSION_COOKIE_EXPIRES
-    make_session_cookie(user.id, passwd, expires)
+    make_session_cookie(_LOCAL_SIGNIN, user.id, passwd, expires)
     # clear passwd:
     user.passwd = '******'
     return user
@@ -64,6 +69,8 @@ def signout():
     logging.debug('signed out and redirect to: %s' % redirect)
     raise seeother(redirect)
 
+
+# deprecated
 def http_basic_auth(auth):
     try:
         s = base64.b64decode(auth)
@@ -80,12 +87,13 @@ def http_basic_auth(auth):
         logging.exception('auth failed.')
         return None
 
-def make_session_cookie(uid, passwd, expires=None):
+def make_session_cookie(signin_privider, uid, passwd, expires=None):
     '''
     Generate a secure client session cookie by constructing: 
-    base64(uid, expires, md5(uid, expires, passwd, salt)).
+    base64(signin_privider, uid, expires, md5(uid, expires, passwd, salt)).
     
     Args:
+        signin_privider: signin plugin id.
         uid: user id.
         expires: unix-timestamp as float.
         passwd: user's password.
@@ -93,10 +101,11 @@ def make_session_cookie(uid, passwd, expires=None):
     Returns:
         base64 encoded cookie value as str.
     '''
+    signin_privider = str(signin_privider)
     sid = str(uid)
     exp = str(int(expires)) if expires else str(int(time.time() + 86400))
-    secure = ':'.join([sid, exp, str(passwd), _SESSION_COOKIE_SALT])
-    cvalue = ':'.join([sid, exp, hashlib.md5(secure).hexdigest()])
+    secure = ':'.join([signin_privider, sid, exp, str(passwd), _SESSION_COOKIE_SALT])
+    cvalue = ':'.join([signin_privider, sid, exp, hashlib.md5(secure).hexdigest()])
     logging.info('make cookie: %s' % cvalue)
     cookie = base64.urlsafe_b64encode(cvalue).replace('=', '_')
     ctx.response.set_cookie(_SESSION_COOKIE_NAME, cookie, expires=expires)
@@ -114,16 +123,16 @@ def extract_session_cookie():
         if not s:
             return None
         ss = base64.urlsafe_b64decode(s.replace('_', '=')).split(':')
-        if len(ss)!=3:
+        if len(ss)!=4:
             raise ValueError('bad cookie: %s' % s)
-        uid, exp, md5 = ss
+        signin_privider, uid, exp, md5 = ss
         if float(exp) < time.time():
             raise ValueError('expired cookie: %s' % s)
         user = User.get_by_id(uid)
         if not user:
             raise ValueError('bad cookie: %s' % s)
-        expected_pwd = str(user.passwd)
-        expected = ':'.join([uid, exp, expected_pwd, _SESSION_COOKIE_SALT])
+        expected_pwd = str(user.passwd) if signin_privider==_LOCAL_SIGNIN else 'TODO:get-by-oauth-token'
+        expected = ':'.join([signin_privider, uid, exp, expected_pwd, _SESSION_COOKIE_SALT])
         if hashlib.md5(expected).hexdigest()!=md5:
             raise ValueError('bad cookie: unexpected md5.')
         # clear password in memory:
