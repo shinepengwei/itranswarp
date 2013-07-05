@@ -42,7 +42,7 @@ def _load_plugins(ptype):
     for pid, mod in utils.scan_submodules('plugins.%s' % ptype).iteritems():
         try:
             keys = frozenset([i['key'] for i in mod.Plugin.get_inputs()])
-            s = Dict(id=pid, name=mod.Plugin.name, description=mod.Plugin.description, keys=keys, Plugin=mod.Plugin)
+            s = Dict(id=pid, name=mod.Plugin.name, description=mod.Plugin.description, icon=getattr(mod.Plugin, 'icon', None), keys=keys, Plugin=mod.Plugin)
             D[pid] = s
             logging.info('Load plugin: %s.%s' % (ptype, pid))
         except:
