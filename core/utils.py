@@ -13,6 +13,8 @@ import markdown2
 
 from transwarp import cache
 
+from core.apis import APIValueError
+
 def load_module(module_name):
     '''
     Load a module and return the module reference.
