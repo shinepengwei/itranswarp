@@ -1,0 +1,79 @@
+<script>
+
+$(function() {
+    $('a.x-enable').each(function() {
+        $(this).click(function() {
+            $btn = $(this);
+            var rel = $btn.attr('rel');
+            var prompt = $btn.attr('prompt');
+            show_confirm('Enable Sign In', 'Are you sure you want to enable the signin plugin "' + prompt + '"?', function(btn, fn_hide) {
+                $.postJSON('/api/admin/signins/' + rel + '/enable', {}, function(result) {
+                    refresh();
+                }, function(err) {
+                    fn_hide();
+                    show_error(err.message || err.error, err.data);
+                });
+            });
+        });
+    });
+    $('a.x-disable').each(function() {
+        $(this).click(function() {
+            $btn = $(this);
+            var rel = $btn.attr('rel');
+            var prompt = $btn.attr('prompt');
+            show_confirm('Disable Sign In', 'Are you sure you want to disable the signin plugin "' + prompt + '"?', function(btn, fn_hide) {
+                $.postJSON('/api/admin/signins/' + rel + '/disable', {}, function(result) {
+                    refresh();
+                }, function(err) {
+                    fn_hide();
+                    show_error(err.message || err.error, err.data);
+                });
+            });
+        });
+    });
+});
+
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('Sign In Plugins') }}</h3>
+    </div>
+
+    <div class="span10">
+        <div class="alert alert-error hide"></div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="30%">{{ _('Name') }}</th>
+                    <th width="50%">{{ _('Description') }}</th>
+                    <th width="10%">{{ _('Enabled') }}</th>
+                    <th width="10%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for p in plugins %}
+                <tr class="{{ 'success' if p.enabled }}">
+                    <td>{{ p.name|e }}</td>
+                    <td>{{ p.description|e }}</td>
+                    <td>
+                    {% if is_enabled(p.id) %}
+                        <i class="icon-ok"></i>
+                    {% else %}
+                        <i class="icon-remove"></i>
+                    {% endif %}
+                    </td>
+                    <td>
+                        <a href="?action=edit&id={{ p.id }}" data-toggle="tooltip" title="Edit this plugin settings" class="x-btn"><i class="icon-edit"></i></a>
+                    {% if is_enabled(p.id) %}
+                        <a href="javascript:void(0)" data-toggle="tooltip" title="Disable this plugin" rel="{{ p.id }}" prompt="{{ p.name|e }}" class="x-btn x-disable"><i class="icon-remove"></i></a>
+                    {% else %}
+                        <a href="javascript:void(0)" data-toggle="tooltip" title="Enable this plugin" rel="{{ p.id }}" prompt="{{ p.name|e }}" class="x-btn x-enable"><i class="icon-ok"></i></a>
+                    {% endif %}
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
