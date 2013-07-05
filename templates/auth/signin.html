@@ -14,14 +14,12 @@
     <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/static/js/manage.js"></script>
     <script type="text/javascript">
-var redirect = '{{ redirect }}';
-
 function ajax_signin(form) {
     $('#md5-passwd').val($.md5($('#origin-passwd').val()));
     show_loading(true);
     show_error(null);
     $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
-        location.assign(redirect);
+        location.assign('{{ redirect }}');
     }, function(e) {
         show_loading(false);
         show_error(e.message || e.error, e.data);
@@ -32,43 +30,62 @@ function ajax_signin(form) {
 </head>
 <body>
     <div class="container">
-        <div class="row" style="height: 120px"></div>
+        <div class="row" style="height:40px"></div>
 
         <div class="row">
-            <div class="span1 offset3">
+            <div class="span1 offset1">
                 <img src="/static/img/logo.png" width="64" height="64" />
             </div>
-            <div class="span5" style="padding-top:16px;">
+            <div class="span10" style="padding:16px 0 32px 0;">
                 <h1>{{ website.name }}</h1>
             </div>
         </div>
 
         <div class="row">
-            <form action="/api/authenticate" method="post" onsubmit="return ajax_signin(this)">
-                <div class="span4 offset4">
-                    <div class="alert alert-error hide"></div>
-                    <label class="control-label">{{ _('Email') }}:</label>
-                    <input type="text" id="input-email" name="email" maxlength="50" class="input-xlarge" value="{{ email }}" />
-                    <label class="control-label">{{ _('Password') }}:</label>
-                    <input type="password" id="origin-passwd" maxlength="50" class="input-xlarge" />
-                    <input type="hidden" id="md5-passwd" name="passwd" />
-                    <label class="checkbox"><input type="checkbox" name="remember" value="True" /> {{ _('Remember me') }}</label>
-                </div>
-                <div class="span6 offset3">
-                    <div class="form-actions">
-                        <div class="row">
-                            <div class="span5 offset1">
+            <div class="span4 offset2">
+                <div class="row">
+                    <div class="span4">
+                        <form action="/api/authenticate" method="post" onsubmit="return ajax_signin(this)">
+                            <legend>Sign in with email and password</legend>
+                            <div class="alert alert-error hide"></div>
+                            <div style="margin: 16px 0;">
+                                <label class="control-label">{{ _('Email') }}:</label>
+                                <input type="text" id="input-email" name="email" maxlength="50" class="input-xlarge" value="{{ email }}" />
+                            </div>
+                            <div style="margin: 16px 0;">
+                                <label class="control-label">{{ _('Password') }}:</label>
+                                <input type="password" id="origin-passwd" maxlength="50" class="input-xlarge" />
+                                <input type="hidden" id="md5-passwd" name="passwd" />
+                            </div>
+                            <div style="margin: 16px 0;">
+                                <label class="checkbox"><input type="checkbox" name="remember" value="True" /> {{ _('Remember me') }}</label>
+                            </div>
+                            <div style="margin: 16px 0;">
                                 <button type="submit" class="btn btn-primary"><i class="icon-lock icon-white"></i> {{ _('Sign In') }}</button>
                             </div>
-                        </div>
+                        </form>
+                    </div>
+                    <div class="span4">
+                        <i class="icon-question-sign"></i> <a href="/forgot">{{ _('Forgot password') }}</a>
+                        &nbsp;&nbsp;
+                        <i class="icon-circle-arrow-left"></i> <a href="/">{{ _('Back to home') }}</a>
                     </div>
                 </div>
-                <div class="span6 offset4">
-                    <i class="icon-question-sign"></i> <a href="/forgot">{{ _('Forgot password') }}</a>
-                    &nbsp;&nbsp;
-                    <i class="icon-circle-arrow-left"></i> <a href="/">{{ _('Back to home') }}</a>
+            </div>
+            <div class="span1">
+                <div style="font-size:21px; line-height:40px; text-align:center; color: #ccc;">or</div>
+                <div style="padding-left:39px;">
+                    <div style="width:0px; height: 300px; border-left: solid 1px #e5e5e5;"></div>
                 </div>
-            </form>
+            </div>
+            <div class="span4">
+                <form><legend>Sign in with social network</legend></form>
+            {% for s in signins %}
+                <div style="margin: 16px 0; width: 200px;">
+                    <a href="/auth/from/{{ s.id }}?redirect={{ redirect|url }}" class="btn btn-large btn-block" style="text-align:left; padding-left:46px;background-repeat:no-repeat;background-position:12px center;background-image:url({{ s.icon }});">{{ s.name|e }}</a>
+                </div>
+            {% endfor %}
+            </div>
         </div>
 
         <div class="row">
