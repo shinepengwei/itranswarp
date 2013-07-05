@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ _('Fullfill your profile') }} - {{ website.name }}</title>
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/css/manage.css" />
+    <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.postjson.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.md5.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/manage.js"></script>
+    <script type="text/javascript">
+function ajax_bind(form) {
+    if ($('#password-required:visible').length) {
+        $('#md5-passwd').removeAttr('disabled').val($.md5($('#origin-passwd').val()));
+    }
+    else {
+        $('#origin-passwd').val('');
+        $('#md5-passwd').attr('disabled', 'disabled').val('');
+    }
+    show_loading(true);
+    show_error(null);
+    $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        location.assign('{{ redirect }}');
+    }, function(e) {
+        show_loading(false);
+        show_error(e.message || e.error, e.data);
+        if (e.error=='password-required') {
+            $('#password-required').show();
+        }
+    });
+    return false;
+}
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="height:40px"></div>
+
+        <div class="row">
+            <div class="span1 offset1">
+                <img src="/static/img/logo.png" width="64" height="64" />
+            </div>
+            <div class="span10" style="padding:16px 0 32px 0;">
+                <h1>{{ website.name }}</h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span8 offset2">
+                <div class="row">
+                    <div class="span2">
+                        <div style="padding: 62px 0 0 46px">
+                            <img src="{{ auth_user.image_url }}" class="img-polaroid" style="width:50px;" />
+                        </div>
+                    </div>
+                    <div class="span4">
+                        <form action="/api/auth/bind" method="post" onsubmit="return ajax_bind(this)">
+                            <legend>Complete your profile</legend>
+                            <div class="alert alert-error hide"></div>
+                            <div class="field-name control-group" style="margin: 16px 0;">
+                                <label class="control-label">{{ _('Name') }}:</label>
+                                <input type="text" name="name" maxlength="50" class="input-xlarge" value="{{ auth_user.name }}" />
+                            </div>
+                            <div class="field-email control-group" style="margin: 16px 0;">
+                                <label class="control-label">{{ _('Email') }}:</label>
+                                <input type="text" name="email" maxlength="50" class="input-xlarge" value="" />
+                            </div>
+                            <div class="field-passwd control-group hide" id="password-required" style="margin: 16px 0;">
+                                <label class="control-label">{{ _('Password') }}:</label>
+                                <input type="password" id="origin-passwd" maxlength="50" class="input-xlarge" />
+                                <input type="hidden" id="md5-passwd" name="passwd" />
+                            </div>
+                            <div style="margin: 16px 0;">
+                                <input type="hidden" name="key" value="{{ key }}" />
+                                <button type="submit" class="btn btn-primary"><i class="icon-lock icon-white"></i> {{ _('Save') }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="span10 offset1">
+                <div style="margin-top: 24px; padding: 12px 0px; text-align: center; border-top: 1px solid #ccc;">
+                    About iTranswarp &copy; 2013, <a href="https://github.com/michaelliao/itranswarp" target="_blank">iTranswarp on GitHub</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
