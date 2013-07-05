@@ -14,6 +14,8 @@ from transwarp.web import ctx, Template
 from core import settings
 from core.navs import get_navigations
 
+from plugins import signins
+
 def _get_active_theme():
     return 'default'
 
@@ -27,6 +29,7 @@ def _init_theme(path, model):
     model['__navigations__'] = get_navigations()
     model['__website__'] = ctx.website
     model['__user__'] = ctx.user
+    model['__signins__'] = signins.get_enabled_signins()
     return 'themes/%s/%s' % (theme, path), model
 
 def theme(path):
