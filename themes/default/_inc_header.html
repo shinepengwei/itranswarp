@@ -38,9 +38,24 @@ $(function() {
                     <h3><a href="/">{{ __website__.name|e }}</a></h3>
                     <p>{{ __website__.description|e }}</p>
                 </div>
-                <div class="span4" style="padding:15px 0; text-align:right;">
-                        <a href="/auth/signin">Sign In</a> or <a href="#">Register</a>
+                <div class="span4" style="padding:15px 0;">
+                {% if __user__ %}
+                    <div style="text-align:right">
+                        Welcome, {{ __user__.name|e }}! <a href="/auth/signout">Sign Out</a>
                     </div>
+                {% else %}
+                    <div class="btn-group" style="float:right;">
+                        <a href="/auth/signin" class="btn">Sign In</a>
+                    {% if __signins__ %}
+                        <a class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                        <ul class="dropdown-menu pull-right">
+                        {% for s in __signins__ %}
+                            <li><a href="/auth/from/{{ s.id }}"><i class="icon-x" style="background-repeat:no-repeat;background-position:left center;background-size:14px 14px; background-image:url({{ s.icon }});"></i> {{ s.name|e }}</a></li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                    </div>
+                {% endif %}
                 </div>
             </div>
         </div>
