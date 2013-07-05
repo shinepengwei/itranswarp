@@ -14,7 +14,7 @@ from transwarp.web import ctx, get, post, route, seeother, notfound, UTC, UTC_0,
 from transwarp.mail import send_mail
 from transwarp import db, task
 
-from core.models import Website, User, create_user
+from core.models import Website, User
 from core.apis import api, APIValueError
 from core.roles import *
 from core import utils, settings
@@ -82,7 +82,7 @@ def admin_signins():
         for ip in inputs:
             ip['value'] = ss.get(ip['key'], '')
         return Template('pluginform.html', plugin=p, plugin_type='signins', inputs=inputs, submit_url='/api/admin/signins/%s/update' % p.id, cancel_url='?action=')
-    return Template('signins.html', plugins=signins.get_signins())
+    return Template('signins.html', plugins=signins.get_signins(), is_enabled=signins.is_enabled)
 
 @api
 @allow(ROLE_ADMINISTRATORS)
