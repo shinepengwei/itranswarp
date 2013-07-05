@@ -114,7 +114,7 @@ class User(db.Model):
         self.modified_time = time.time()
         self.version = self.version + 1
 
-def create_user(website_id, email, passwd, name, role_id, locked=False):
+def create_user(website_id, email, passwd, name, role_id, image_url=None, locked=False):
     user = User(
         website_id = website_id, \
         locked = locked,
@@ -123,7 +123,7 @@ def create_user(website_id, email, passwd, name, role_id, locked=False):
         email = email,
         verified = False,
         passwd = passwd,
-        image_url = 'http://www.gravatar.com/avatar/%s' % hashlib.md5(str(email)).hexdigest())
+        image_url = image_url if image_url else 'http://www.gravatar.com/avatar/%s' % hashlib.md5(str(email)).hexdigest())
     user.insert()
     return user
 
