@@ -5,7 +5,7 @@ __author__ = 'Michael Liao'
 
 ' Http utils such as get referer from request. '
 
-import urllib, urllib2
+import urllib, urllib2, logging
 
 from transwarp.web import ctx
 
@@ -48,7 +48,7 @@ def encode_params(**kw):
 def http_get(url, authorization=None, **kw):
     return http_method('GET', url, authorization, **kw)
 
-def http_post(method, url, authorization=None, **kw):
+def http_post(url, authorization=None, **kw):
     return http_method('POST', url, authorization, **kw)
 
 def http_method(method, url, authorization=None, **kw):
@@ -58,11 +58,19 @@ def http_method(method, url, authorization=None, **kw):
     params = encode_params(**kw)
     http_url = '%s?%s' % (url, params) if method=='GET' else url
     http_body = None if method=='GET' else params
+    logging.info('%s: %s' % (method, http_url))
+    if method=='POST':
+        logging.info('body: %s' % params)
     req = urllib2.Request(http_url, data=http_body)
     if authorization:
         req.add_header('Authorization', authorization)
     try:
         resp = urllib2.urlopen(req)
-        return 200, resp.read()
+        r = resp.read()
+        logging.info('200: %s' % r)
+        return 200, r
     except urllib2.HTTPError, e:
-        return e.code, e.read()
+        code = e.code
+        r = e.read()
+        logging.warning('%s: %s' % (code, r))
+        return code, r
