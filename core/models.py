@@ -7,7 +7,7 @@ __author__ = 'Michael Liao'
 Models for User, Website.
 '''
 
-import time, hashlib
+import time, uuid, random, hashlib
 
 from transwarp import db
 
@@ -113,6 +113,40 @@ class User(db.Model):
     def pre_update(self):
         self.modified_time = time.time()
         self.version = self.version + 1
+
+class Random(db.Model):
+    '''
+    create table random (
+        id varchar(50) not null,
+        website_id varchar(50) not null,
+        value varchar(100) not null,
+        expires_time real not null,
+        primary key(id),
+        unique key uk_value(value),
+        index idx_expires_time(expires_time)
+    );
+    '''
+
+    id = db.StringField(primary_key=True, default=db.next_str)
+
+    website_id = db.StringField(nullable=False, updatable=False)
+
+    value = db.StringField(nullable=False, updatable=False, default=lambda: '%s%s' % (uuid.uuid4().hex, random.randrange(100000000,999999999)))
+
+    expires_time = db.FloatField(nullable=False, updatable=False, default=lambda: time.time() + 600)
+
+def create_random():
+    r = Random(website_id=ctx.website.id)
+    r.insert()
+    return r.value
+
+def verify_random(value, delete=True):
+    r = Random.select_one('where value=?', value)
+    if r:
+        if delete:
+            r.delete()
+        return True
+    raise APIError('verify', 'random', 'invalid random value.')
 
 def create_user(website_id, email, passwd, name, role_id, image_url=None, locked=False):
     user = User(
