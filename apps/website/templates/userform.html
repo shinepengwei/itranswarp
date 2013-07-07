@@ -44,10 +44,10 @@ function ajax_post(form) {
 </script>
 
 <div class="row">
-    <div class="span10">
+    <div class="span8">
         <h3>{{ form_title }}</h3>
         <form id="x-form" action="{{ form_action }}" method="post" class="form-horizontal" style="position:relative;" onsubmit="return ajax_post(this)">
-            <img src="{{ image_url }}" style="position:absolute;width:120px;height:120px;right:10px;top:0px;" />
+            <div class="clearfix"></div>
             <fieldset>
                 <div class="alert alert-error hide"></div>
                 <div class="alert alert-success hide">Profile updated successfully!</div>
@@ -117,5 +117,9 @@ function ajax_post(form) {
                 </div>
             </fieldset>
         </form>
+    </div>
+    <div class="span2">
+        <h3>&nbsp;</h3>
+        <img src="{{ image_url }}" style="width:120px; height:120px; margin-left:20px;" />
     </div>
 </div>
