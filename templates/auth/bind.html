@@ -68,7 +68,7 @@ function ajax_bind(form) {
                             </div>
                             <div class="field-email control-group" style="margin: 16px 0;">
                                 <label class="control-label">{{ _('Email') }}:</label>
-                                <input type="text" name="email" maxlength="50" class="input-xlarge" value="" />
+                                <input type="text" name="email" maxlength="50" class="input-xlarge" value="{{ auth_user.email }}" />
                             </div>
                             <div class="field-passwd control-group hide" id="password-required" style="margin: 16px 0;">
                                 <label class="control-label">{{ _('Password') }}:</label>

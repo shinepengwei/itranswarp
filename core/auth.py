@@ -39,6 +39,7 @@ class Auth_User(db.Model):
         auth_id varchar(200) not null,
         auth_token varchar(200) not null,
 
+        email varchar(100) not null,
         name varchar(100) not null,
         image_url varchar(1000) not null,
 
@@ -61,6 +62,7 @@ class Auth_User(db.Model):
     auth_id = db.StringField(nullable=False, updatable=False)
     auth_token = db.StringField(nullable=False)
 
+    email = db.StringField(nullable=False, default='')
     name = db.StringField(nullable=False)
     image_url = db.StringField(nullable=False)
 
@@ -117,7 +119,6 @@ def auth_callback(provider):
 
     redirect = http.get_redirect(excludes='/auth/')
     callback = 'http://%s/auth/callback/%s' % (ctx.request.host, provider)
-    callback = 'http://www.shi-ci.com/auth/callback'
     u = p.auth_callback(callback, **ctx.request.input())
 
     auth_id = '%s-%s-%s' % (provider, ctx.website.id, u['id'])
@@ -125,7 +126,7 @@ def auth_callback(provider):
     name = u['name']
     image_url = u['image_url']
     expires = u['expires']
-    email = u.get('email')
+    email = u.get('email', '')
 
     auser = Auth_User.select_one('where auth_id=?', auth_id)
     if auser:
@@ -147,6 +148,7 @@ def auth_callback(provider):
             auth_provider=provider, \
             auth_id=auth_id, \
             auth_token=auth_token, \
+            email = email, \
             name=name, \
             image_url=image_url, \
             expires_time=expires)
