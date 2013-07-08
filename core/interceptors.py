@@ -10,7 +10,7 @@ import os, logging, functools
 from transwarp.web import ctx, forbidden, notfound
 from transwarp import db, i18n
 
-from core.auth import extract_session_cookie, http_basic_auth
+from core.auth import extract_session_cookie
 from core.models import Website, User
 from core.utils import cached_func
 
@@ -47,9 +47,7 @@ def load_user(func):
         user = extract_session_cookie()
         if user is None:
             auth = ctx.request.header('AUTHORIZATION')
-            logging.debug('get authorization header: %s' % auth)
-            if auth and auth.startswith('Basic '):
-                user = http_basic_auth(auth[6:])
+            pass
         if user and ctx.website.id!=user.website_id:
             user = None
         logging.info('bind ctx.user: %s' % user)

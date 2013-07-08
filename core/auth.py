@@ -184,6 +184,7 @@ def api_auth_bind():
                 make_session_cookie(au.auth_provider, au.auth_id, au.auth_token, au.expires_time)
                 return dict(result=True)
             raise APIValueError('passwd', 'Bad password.')
+        # FIXME: auth by 3rd-part A without passwd, now auth by 3rd-part B:
         raise APIError('password-required', '', 'Need password.')
     else:
         # user not exist:
@@ -228,23 +229,6 @@ def signout():
     logging.debug('signed out and redirect to: %s' % redirect)
     raise seeother(redirect)
 
-# deprecated
-def http_basic_auth(auth):
-    try:
-        s = base64.b64decode(auth)
-        logging.warn(s)
-        u, p = s.split(':', 1)
-        user = User.select_one('where email=?', u)
-        if not user or user.website_id != ctx.website.id or user.passwd != hashlib.md5(p).hexdigest():
-            return None
-        logging.info('Basic auth ok: %s' % u)
-        # clear passwd in memory:
-        user.passwd = '******'
-        return user
-    except BaseException, e:
-        logging.exception('auth failed.')
-        return None
-
 def make_session_cookie(signin_privider, uid, passwd, expires=None):
     '''
     Generate a secure client session cookie by constructing: 
@@ -265,7 +249,7 @@ def make_session_cookie(signin_privider, uid, passwd, expires=None):
     secure = ':'.join([signin_privider, sid, exp, str(passwd), _SESSION_COOKIE_SALT])
     cvalue = ':'.join([signin_privider, sid, exp, hashlib.md5(secure).hexdigest()])
     logging.info('make cookie: %s' % cvalue)
-    cookie = base64.urlsafe_b64encode(cvalue).replace('=', '_')
+    cookie = base64.urlsafe_b64encode(cvalue).replace('=', '.')
     ctx.response.set_cookie(_SESSION_COOKIE_NAME, cookie, expires=expires)
 
 def extract_session_cookie():
@@ -280,7 +264,7 @@ def extract_session_cookie():
         logging.debug('read cookie: %s' % s)
         if not s:
             return None
-        ss = base64.urlsafe_b64decode(s.replace('_', '=')).split(':')
+        ss = base64.urlsafe_b64decode(s.replace('.', '=')).split(':')
         if len(ss)!=4:
             raise ValueError('bad cookie: %s' % s)
         signin_privider, the_id, expires, md5 = ss
