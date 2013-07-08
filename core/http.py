@@ -45,25 +45,31 @@ def encode_params(**kw):
         args.append('%s=%s' % (k, urllib.quote(qv)))
     return '&'.join(args)
 
-def http_get(url, authorization=None, **kw):
-    return http_method('GET', url, authorization, **kw)
+def http_get(url, headers=None, **kw):
+    return http_method('GET', url, headers, **kw)
 
-def http_post(url, authorization=None, **kw):
-    return http_method('POST', url, authorization, **kw)
+def http_post(url, headers=None, **kw):
+    return http_method('POST', url, headers, **kw)
 
-def http_method(method, url, authorization=None, **kw):
+def http_method(method, url, headers=None, **kw):
     '''
     send an http request and expect to return a json object if no error.
     '''
     params = encode_params(**kw)
-    http_url = '%s?%s' % (url, params) if method=='GET' else url
+    http_url = url
+    if method=='GET' and params:
+        if '?' in url:
+            http_url = '%s&%s' % (url, params)
+        else:
+            http_url = '%s?%s' % (url, params)
     http_body = None if method=='GET' else params
     logging.info('%s: %s' % (method, http_url))
     if method=='POST':
         logging.info('body: %s' % params)
     req = urllib2.Request(http_url, data=http_body)
-    if authorization:
-        req.add_header('Authorization', authorization)
+    if headers:
+        for k, v in headers.iteritems():
+            req.add_header(k, v)
     try:
         resp = urllib2.urlopen(req)
         r = resp.read()
