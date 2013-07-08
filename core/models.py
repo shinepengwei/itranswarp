@@ -9,6 +9,7 @@ Models for User, Website.
 
 import time, uuid, random, hashlib
 
+from transwarp.web import ctx
 from transwarp import db
 
 class Website(db.Model):
