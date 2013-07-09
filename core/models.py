@@ -65,6 +65,65 @@ class Website(db.Model):
         self.modified_time = time.time()
         self.version = self.version + 1
 
+class Comment(db.Model):
+    '''
+    create table comment (
+        id varchar(50) not null,
+
+        website_id varchar(50) not null,
+        ref_id varchar(50) not null,
+
+        user_id varchar(50) not null,
+        user_name varchar(100) not null,
+        user_image_url varchar(1000) not null,
+
+        content varchar(1000) not null,
+
+        creation_time real not null,
+        version bigint not null,
+
+        primary key(id),
+        index idx_website_ref_id(website_id, ref_id)
+    );
+    '''
+
+    id = db.StringField(primary_key=True, default=db.next_str)
+
+    website_id = db.StringField(nullable=False, updatable=False)
+    ref_id = db.StringField(nullable=False, updatable=False)
+
+    user_id = db.StringField(nullable=False, updatable=False)
+    user_name = db.StringField(nullable=False, updatable=False)
+    user_image_url = db.StringField(nullable=False, updatable=False)
+
+    content = db.StringField(nullable=False, updatable=False)
+
+    creation_time = db.FloatField(nullable=False, updatable=False, default=time.time)
+    version = db.VersionField()
+
+def get_comments(ref_id, next_id=None, limit=20):
+    if next_id:
+        return Comment.select('where ref_id=? and id<? order by id desc limit ?', ref_id, next_id, limit)
+    return Comment.select('where ref_id=? order by id desc limit ?', ref_id, limit)
+
+def _encodehtml(s):
+    return s.replace(u' ', u'&nbsp;').replace(u'<', u'&lt;').replace(u'>', u'&gt;')
+
+def _safehtml(text):
+    return u'<p>%s</p>' % u'</p><p>'.join([_encodehtml(s) for s in text.split('\n')])
+
+def create_comment(ref_id, content):
+    u = ctx.user
+    c = Comment(website_id=ctx.website.id, user_id=u.id, user_name=u.name, user_image_url=u.image_url, ref_id=ref_id, content=_safehtml(content))
+    c.insert()
+    return c
+
+def delete_comments(ref_id):
+    db.update('delete from comment where website_id=? and ref_id=?', ctx.website.id, ref_id)
+
+def delete_comment(cid):
+    Comment.get_by_id(cid).delete()
+
 class User(db.Model):
     '''
     create table user (
