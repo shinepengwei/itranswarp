@@ -11,6 +11,7 @@ from transwarp import db
 
 from core.apis import *
 from core.roles import *
+from core.models import get_comments, create_comment
 
 from core import utils, thumbnails, texts
 
@@ -292,6 +293,9 @@ class Attachment(db.Model):
         self.modified_time = time.time()
         self.version = self.version + 1
 
+def _summary(content):
+    return utils.html2summary(utils.markdown2html(content), 500)
+
 def _format_tags(tags):
     if tags:
         return u','.join([t.strip() for t in tags.split(u',')])
@@ -311,6 +315,14 @@ def web_category(cid):
 def web_category_page(cid, p):
     return _web_category_p(cid, p)
 
+@get('/articles/recent')
+@theme('category.html')
+def web_recent():
+    limit = 20
+    categories = _get_categories()
+    articles = Article.select('where website_id=? and publish_time<? order by publish_time desc limit ?', ctx.website.id, time.time(), limit)
+    return dict(articles=articles, categories=categories)
+
 def _web_category_p(cid, p):
     page_index = int(p)
     if p < 1:
@@ -327,7 +339,7 @@ def _web_category_p(cid, p):
 def _web_article(aid):
     article = _get_full_article(aid)
     categories = _get_categories()
-    return dict(categories=categories, article=article)
+    return dict(categories=categories, article=article, comments=get_comments(ref_id=aid))
 
 def _get_category(category_id):
     cat = Category.get_by_id(category_id)
@@ -504,6 +516,20 @@ def api_article_get(aid):
         raise APIValueError('id', 'id is empty.')
     return _get_article(aid)
 
+@api
+@post('/api/articles/<aid>/comments/create')
+def api_article_comment_create(aid):
+    if not aid:
+        raise APIValueError('id', 'id is empty.')
+    if not ctx.user:
+        raise APIPermissionError('user not sign in.')
+    i = ctx.request.input(content='')
+    content = i.content.strip()
+    if not content:
+        raise APIValueError('content', 'content is empty.')
+    a = _get_article(aid)
+    return create_comment(aid, content)
+
 def _can_create_article():
     return ctx.user.role_id <= ROLE_CONTRIBUTORS
 
@@ -538,6 +564,7 @@ def api_article_create():
         raise APIValueError('name', 'name cannot be empty.')
     if not content:
         raise APIValueError('content', 'content cannot be empty.')
+    summary = _summary(content)
     draft = i.draft.strip().lower() == 'true' and _can_publish_article()
     cat_ids = i.gets('category_id')
     cat_dict = _get_categories(return_dict=True)
@@ -556,7 +583,7 @@ def api_article_create():
         user_name=ctx.user.name, \
         draft=draft, \
         name=name, \
-        summary='', \
+        summary=summary, \
         tags=_format_tags(i.tags))
     with db.transaction():
         article.insert()
@@ -566,7 +593,6 @@ def api_article_create():
         if category_list:
             for category in category_list:
                 Article_Category(article, category).insert()
-    print article
     return article
 
 @api
@@ -608,6 +634,7 @@ def api_article_update(aid):
         if content:
             content_id = db.next_str()
             article.content_id = content_id
+            article.summary = _summary(content)
             texts.set(article.id, content_id, content)
         article.update()
         if cat_ids:
@@ -616,7 +643,7 @@ def api_article_update(aid):
             if category_list:
                 for category in category_list:
                     Article_Category(article, category).insert()
-    return True
+    return dict(id=aid)
 
 @api
 @allow(ROLE_AUTHORS)
