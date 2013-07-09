@@ -9,14 +9,16 @@
                     <div class="panel">
                         <div class="panel-heading"><h3><a href="/article/{{ a.id }}">{{ a.name|e }}</a></h3></div>
                         <div class="panel-inner">
-                            ...
+                            {{ a.summary }}
                         </div>
                         <div class="panel-footer x-ext-info">
                             <i class="icon-user"></i> {{ a.user_name|e }} <i class="icon-time"></i> {{ a.publish_time|dt }} <i class="icon-eye-open"></i> 0 <i class="icon-comment"></i> 0
                         </div>
                     </div>
                 {% endfor %}
+                {% if page %}
                     {{ macros.pagination(page, '/category/%s/' % category.id) }}
+                {% endif %}
                 </div>
             </div>
             <div class="span3">
