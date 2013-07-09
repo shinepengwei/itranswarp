@@ -1,0 +1,100 @@
+{% import __get_theme_file__('_inc_macros.html') as macros %}
+{% include __get_theme_file__('_inc_header.html') %}
+
+<script>
+function ajaxPostComment(form) {
+    var $form = $(form);
+    var $submit = $form.find('button[type=submit]');
+    var $alert = $form.find('.alert');
+    function _show_error(msg) {
+        if (msg) {
+            $alert.text(msg).show();
+            $form.find('.control-group').addClass('error');
+        }
+        else {
+            $alert.hide();
+            $form.find('.control-group').removeClass('error');
+        }
+    };
+    function _show_loading(is_loading) {
+        if (is_loading) {
+            $submit.attr('disabled', 'disabled');
+        }
+        else {
+            $submit.removeAttr('disabled');
+        }
+    };
+    _show_error(null);
+    _show_loading(true);
+    $.postJSON($form.attr('action'), $form.serialize(), function(result) {
+        location.reload();
+    }, function(err) {
+        _show_error(err.message || err.error, err.data);
+        _show_loading(false);
+    });
+    return false;
+}
+</script>
+
+    <div id="main" class="container">
+        <div class="row" style="margin-top:20px;">
+            <div class="span9">
+                <div style="margin-right:25px;">
+                    <div class="panel">
+                        <div class="panel-heading"><h3>{{ article.name|e }}</h3></div>
+                        <div class="panel-inner">
+                            {{ article.content }}
+                        </div>
+                        <div class="panel-footer x-ext-info">
+                            <i class="icon-user"></i> {{ article.user_name|e }} <i class="icon-time"></i> {{ article.publish_time|dt }} <i class="icon-eye-open"></i> 0 <i class="icon-comment"></i> 0
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-heading"><h3>{{ _('Post a comment') }}</h3></div>
+                        <div class="panel-inner">
+                            <form name="post-a-comment" action="/api/articles/{{ article.id }}/comments/create" method="post" onsubmit="return ajaxPostComment(this)" style="margin-bottom:0">
+                                <div class="alert alert-error hide"></div>
+                                <div class="field-content control-group"><textarea name="content" rows="5" style="width:650px; resize:none;"></textarea></div>
+                                <div><button type="submit" class="btn btn-primary"><i class="icon-comment icon-white"></i> {{ _('Post') }}</button></div>
+                            </form>
+                        </div>
+                        <div class="panel-footer x-ext-info">
+                            <i class="icon-comment"></i> Your comment will be synchronized to SNS
+                        </div>
+                    </div>
+
+                    <div class="row"><h3>Comments</h3></div>
+                {% for c in comments %}
+                    <div class="row">
+                        <div style="width:100px;float:left;">
+                            <img src="{{ c.user_image_url }}" class="img-polaroid" style="margin-bottom: 14px" />
+                        </div>
+                        <div style="width:595px;float:left;">
+                            <div class="quote right">
+                                <div class="arrow"></div>
+                                <div class="quote-inner">
+                                    {{ c.content }}
+                                    <p style="font-style:italic; color:#999;">By {{ c.user_name|e }}. Posted at {{ c.creation_time|dt }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="row"><div style="margin-bottom:20px;">No comment.</div></div>
+                {% endfor %}
+                </div>
+            </div>
+            <div class="span3">
+                <div class="panel">
+                    <div class="panel-heading"><h3>Categories</h3></div>
+                    <div class="panel-inner">
+                    {% for c in categories %}
+                        <p><a href="/category/{{ c.id }}">{{ c.name|e }}</a></p>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% include __get_theme_file__('_inc_footer.html') %}
