@@ -40,6 +40,12 @@ menus = (
 
 navigations = (
         dict(
+            key='recent_articles',
+            prompt='Recent Articles',
+            description='Show recent articles',
+            fn_get_url=lambda value: '/articles/recent'
+        ),
+        dict(
             key='category',
             input='select',
             prompt='Category',
