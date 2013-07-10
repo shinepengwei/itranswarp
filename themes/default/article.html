@@ -1,41 +1,6 @@
 {% import __get_theme_file__('_inc_macros.html') as macros %}
 {% include __get_theme_file__('_inc_header.html') %}
 
-<script>
-function ajaxPostComment(form) {
-    var $form = $(form);
-    var $submit = $form.find('button[type=submit]');
-    var $alert = $form.find('.alert');
-    function _show_error(msg) {
-        if (msg) {
-            $alert.text(msg).show();
-            $form.find('.control-group').addClass('error');
-        }
-        else {
-            $alert.hide();
-            $form.find('.control-group').removeClass('error');
-        }
-    };
-    function _show_loading(is_loading) {
-        if (is_loading) {
-            $submit.attr('disabled', 'disabled');
-        }
-        else {
-            $submit.removeAttr('disabled');
-        }
-    };
-    _show_error(null);
-    _show_loading(true);
-    $.postJSON($form.attr('action'), $form.serialize(), function(result) {
-        location.reload();
-    }, function(err) {
-        _show_error(err.message || err.error, err.data);
-        _show_loading(false);
-    });
-    return false;
-}
-</script>
-
     <div id="main" class="container">
         <div class="row" style="margin-top:20px;">
             <div class="span9">
@@ -63,25 +28,8 @@ function ajaxPostComment(form) {
                         </div>
                     </div>
 
-                    <div class="row"><h3>Comments</h3></div>
-                {% for c in comments %}
-                    <div class="row">
-                        <div style="width:100px;float:left;">
-                            <img src="{{ c.user_image_url }}" class="img-polaroid" style="margin-bottom: 14px" />
-                        </div>
-                        <div style="width:595px;float:left;">
-                            <div class="quote right">
-                                <div class="arrow"></div>
-                                <div class="quote-inner">
-                                    {{ c.content }}
-                                    <p style="font-style:italic; color:#999;">By {{ c.user_name|e }}. Posted at {{ c.creation_time|dt }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="row"><div style="margin-bottom:20px;">No comment.</div></div>
-                {% endfor %}
+                    {{ macros.show_comments(comments) }}
+
                 </div>
             </div>
             <div class="span3">
