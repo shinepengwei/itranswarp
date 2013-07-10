@@ -50,6 +50,13 @@ def _get_navigation(nav_id):
         raise APIValueError('id', 'invalid id')
     return nav
 
+@get('/')
+def web_index():
+    nav = get_navigations()
+    if nav:
+        raise seeother(nav[0].url)
+    return '<html><body><h1>This website is not configured.</h1></body></html>'
+
 @api
 @allow(ROLE_ADMINISTRATORS)
 @post('/api/navigation/create')
