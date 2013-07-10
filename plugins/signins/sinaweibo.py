@@ -5,7 +5,6 @@ __author__ = 'Michael Liao'
 
 import json, time, urllib, urllib2, logging, mimetypes
 
-from transwarp.web import ctx, seeother, Dict
 from core import http
 
 class Plugin(object):
@@ -35,8 +34,9 @@ class Plugin(object):
         return '%s?%s' % ('https://api.weibo.com/oauth2/authorize', http.encode_params(redirect_uri=callback_url, response_type='code', client_id=self._client_id))
 
     def auth_callback(self, callback_url, **kw):
-        # sina weibo login:
-        code = kw.pop('code')
+        code = kw.get('code', '')
+        if not code:
+            raise IOError('missing code')
         c, s = http.http_post('https://api.weibo.com/oauth2/access_token', \
                 client_id = self._client_id, \
                 client_secret = self._client_secret, \
