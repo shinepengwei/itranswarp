@@ -675,6 +675,12 @@ def add_article():
 # Pages
 ################################################################################
 
+@get('/page/<pid>')
+@theme('page.html')
+def _web_page(pid):
+    page = _get_full_page(pid)
+    return dict(page=page)
+
 def _get_page(page_id):
     p = Page.get_by_id(page_id)
     if p:
@@ -682,6 +688,11 @@ def _get_page(page_id):
             return p
         raise APIPermissionError('cannot get page.')
     raise APIValueError('id', 'page not found.')
+
+def _get_full_page(page_id):
+    p = _get_page(page_id)
+    p.content = utils.markdown2html(texts.get(p.id))
+    return p
 
 def _get_pages():
     return Page.select('where website_id=? order by id desc', ctx.website.id)

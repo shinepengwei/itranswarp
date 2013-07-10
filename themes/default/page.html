@@ -1,0 +1,25 @@
+{% import __get_theme_file__('_inc_macros.html') as macros %}
+{% include __get_theme_file__('_inc_header.html') %}
+
+    <div id="main" class="container">
+        <div class="row" style="margin-top:20px;">
+            <div class="span9">
+                <div style="margin-right:25px;">
+                    <div class="panel">
+                        <div class="panel-heading"><h3>{{ page.name|e }}</h3></div>
+                        <div class="panel-inner">
+                            {{ page.content }}
+                        </div>
+                        <div class="panel-footer x-ext-info">
+                            <i class="icon-time"></i> {{ page.creation_time|dt }} <i class="icon-eye-open"></i> 0
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="span3">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+
+{% include __get_theme_file__('_inc_footer.html') %}
