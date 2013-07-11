@@ -16,6 +16,7 @@ import markdown2
 from transwarp import cache
 
 from core.apis import APIValueError
+from core import texts
 
 def load_module(module_name):
     '''
@@ -237,6 +238,12 @@ def markdown2html(md):
     if isinstance(md, str):
         md = md.decode('utf-8')
     return unicode(markdown2.markdown(md))
+
+def cached_markdown2html(obj):
+    # FIXME: not cached yet...
+    key = '%s-%s' % (obj.id, obj.version)
+    html = markdown2html(texts.get(obj.id))
+    return html
 
 def html2summary(html, maxchars=1000):
     L = _RE_END_PARA.split(html)
