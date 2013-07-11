@@ -462,7 +462,7 @@ def _get_article_categories(article_id):
 
 def _get_full_article(article_id):
     a = _get_article(article_id)
-    a.content = utils.markdown2html(texts.get(a.id))
+    a.content = utils.cached_markdown2html(a)
     return a
 
 def _get_article(article_id):
@@ -691,7 +691,7 @@ def _get_page(page_id):
 
 def _get_full_page(page_id):
     p = _get_page(page_id)
-    p.content = utils.markdown2html(texts.get(p.id))
+    p.content = utils.cached_markdown2html(p)
     return p
 
 def _get_pages():
