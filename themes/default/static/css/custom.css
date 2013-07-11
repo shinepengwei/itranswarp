@@ -14,3 +14,25 @@
     background-image: url(../img/loading.gif);
     background-position: 0 0;
 }
+
+.wiki ul li a {
+  line-height: 24px;
+}
+
+.wiki ul li {
+  list-style-type: none;
+  padding: 0;
+}
+
+.wiki ul li.selected {
+  list-style-type: square;
+}
+
+.wiki ul li.selected > a {
+  color: #000;
+}
+
+.wiki ul {
+  padding: 0 0 0 1em;
+  margin: 0;
+}

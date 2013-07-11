@@ -1,0 +1,54 @@
+{% import __get_theme_file__('_inc_macros.html') as macros %}
+{% include __get_theme_file__('_inc_header.html') %}
+
+{% macro wiki_tree(nodes) %}
+    <ul>
+    {% for n in nodes %}
+        <li id="{{ n.id }}">
+            <a href="/wiki/{{ wiki.id }}/{{ n.id }}">{{ n.name|e }}</a>
+            {% if n.children %}
+                {{ wiki_tree(n.children) }}
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% if page %}
+<script>
+$(function() {
+    $('#{{ page.id }}').addClass('selected');
+});
+</script>
+{% endif %}
+
+    <div id="main" class="container">
+        <div class="row" style="margin-top:20px;">
+            <div class="span3">
+                <div style="margin-right:25px;">
+                    <div class="panel">
+                        <div class="panel-heading"><h3><a href="/wiki/{{ wiki.id }}">{{ wiki.name|e }}</a></h3></div>
+                        <div class="panel-inner">
+                            <div class="wiki">{{ wiki_tree(pages) }}</div>
+                        </div>
+                        <div class="panel-footer x-ext-info">
+                            <i class="icon-question-sign"></i> Help
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="span9">
+                <div class="panel">
+                    <div class="panel-heading"><h3>{{ wiki_name|e }}</h3></div>
+                    <div class="panel-inner">
+                        {{ wiki_content }}
+                    </div>
+                    <div class="panel-footer x-ext-info">
+                        <i class="icon-comment"></i> 0
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% include __get_theme_file__('_inc_footer.html') %}
