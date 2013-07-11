@@ -1,0 +1,57 @@
+<script>
+
+$(function() {
+    $('a.x-btn-delete').each(function() {
+        $(this).click(function() {
+            var $btn = $(this);
+            var rel = $btn.attr('rel');
+            show_confirm('Delete Confirm', 'Are you sure you want to delete "' + $btn.attr('prompt') + '"?', function(btn, fn_hide) {
+                $.postJSON('/api/wikis/' + rel + '/delete', {}, function(result) {
+                    refresh();
+                }, function(err) {
+                    fn_hide();
+                    show_error(err.message, err.data);
+                });
+            });
+        });
+    });
+});
+
+</script>
+
+<div class="row">
+    <div class="span10">
+        <h3>{{ _('All Wikis') }}</h3>
+    </div>
+    <div class="span10">
+        <div class="btn-toolbar" style="text-align:right">
+            <a href="add_wiki" class="btn btn-primary"><i class="icon-plus icon-white"></i> {{ _('Add Wiki') }}</a>
+        </div>
+    </div>
+    <div class="span10">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="25%">{{ _('Name') }}</th>
+                    <th width="40%">{{ _('Description') }}</th>
+                    <th width="20%">{{ _('Creation Date') }}</th>
+                    <th width="15%">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+{% for w in wikis %}
+                <tr>
+                    <td><a href="/wiki/{{ w.id }}" target="_blank">{{ w.name|e }}</a></td>
+                    <td>{{ w.description|e }}</td>
+                    <td>{{ w.creation_time|dt }}</td>
+                    <td>
+                        <a data-toggle="tooltip" title="List pages" href="?action=pages&id={{ w.id }}" class="x-btn"><i class="icon-list"></i></a>
+                        <a data-toggle="tooltip" title="Edit Wiki" href="?action=edit&id={{ w.id }}" class="x-btn"><i class="icon-edit"></i></a>
+                        <a data-toggle="tooltip" title="Delete Wiki" rel="{{ w.id }}" href="javascript:void(0)" class="x-btn x-btn-delete" prompt="{{ w.name|jsstr }}"><i class="icon-trash"></i></a>
+                    </td>
+                </tr>
+{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

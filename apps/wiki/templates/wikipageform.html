@@ -1,53 +1,35 @@
-<script type="text/javascript">
-    function show_error(err, field_name) {
-        $('div.control-group').removeClass('error');
-        if (err==null) {
-            $('div.alert-error').text('').hide();
-            return false;
-        }
-        $('div.alert-error').text(err).show();
-        $('div.field-' + field_name).addClass('error');
-        if ($('div.alert-error').offset().top < $(window).scrollTop()) {
-            $('html,body').animate({scrollTop: $('div.alert-error').offset().top});
-        }
-        return false;
-    }
+<script>
 
-    function show_loading(show) {
-        if (show) {
-            $('span.loading').show();
-        }
-        else {
-            $('span.loading').hide();
-        }
-    }
+var g_initial_text = '';
 
-    function ajax_post(form) {
-        show_error(null);
-        show_loading(true);
-        $('button[type=submit]').attr('disabled', 'disabled');
-        $.postJSON($(form).attr('action'), $(form).serialize()).success(function(result) {
-            if (result.error) {
-                show_error(result.message, result.data);
-                $('button[type=submit]').removeAttr('disabled');
-            }
-            else {
-                location.assign('wikis?action=pages&id={{ wiki.id }}');
-            }
-        }).error(function() {
-            show_error('{{ _('Server error') }}!', '');
-            $('button[type=submit]').removeAttr('disabled');
-        }).complete(function() {
-            show_loading(false);
-        });
-        return false;
+function ajax_post(form) {
+    show_error(null);
+    show_loading(true);
+    if (g_initial_text!=$('#markdown-editor').val()) {
+        // update content only if it is changed:
+        $('#markdown-editor').attr('name', 'content');
     }
+    $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
+        location.assign('{{ redirect }}');
+    }, function(err) {
+        show_loading(false);
+        show_error(err.message || err.error, err.data);
+    });
+    return false;
+}
+
+$(function() {
+    g_initial_text = $('#markdown-editor').val();
+    $('#markdown-editor').removeAttr('disabled');
+    $('#markdown-editor').markdown();
+});
+
 </script>
 
 <div class="row">
     <div class="span10">
-        <h3>Wiki Page - {{ page.name|e }}</h3>
-        <form name="form-x" action="/api/wikipages/update" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
+        <h3>{{ _('Wiki Page') }} - {{ page.name|e }}</h3>
+        <form name="form-x" action="{{ form_action }}" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
                 <div class="alert alert-error hide"></div>
                 <div class="field-name control-group">
@@ -57,24 +39,14 @@
                     </div>
                 </div>
                 <div class="field-content control-group">
-                    <div class="btn-group" style="margin-bottom: 6px;">
-                        <button type="button" class="btn"><i class="icon-envelope"></i></button>
-                        <button type="button" class="btn"><i class="icon-th-list"></i></button>
-                        <button type="button" class="btn"><i class="icon-bold"></i></button>
-                        <button type="button" class="btn"><i class="icon-italic"></i></button>
-                        <button type="button" class="btn"><i class="icon-picture"></i></button>
-                        <button type="button" class="btn"><i class="icon-facetime-video"></i></button>
+                    <label class="control-label">{{ _('Content') }}:</label>
+                    <div class="controls">
+                        <textarea id="markdown-editor" rows="20" disabled="disabled" style="width:600px;">{{ page.content|e }}</textarea>
                     </div>
-                    <textarea id="markdown-editor" name="content" rows="20" style="width:780px;resize:none;">{{ page.content|e }}</textarea>
-                </div>
-                <div class="control-group">
-                    <div><a href="http://daringfireball.net/projects/markdown/" target="_blank">get full Markdown syntax</a></div>
                 </div>
                 <div class="form-actions">
-                    <input type="hidden" name="id" value="{{ page.id }}" />
-                    <button type="submit" id="submit" class="btn btn-primary">{{ _('Save') }}</button>
-                    <button type="button" class="btn" onclick="location.assign('{{ 'pages' if static else 'articles' }}')">{{ _('Cancel') }}</button>
-                    <span class="loading hide">{{ _('Processing') }}...</span>
+                    <button type="submit" class="btn btn-primary"><i class="icon-ok icon-white"></i> {{ _('Save') }}</button>
+                    <a href="{{ redirect }}" class="btn"><i class="icon-remove"></i> {{ _('Cancel') }}</a>
                 </div>
             </fieldset>
         </form>

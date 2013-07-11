@@ -1,4 +1,4 @@
-<script type="text/JavaScript">
+<script>
     var g_wiki_id = '{{ wiki.id }}';
     var g_wiki_name = '{{ wiki.name|jsstr }}';
     var g_ajaxing = false;
@@ -16,15 +16,6 @@
         g_ajaxing = false;
         $('#ajaxing').hide();
         show_error(null);
-    }
-
-    function show_error(s) {
-        if (s) {
-            $('div.alert-error').text(s).show();
-        }
-        else {
-            $('div.alert-error').hide();
-        }
     }
 
     function set_button_enabled(btn, enabled) {
@@ -54,16 +45,11 @@
 
     function move_api(moved, parent, index) {
         start_ajax();
-        $.postJSON('/api/wikipages/move', 'id=' + moved.id + '&move_to=' + parent.id + '&index=' + index).success(function(result) {
-            if (result.error) {
-                show_error('Failed move wiki pages.');
-            }
-            else {
-                // done!
-                end_ajax();
-            }
-        }).error(function() {
-            show_error('Failed move wiki pages.');
+        $.postJSON('/api/wikis/pages/' + moved.id + '/move/' + parent.id, {'index': index}, function(result) {
+        }, function(err) {
+            show_error(err.message || err.error);
+        }, function() {
+            end_ajax();
         });
     }
 
@@ -80,68 +66,61 @@
 
     function delete_wikipage() {
         var node = $('#tree-wikipages').tree('getSelectedNode');
-        $.postJSON('/api/wikipages/delete', 'id=' + node.id).success(function(result) {
-            if (result.error) {
-                show_error('Error when delete wiki page.')
-            }
-            else {
+
+        show_confirm('Delete Confirm', 'Are you sure you want to delete "' + node.name + '"?', function(btn, fn_hide) {
+            $.postJSON('/api/wikis/pages/' + node.id + '/delete', {}, function(result) {
                 $('#tree-wikipages').tree('removeNode', node);
-            }
-        }).error(function() {
-            show_error('Error when delete wiki page.');
-        }).complete(function() {
-            $('#deleteModal').modal('hide');
+            }, function(err) {
+                show_error(err.message || err.error, err.data);
+            }, function() {
+                fn_hide();
+            });
         });
     }
 
     $(function() {
         // load tree data:
-        $.getJSON('/api/wikipages/list?id={{ wiki.id }}').success(function(result) {
+        $.getJSON('/api/wikis/{{ wiki.id }}/pages').success(function(result) {
             if (result.error) {
-                show_error('Error when load wiki pages.');
+                var err = result.error;
+                show_error(err.message || err.error);
+                return;
             }
-            else {
-                $('#tree-wikipages').tree({
-                    data: [{'id': '', 'name': g_wiki_name, 'children': result}],
-                    autoOpen: true,
-                    dragAndDrop: true,
-                    onCanMove: function(node) {
-                        return ! is_ajaxing() && node.id!='';
-                    },
-                    onCanMoveTo: function(moved_node, target_node, position) {
-                        return target_node.id!='';
-                    },
-                    onCanSelectNode: function(node) {
-                        return ! is_ajaxing();
-                    }
-                });
-                $('#tree-wikipages').bind('tree.select', function(event) {
-                    update_button_group(event.node);
-                });
-                $('#tree-wikipages').bind('tree.move', function(event) {
-                    move_node(event.move_info.moved_node, event.move_info.target_node, event.move_info.position, event.move_info.previous_parent);
-                });
-            }
+            $('#tree-wikipages').tree({
+                data: [{'id': '', 'name': g_wiki_name, 'children': result}],
+                autoOpen: true,
+                dragAndDrop: true,
+                onCanMove: function(node) {
+                    return ! is_ajaxing() && node.id!='';
+                },
+                onCanMoveTo: function(moved_node, target_node, position) {
+                    return target_node.id!='';
+                },
+                onCanSelectNode: function(node) {
+                    return ! is_ajaxing();
+                }
+            });
+            $('#tree-wikipages').bind('tree.select', function(event) {
+                update_button_group(event.node);
+            });
+            $('#tree-wikipages').bind('tree.move', function(event) {
+                move_node(event.move_info.moved_node, event.move_info.target_node, event.move_info.position, event.move_info.previous_parent);
+            });
         }).error(function() {
             show_error('Error when load wiki pages.');
         }).complete(function() {
-            $('span.loading').hide();
+            $('#loading').hide();
         });
 
         $('#btn-add').click(function() {
             var $tree = $('#tree-wikipages');
             var node = $tree.tree('getSelectedNode');
-            $.postJSON('/api/wikipages/create', 'name=New%20Wiki%20Page&content=New%20Wiki%20Page&wiki_id=' + g_wiki_id + '&parent_id=' + node.id).success(function(result) {
-                if (result.error) {
-                    show_error('Failed to create pages.');
-                }
-                else {
-                    $tree.tree('appendNode', result, node);
-                    $tree.tree('openNode', node);
-                    $tree.tree('selectNode', $tree.tree('getNodeById', result.id));
-                }
-            }).error(function() {
-                show_error('Failed to create pages.');
+            $.postJSON('/api/wikis/' + g_wiki_id + '/pages/create', {'name': 'New Wiki Page', 'content': 'New Wiki Page content', 'parent_id': node.id}, function(result) {
+                $tree.tree('appendNode', result, node);
+                $tree.tree('openNode', node);
+                $tree.tree('selectNode', $tree.tree('getNodeById', result.id));
+            }, function(err) {
+                show_error(err.message || err.error);
             });
         });
 
@@ -151,9 +130,7 @@
         });
 
         $('#btn-delete').click(function() {
-            var node = $('#tree-wikipages').tree('getSelectedNode');
-            $('#spanName').text(node.name);
-            $('#deleteModal').modal('show');
+            delete_wikipage();
         });
 
         $('#btn-refresh').click(function() {
@@ -161,46 +138,32 @@
         });
 
         $('#btn-back').click(function() {
-            location.assign('wikis');
+            location.assign('all_wikis');
         });
     });
 </script>
 
-<div id="deleteModal" class="modal hide fade" role="dialog">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3>Confirm Deletion</h3>
-    </div>
-    <div class="modal-body">
-        <p>Are you sure you want to delete the wiki page "<span id="spanName"></span>"?</p>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" onclick="delete_wikipage()">Yes</button>
-        <button class="btn" data-dismiss="modal">Cancel</button>
+<div class="row">
+    <div class="span10">
+        <h3>{{ wiki.name|e }}</h3>
+
+        <div class="btn-toolbar">
+            <div class="btn-group">
+                <button id="btn-back" class="btn btn"><i class="icon-chevron-left"></i> Back</button>
+                <button id="btn-refresh" class="btn btn-info"><i class="icon-refresh icon-white"></i> Refresh</button>
+                <button id="btn-add" disabled="disabled" class="btn"><i class="icon-plus"></i> Add Wiki Page</button>
+                <button id="btn-edit" disabled="disabled" class="btn"><i class="icon-edit"></i> Edit</button>
+                <button id="btn-delete" disabled="disabled" class="btn btn-danger"><i class="icon-trash icon-white"></i> Delete</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="row">
     <div class="span10">
-        <h3>{{ wiki.name|e }}</h3>
-    </div>
-</div>
-
-<div class="row sep">
-    <div class="span10">
-        <button id="btn-back" class="btn btn"><i class="icon-chevron-left"></i> Back</button>
-        <button id="btn-refresh" class="btn btn-info"><i class="icon-refresh icon-white"></i> Refresh</button>
-        <button id="btn-add" disabled="disabled" class="btn"><i class="icon-plus"></i> Add Wiki Page</button>
-        <button id="btn-edit" disabled="disabled" class="btn"><i class="icon-edit"></i> Edit</button>
-        <button id="btn-delete" disabled="disabled" class="btn btn-danger"><i class="icon-trash icon-white"></i> Delete</button>
-    </div>
-</div>
-
-<div class="row sep">
-    <div class="span10">
         <div class="alert alert-error hide"></div>
         <div class="well">
-            <span class="loading">Loading wiki pages...</span>
+            <span id="loading">Loading wiki pages...</span>
             <div id="tree-wikipages"></div>
         </div>
     </div>
