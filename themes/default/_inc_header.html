@@ -17,12 +17,27 @@
     <script src="{{ __theme_path__ }}/static/js/bootstrap.min.js"></script>
     <script src="{{ __theme_path__ }}/static/js/theme.js"></script>
     <script>
+function _remove_appendix(path) {
+    var n = path.lastIndexOf('/');
+    if (n<=0) {
+        return null;
+    }
+    if (path.length == (n+1)) {
+        return path.substring(0, n);
+    }
+    return path.substring(0, n+1);
+}
+
 $(function() {
     var path = location.pathname;
-    var navs = [path, {% for nav in __navigations__ %} '{{ nav.url }}', {% endfor %}];
+    var navs = [path {% for nav in __navigations__ %} , '{{ nav.url }}' {% endfor %}];
+    while (path) {
+        navs.unshift(path);
+        path = _remove_appendix(path);
+    }
     for (var i=0; i<navs.length; i++) {
         var a = $('#navigations li a[href="' + navs[i] + '"]:first');
-        if (a.length > 0) {
+        if (a.length) {
             a.parent().addClass('active');
             break;
         }
