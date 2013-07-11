@@ -7,7 +7,7 @@ __author__ = 'Michael Liao'
 JSON API definition.
 '''
 
-import re, time, json, logging, functools
+import re, json, logging, functools
 
 from transwarp.web import ctx, get, post, forbidden, HttpError, Dict
 
@@ -49,7 +49,6 @@ def api(func):
     def _wrapper(*args, **kw):
         ctx.response.content_type = 'application/json; charset=utf-8'
         try:
-            time.sleep(1.5)
             return json.dumps(func(*args, **kw))
         except APIError, e:
             logging.exception('API Error when calling api function.')
