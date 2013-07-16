@@ -115,7 +115,7 @@ class Article(db.Model):
         user_name varchar(100) not null,
         name varchar(100) not null,
         tags varchar(1000) not null,
-        summary varchar(1000) not null,
+        summary varchar(2000) not null,
 
         publish_time real not null,
         creation_time real not null,
@@ -300,7 +300,7 @@ class Attachment(db.Model):
         self.version = self.version + 1
 
 def _summary(content):
-    return utils.html2summary(utils.markdown2html(content), 500)
+    return utils.html2summary(utils.markdown2html(content))
 
 def _format_tags(tags):
     if tags:
