@@ -15,7 +15,7 @@ from htmlentitydefs import name2codepoint
 
 import markdown2
 
-from transwarp.web import UTC
+from transwarp.web import ctx, UTC
 from transwarp import cache
 
 from core.apis import APIValueError
@@ -68,7 +68,7 @@ def cached_func(key=None, timeout=3600, use_ctx=True):
       args function: 'WebsiteId--FunctionName--Arg1--Arg2--ArgN'
 
     >>> import time
-    >>> @cached(timeout=2)
+    >>> @cached_func(timeout=2)
     ... def get_time():
     ...     return int(time.time() * 1000)
     >>> n1 = get_time()
