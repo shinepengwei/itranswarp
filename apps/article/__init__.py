@@ -326,8 +326,11 @@ def web_category_page(cid, p):
 def web_recent():
     limit = 20
     categories = _get_categories()
-    articles = Article.select('where website_id=? and publish_time<? order by publish_time desc limit ?', ctx.website.id, time.time(), limit)
+    articles = _get_recent_articles(limit)
     return dict(articles=articles, categories=categories)
+
+def _get_recent_articles(limit=20):
+    return Article.select('where website_id=? and publish_time<? order by publish_time desc limit ?', ctx.website.id, time.time(), limit)
 
 def _web_category_p(cid, p):
     page_index = int(p)
@@ -878,6 +881,69 @@ def api_attachment_delete(aid):
     stores.delete_resources(aid)
     atta.delete()
     return True
+
+#------------------------------------------------------------------------------
+# RSS
+#------------------------------------------------------------------------------
+
+@get('/feed')
+def rss():
+    ctx.response.content_type = 'application/rss+xml'
+    return _get_rss()
+
+@utils.cached_func(timeout=3600)
+def _get_rss():
+
+    def _rss_datetime(ts):
+        dt = datetime.fromtimestamp(ts, UTC_0)
+        return dt.strftime('%a, %d %b %Y %H:%M:%S GMT')
+
+    def _safe_str(s):
+        if isinstance(s, str):
+            return s
+        if isinstance(s, unicode):
+            return s.encode('utf-8')
+        return str(s)
+
+    limit = 20
+    w = ctx.website
+    name = w.name
+    description = w.description
+    copyright = w.copyright
+    domain = w.domain
+    articles = _get_recent_articles(20)
+    rss_time = articles and articles[0].publish_time or time.time()
+    L = [
+        '<?xml version="1.0"?>\n<rss version="2.0"><channel><title><![CDATA[',
+        name,
+        ']]></title><link>http://',
+        domain,
+        '/</link><description><![CDATA[',
+        description,
+        ']]></description><lastBuildDate>',
+        _rss_datetime(rss_time),
+        '</lastBuildDate><generator>iTranswarp</generator><ttl>60</ttl>'
+    ]
+    for a in articles:
+        L.append('<item><title><![CDATA[')
+        L.append(a.name)
+        L.append(']]></title><link>http://')
+        L.append(domain)
+        L.append('/article/')
+        L.append(a.id)
+        L.append('</link><guid>http://')
+        L.append(domain)
+        L.append('/article/')
+        L.append(a.id)
+        L.append('</guid><author><![CDATA[')
+        L.append(a.user_name)
+        L.append(']]></author><pubDate>')
+        L.append(_rss_datetime(a.publish_time))
+        L.append('</pubDate><description><![CDATA[')
+        L.append(utils.cached_markdown2html(a))
+        L.append(']]></description></item>')
+    L.append(r'</channel></rss>')
+    return ''.join(map(_safe_str, L))
 
 if __name__=='__main__':
     import doctest
