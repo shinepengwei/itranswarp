@@ -27,7 +27,7 @@ function ajaxPostComment(form) {
     _show_error(null);
     _show_loading(true);
     $.postJSON($form.attr('action'), $form.serialize(), function(result) {
-        location.reload();
+        location.assign(location.pathname + '?t=' + new Date().getTime() + '#comments');
     }, function(err) {
         _show_error(err.message || err.error, err.data);
         _show_loading(false);

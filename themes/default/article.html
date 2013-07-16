@@ -14,21 +14,37 @@
                             <i class="icon-user"></i> {{ article.user_name|e }} <i class="icon-time"></i> {{ article.publish_time|dt }} <i class="icon-eye-open"></i> 0 <i class="icon-comment"></i> 0
                         </div>
                     </div>
+
+                    {{ macros.show_comments(comments) }}
+
                     <div class="panel">
                         <div class="panel-heading"><h3>{{ _('Post a comment') }}</h3></div>
                         <div class="panel-inner">
+                        {% if __user__ %}
                             <form name="post-a-comment" action="/api/articles/{{ article.id }}/comments/create" method="post" onsubmit="return ajaxPostComment(this)" style="margin-bottom:0">
                                 <div class="alert alert-error hide"></div>
-                                <div class="field-content control-group"><textarea name="content" rows="5" style="width:650px; resize:none;"></textarea></div>
+                                <div class="field-content control-group"><textarea name="content" rows="8" style="width:650px; resize:none;"></textarea></div>
                                 <div><button type="submit" class="btn btn-primary"><i class="icon-comment icon-white"></i> {{ _('Post') }}</button></div>
                             </form>
+                        {% else %}
+                            <p>Please sign in to post a comment:</p>
+                            <div class="btn-group">
+                                <a href="/auth/signin" class="btn">Sign In</a>
+                            {% if __signins__ %}
+                                <a class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                                <ul class="dropdown-menu">
+                                {% for s in __signins__ %}
+                                    <li><a href="/auth/from/{{ s.id }}"><i class="icon-x" style="background-repeat:no-repeat;background-position:left center;background-size:14px 14px; background-image:url({{ s.icon }});"></i> {{ s.name|e }}</a></li>
+                                {% endfor %}
+                                </ul>
+                            {% endif %}
+                            </div>
+                        {% endif %}
                         </div>
                         <div class="panel-footer x-ext-info">
                             <i class="icon-comment"></i> Your comment will be synchronized to SNS
                         </div>
                     </div>
-
-                    {{ macros.show_comments(comments) }}
 
                 </div>
             </div>
@@ -45,4 +61,4 @@
         </div>
     </div>
 
-{% include __get_theme_file__('_inc_footer.html') %}
+{% include '%s/%s' % (__theme_path__, '_inc_footer.html') %}

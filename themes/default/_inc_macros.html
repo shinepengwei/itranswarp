@@ -17,7 +17,7 @@
 {% endmacro %}
 
 {% macro show_comments(comments) %}
-    <div class="row"><h3>Comments</h3></div>
+    <div class="row"><a name="comments"></a><h3>Comments</h3></div>
     {% for c in comments %}
     <div class="row">
         <div style="width:100px;float:left;">
@@ -28,7 +28,7 @@
                 <div class="arrow"></div>
                 <div class="quote-inner">
                     {{ c.content }}
-                    <p style="font-style:italic; color:#999;">By {{ c.user_name|e }}. Posted at {{ c.creation_time|dt }}</p>
+                    <p style="font-style:italic; color:#999;">{{ c.user_name|e }} posted at {{ c.creation_time|dt }}</p>
                 </div>
             </div>
         </div>
