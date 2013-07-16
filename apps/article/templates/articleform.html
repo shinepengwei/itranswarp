@@ -66,6 +66,13 @@ $(function() {
                     </div>
                 </div>
 {% if not static and can_publish %}
+                <div class="field-publish_time control-group">
+                    <label class="control-label">{{ _('Publish Time') }}:</label>
+                    <div class="controls">
+                        <input name="publish_time" type="text" value="{{ publish_time and publish_time|dt('%Y-%m-%d %H:%M:%S') }}" />
+                        <span class="help-inline">Publish immediately if leave blank.</span>
+                    </div>
+                </div>
                 <div class="field-draft control-group">
                     <label class="control-label">{{ _('Draft') }}:</label>
                     <div class="controls">

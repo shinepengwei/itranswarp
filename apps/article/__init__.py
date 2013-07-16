@@ -6,7 +6,7 @@ __author__ = 'Michael Liao'
 import os, time, logging, mimetypes
 from datetime import datetime
 
-from transwarp.web import ctx, get, post, route, seeother, badrequest, Template, Dict, UTC_0
+from transwarp.web import ctx, get, post, route, seeother, badrequest, Template, Dict, UTC_0, UTC
 from transwarp import db
 
 from core.apis import *
@@ -151,7 +151,7 @@ class Article(db.Model):
 
     def pre_insert(self):
         self.creation_time = time.time() - 10
-        if 'publish_time' not in self or self.publish_time <= 0.1:
+        if 'publish_time' not in self or self.publish_time < 0.1:
             self.publish_time = self.creation_time
 
     def pre_update(self):
@@ -515,6 +515,10 @@ def all_articles():
     articles = _get_articles(page, category_id)
     return Template('all_articles.html', articles=articles, page=page, category=category, category_list=_get_categories(), can_create=_can_create_article(), can_edit=_can_edit_article, can_delete=_can_delete_article, can_publish=_can_publish_article())
 
+@allow(ROLE_CONTRIBUTORS)
+def add_article():
+    return Template('articleform.html', form_title=_('Add Article'), form_action='/api/articles/create', redirect='all_articles', static=False, categories=frozenset(), category_list=_get_categories(), can_publish=_can_publish_article())
+
 @api
 @get('/api/articles/<aid>')
 def api_article_get(aid):
@@ -571,6 +575,7 @@ def api_article_create():
     if not content:
         raise APIValueError('content', 'content cannot be empty.')
     summary = _summary(content)
+    publish_time = utils.datetime2timestamp(i.publish_time) if _can_publish_article() and 'publish_time' in i and i.publish_time.strip() else None
     draft = i.draft.strip().lower() == 'true' and _can_publish_article()
     cat_ids = i.gets('category_id')
     cat_dict = _get_categories(return_dict=True)
@@ -591,6 +596,8 @@ def api_article_create():
         name=name, \
         summary=summary, \
         tags=_format_tags(i.tags))
+    if publish_time:
+        article.publish_time = publish_time
     with db.transaction():
         article.insert()
         texts.set(article.id, content_id, content)
@@ -628,6 +635,8 @@ def api_article_update(aid):
             raise APIValueError('content', 'content cannot be empty.')
     if 'tags' in i:
         article.tags = _format_tags(i.tags)
+    if _can_publish_article() and 'publish_time' in i and i.publish_time.strip():
+        article.publish_time = utils.datetime2timestamp(i.publish_time)
     # get category:
     cat_ids = i.gets('category_id')
     cat_dict = _get_categories(return_dict=True)
@@ -666,10 +675,6 @@ def api_article_delete(aid):
         # update Article_Category:
         db.update('delete from article_category where article_id=?', aid)
     return True
-
-@allow(ROLE_CONTRIBUTORS)
-def add_article():
-    return Template('articleform.html', form_title=_('Add Article'), form_action='/api/articles/create', redirect='all_articles', static=False, categories=frozenset(), category_list=_get_categories(), can_publish=_can_publish_article())
 
 ################################################################################
 # Pages
