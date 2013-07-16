@@ -289,6 +289,8 @@ def cached_markdown2html(obj):
     return html
 
 def html2summary(html, maxchars=1800):
+    if len(html) <= maxchars:
+        return html
     L = _RE_END_PARA.split(html)
     parser = _MyHTMLParser(maxchars)
     for s in L:
