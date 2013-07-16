@@ -7,12 +7,15 @@ __author__ = 'Michael Liao'
 Utils.
 '''
 
-import os, re, json, time, logging, functools
+import os, re, json, time, logging, calendar, functools
+from datetime import datetime
+
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
 
 import markdown2
 
+from transwarp.web import UTC
 from transwarp import cache
 
 from core.apis import APIValueError
@@ -171,15 +174,17 @@ def check_email(email):
 
 class _MyHTMLParser(HTMLParser):
 
-    def __init__(self):
+    def __init__(self, maxchars=1500):
         HTMLParser.__init__(self)
         self._tag_stack = []
         self._buffer = []
-        self._length = 0
+        self._htmllength = maxchars
+        self._stop = False
         self._last_is_pre = False
+        self._last_is_script = False
 
-    def enough(self, length):
-        return self._length >= length
+    def enough(self):
+        return self._stop
 
     def flush(self):
         ' Return html as unicode '
@@ -190,49 +195,87 @@ class _MyHTMLParser(HTMLParser):
         return u''.join(L)
 
     def handle_starttag(self, tag, attrs):
-        self._tag_stack.append(tag)
-        self._last_is_pre = tag=='pre'
-        if attrs:
-            self._buffer.append(u'<%s %s>' % (tag, u' '.join([u'%s="%s"' % (k, v) for k, v in attrs])))
+        if self._stop:
+            return
+        if tag=='script':
+            self._last_is_script = True
+            return
+        s = u'<%s %s>' % (tag, u' '.join([u'%s="%s"' % (k, v) for k, v in attrs])) if attrs else u'<%s>' % tag
+        length = len(s) + len(tag) + 3 # add length for </tag>
+        if self._htmllength >= length:
+            self._tag_stack.append(tag)
+            self._last_is_pre = tag=='pre'
+            self._last_is_script = False
+            self._buffer.append(s)
+            self._htmllength = self._htmllength - length
         else:
-            self._buffer.append(u'<%s>' % tag)
+            self._stop = True
 
     def handle_endtag(self, tag):
+        if self._stop:
+            return
         if self._tag_stack and self._tag_stack[-1]==tag:
             self._tag_stack.pop()
             self._buffer.append(u'</%s>' % tag)
             self._last_is_pre = False
+            self._last_is_script = False
         else:
             logging.warn('ERROR when parsing tag.')
 
     def handle_startendtag(self, tag, attrs):
+        if self._stop:
+            return
+        if tag=='script':
+            return
         if tag=='br' or tag=='hr' or tag=='img':
-            if attrs:
-                self._buffer.append(u'<%s %s />' % (tag, u' '.join([u'%s="%s"' % (k, v) for k, v in attrs])))
-            else:
-                self._buffer.append(u'<%s />' % tag)
+            s = u'<%s %s />' % (tag, u' '.join([u'%s="%s"' % (k, v) for k, v in attrs])) if attrs else u'<%s />' % tag
             self._last_is_pre = False
+            if self._htmllength >= len(s):
+                self._buffer.append(s)
+                self._htmllength = self._htmllength - len(s)
+            else:
+                self._stop = True
         else:
             self.handle_starttag(tag, attrs)
             self.handle_endtag(tag)
 
     def handle_data(self, data):
+        if self._stop or self._last_is_script:
+            return
         s = data if self._last_is_pre else data.strip()
-        self._length = self._length + len(s)
-        self._buffer.append(s)
+        if self._htmllength >= len(s):
+            self._buffer.append(s)
+            self._htmllength = self._htmllength - len(s)
+        else:
+            s = s[:self._htmllength]
+            self._buffer.append(s)
+            self._htmllength = 0
+            self._stop = True
 
     def handle_comment(self, data):
         pass
 
     def handle_entityref(self, name):
-        self._length = self._length + 1
-        self._buffer.append(u'&%s;' % name)
+        if self._stop or self._last_is_script:
+            return
+        s = u'&%s;' % name
+        if self._htmllength >= len(s):
+            self._buffer.append(s)
+            self._htmllength = self._htmllength - len(s)
+        else:
+            self._stop = True
 
     def handle_charref(self, name):
-        self._length = self._length + 1
-        self._buffer.append(u'&#%s;' % name)
+        if self._stop or self._last_is_script:
+            return
+        s = u'&#%s;' % name
+        if self._htmllength >= len(s):
+            self._buffer.append(s)
+            self._htmllength = self._htmllength - len(s)
+        else:
+            self._stop = True
 
-_RE_END_PARA = re.compile(ur'(\<\/)(p)|(div)|(pre)(\>)')
+_RE_END_PARA = re.compile(ur'(\<\/p\>)|(\<\/div\>)|(\<\/pre\>)')
 
 def markdown2html(md):
     if isinstance(md, str):
@@ -245,19 +288,39 @@ def cached_markdown2html(obj):
     html = markdown2html(texts.get(obj.id))
     return html
 
-def html2summary(html, maxchars=1000):
+def html2summary(html, maxchars=1800):
     L = _RE_END_PARA.split(html)
-    parser = _MyHTMLParser()
-    summary = None
+    parser = _MyHTMLParser(maxchars)
     for s in L:
         if s:
             parser.feed(s)
-        if not summary and parser.enough(maxchars):
-            summary = parser.flush()
-    h = parser.flush()
-    if not summary:
-        summary = h
-    return summary
+            if parser.enough():
+                break
+    return parser.flush()
+
+def datetime2timestamp(s, tz=None):
+    '''
+    Parse datetime with timezone, default to local time.
+
+    >>> datetime2timestamp('1970-1-1 8:00:00')
+    0
+    >>> datetime2timestamp('1970-1-1 8:00:00', '+8:00')
+    0
+    >>> datetime2timestamp('1970-1-1 7:00:00', '+7:00')
+    0
+    >>> datetime2timestamp('2013-7-15 12:18:00')
+    1373861880
+    >>> datetime2timestamp('2013-7-15 12:18:00', '+8:00')
+    1373861880
+    >>> datetime2timestamp('2013-7-15 11:18:00', '+7:00')
+    1373861880
+    '''
+    # localtime with timezone:
+    lt = datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+    if tz:
+        utc = lt.replace(tzinfo=UTC(tz))
+        return calendar.timegm(utc.utctimetuple())
+    return int(time.mktime(lt.timetuple()))
 
 if __name__=='__main__':
     cache.client = cache.MemcacheClient('localhost')
