@@ -49,7 +49,7 @@ class Wiki(db.Model):
         website_id varchar(50) not null,
         content_id varchar(50) not null,
         name varchar(100) not null,
-        description varchar(1000) not null,
+        description varchar(2000) not null,
         creation_time real not null,
         modified_time real not null,
         version bigint not null,
