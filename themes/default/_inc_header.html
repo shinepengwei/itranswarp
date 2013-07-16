@@ -48,14 +48,13 @@ $(function() {
 </head>
 <body>
     <div id="header">
-        <div class="v-top"></div>
         <div class="container">
             <div class="row">
                 <div class="span8" style="padding:10px 0;">
-                    <h3><a href="/">{{ __website__.name|e }}</a></h3>
+                    <h1><a href="/">{{ __website__.name|e }}</a></h1>
                     <p>{{ __website__.description|e }}</p>
                 </div>
-                <div class="span4" style="padding:15px 0;">
+                <div class="span4" style="padding:20px 0;">
                 {% if __user__ %}
                     <div style="text-align:right">
                         Welcome, {{ __user__.name|e }}! <a href="/auth/signout">Sign Out</a>
