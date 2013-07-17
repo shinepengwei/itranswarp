@@ -12,6 +12,8 @@ import time, uuid, random, hashlib
 from transwarp.web import ctx
 from transwarp import db
 
+from core.apis import APIValueError
+
 class Website(db.Model):
     '''
     create table website (
@@ -77,7 +79,7 @@ class Comment(db.Model):
         user_name varchar(100) not null,
         user_image_url varchar(1000) not null,
 
-        content varchar(1000) not null,
+        content varchar(2000) not null,
 
         creation_time real not null,
         version bigint not null,
@@ -113,6 +115,8 @@ def _safehtml(text):
     return u'<p>%s</p>' % u'</p><p>'.join([_encodehtml(s) for s in text.split('\n')])
 
 def create_comment(ref_id, content):
+    if len(content)>1000:
+        raise APIValueError('content', 'exceeded maximun length: 1000.')
     u = ctx.user
     c = Comment(website_id=ctx.website.id, user_id=u.id, user_name=u.name, user_image_url=u.image_url, ref_id=ref_id, content=_safehtml(content))
     c.insert()

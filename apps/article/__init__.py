@@ -540,8 +540,6 @@ def api_article_comment_create(aid):
     content = i.content.strip()
     if not content:
         raise APIValueError('content', 'content is empty.')
-    if len(content)>1000:
-        raise APIValueError('content', 'exceeded maximun length: 1000.')
     a = _get_article(aid)
     return create_comment(aid, content)
 
