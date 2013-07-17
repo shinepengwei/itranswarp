@@ -55,7 +55,7 @@ def web_index():
     nav = get_navigations()
     if nav:
         raise seeother(nav[0].url)
-    return '<html><body><h1>This website is not configured.</h1></body></html>'
+    return '<html><body><h1>This website is not configured.</h1><p><a href="/auth/signin?redirect=/manage/">Sign In and Configure</a></p></body></html>'
 
 @api
 @allow(ROLE_ADMINISTRATORS)
