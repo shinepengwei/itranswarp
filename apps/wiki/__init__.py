@@ -137,6 +137,7 @@ def all_wikis():
     i = ctx.request.input(action='', id='')
     if i.action=='edit':
         wiki = _get_wiki(i.id)
+        wiki.content = texts.get(wiki.id)
         return Template('wikiform.html', form_title='Edit Wiki', form_action='/api/wikis/%s/update' % i.id, redirect='all_wikis', **wiki)
     if i.action=='pages':
         wiki = _get_wiki(i.id)
