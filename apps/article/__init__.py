@@ -865,8 +865,7 @@ def api_attachment_upload():
         size = res.size, \
         mime = res.mime)
     atta.insert()
-    if i.return_link==u't':
-        atta.filelink = '/api/resources/%s/url' % atta.resource_id
+    atta.url = '/api/resources/%s/url' % atta.resource_id
     return atta
 
 @api
