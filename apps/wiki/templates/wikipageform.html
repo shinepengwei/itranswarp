@@ -21,7 +21,9 @@ function ajax_post(form) {
 $(function() {
     g_initial_text = $('#markdown-editor').val();
     $('#markdown-editor').removeAttr('disabled');
-    $('#markdown-editor').markdown();
+    $('#markdown-editor').markdown({
+        'upload_image_url': '/api/attachments/create',
+    });
 });
 
 </script>
