@@ -45,7 +45,8 @@
 
     function move_api(moved, parent, index) {
         start_ajax();
-        $.postJSON('/api/wikis/pages/' + moved.id + '/move/' + parent.id, {'index': index}, function(result) {
+        var pid = parent.id || 'ROOT';
+        $.postJSON('/api/wikis/pages/' + moved.id + '/move/' + pid, {'index': index}, function(result) {
         }, function(err) {
             show_error(err.message || err.error);
         }, function() {
