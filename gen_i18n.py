@@ -8,7 +8,7 @@ import os, sys
 from transwarp import i18n
 
 _LOCALES = ('zh_cn',)
-_EXCLUDES = ('transwarp', 'static', 'docs', 'test', '__old__')
+_EXCLUDES = ('transwarp', 'static', 'docs', 'test')
 
 def _safe_utf8(s):
     if isinstance(s, unicode):
