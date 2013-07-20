@@ -20,7 +20,7 @@ _REMOTE_DIST_LINK = '/srv/itranswarp.com/www'
 _REMOTE_DIST_DIR = '/srv/itranswarp.com/www-%s' % datetime.now().strftime('%y-%m-%d_%H.%M.%S')
 
 def build(*files):
-    includes = ['apps', 'i18n', 'plugin', 'static', 'templates', 'transwarp', 'admin.py', 'apiexporter.py', 'async.py', 'auth.py', 'conf_prod.py', 'counter.py', 'cron.py', 'html.py', 'install.py', 'loader.py', 'markdown2.py', 'setting.py', 'thumbnail.py', 'wsgi.py', 'wsgiapp.py']
+    includes = ['apps', 'core', 'i18n', 'plugins', 'static', 'templates', 'themes', 'transwarp', 'conf_prod.py', 'favicon.ico', 'markdown2.py', 'wsgi.py', 'wsgiapp.py']
     includes.extend(files)
     excludes = ['.*', '*.pyc', '*.pyo', '*.psd', 'static/css/less/*', 'static/upload/*']
     local('rm -f %s' % _TAR_FILE)
