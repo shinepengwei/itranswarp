@@ -24,6 +24,7 @@ menus = [
     ('-', 'Website'),
     ('general', 'General'),
     ('navigation', 'Navigation'),
+    ('advanced', 'Advanced'),
     ('-', 'Users'),
     ('all_users', 'All Users'),
     ('add_user', 'Add User'),
@@ -165,19 +166,29 @@ def api_website():
 def api_website_update():
     i = ctx.request.input()
     w = Website.get_by_id(ctx.website.id)
+    update_w = False
     for key in ('name', 'description', 'copyright'):
         if key in i:
             value = i[key].strip()
             if value:
                 setattr(w, key, value)
+                update_w = True
     if 'timezone' in i and i.timezone in settings.TIMEZONES:
         w.timezone = i.timezone
+        update_w = True
     if 'dateformat' in i and i.dateformat in settings.DATE_FORMATS:
         w.dateformat = i.dateformat
+        update_w = True
     if 'timeformat' in i and i.timeformat in settings.TIME_FORMATS:
         w.timeformat = i.timeformat
-    w.update()
-    return True
+        update_w = True
+    if update_w:
+        w.update()
+    if settings.KEY_CUSTOM_HEADER in i:
+        settings.set_text(settings.KIND_WEBSITE, settings.KEY_CUSTOM_HEADER, i[settings.KEY_CUSTOM_HEADER])
+    if settings.KEY_CUSTOM_FOOTER in i:
+        settings.set_text(settings.KIND_WEBSITE, settings.KEY_CUSTOM_FOOTER, i[settings.KEY_CUSTOM_FOOTER])
+    return dict(result=True)
 
 @allow(ROLE_ADMINISTRATORS)
 def general():
@@ -200,6 +211,12 @@ def general():
         date_examples=date_examples, \
         time_examples=time_examples, \
         **w)
+
+@allow(ROLE_ADMINISTRATORS)
+def advanced():
+    custom_header = settings.get_text(settings.KIND_WEBSITE, settings.KEY_CUSTOM_HEADER)
+    custom_footer = settings.get_text(settings.KIND_WEBSITE, settings.KEY_CUSTOM_FOOTER)
+    return Template('advanced.html', custom_header=custom_header, custom_footer=custom_footer)
 
 ################################################################################
 # Users

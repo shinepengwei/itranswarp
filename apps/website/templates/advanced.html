@@ -1,9 +1,18 @@
-<script type="text/javascript">
-    function post(form) {
-        $('button[type=submit]').attr('disabled', 'disabled');
-        $('span.loading').show();
-        return true;
-    }
+<script>
+
+function ajax_post(form) {
+    show_error();
+    show_loading(true);
+    $.postJSON($(form).attr('action'), $(form).serialize(),
+        function(result) {
+            refresh();
+        }, function(e) {
+            show_error(e.message || e.code, e.data);
+            show_loading(false);
+        });
+    return false;
+}
+
 </script>
 
 <div class="row">
@@ -21,8 +30,9 @@
             You can add any HTML, JavaScript and CSS code in header and footer zone. If your webpage is broken by these code, just clear and save.
         </div>
 
-        <form name="x-form" action="?action=update" method="post" class="form-horizontal" onsubmit="return post(this)">
+        <form name="x-form" action="/api/website/update" method="post" class="form-horizontal" onsubmit="return ajax_post(this)">
             <fieldset>
+                <div class="alert alert-error hide"></div>
                 <div class="field-domain control-group">
                     <label class="control-label">{{ _('Custom Header') }}:</label>
                     <div class="controls">
@@ -37,7 +47,6 @@
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
-                    <span class="loading hide">{{ _('Processing') }}...</span>
                 </div>
             </fieldset>
         </form>
