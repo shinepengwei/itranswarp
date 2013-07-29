@@ -2,13 +2,18 @@
 
 var g_initial_text = '';
 
+function is_changed() {
+    return g_initial_text != $('#markdown-editor').val();
+}
+
 function ajax_post(form) {
     show_error(null);
     show_loading(true);
-    if (g_initial_text!=$('#markdown-editor').val()) {
+    if (is_changed()) {
         // update content only if it is changed:
         $('#markdown-editor').attr('name', 'content');
     }
+    window.onbeforeunload = null;
     $.postJSON($(form).attr('action'), $(form).serialize(), function(result) {
         location.assign('{{ redirect }}');
     }, function(err) {
@@ -24,6 +29,11 @@ $(function() {
     $('#markdown-editor').markdown({
         'upload_image_url': '/api/attachments/create',
     });
+    window.onbeforeunload = function() {
+        if (is_changed()) {
+            return 'The content has been changed!';
+        }
+    };
 });
 
 </script>
