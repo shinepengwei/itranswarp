@@ -222,6 +222,20 @@ def api_wikis_create():
     return wiki
 
 @api
+@post('/api/wikis/<wid>/comments/create')
+def api_wiki_comment_create(wid):
+    if not wid:
+        raise APIValueError('id', 'id is empty.')
+    if not ctx.user:
+        raise APIPermissionError('user not sign in.')
+    i = ctx.request.input(content='')
+    content = i.content.strip()
+    if not content:
+        raise APIValueError('content', 'content is empty.')
+    w = _get_wiki(wid)
+    return create_comment('wiki', wid, content)
+
+@api
 @allow(ROLE_EDITORS)
 @post('/api/wikis/<wid>/delete')
 def api_wikis_delete(wid):
@@ -327,6 +341,20 @@ def api_wikis_pages_create(wid):
     return _create_wiki_page(wiki.id, i.parent_id, num, name, content)
 
 @api
+@post('/api/wikis/pages/<wpid>/comments/create')
+def api_wikipage_comment_create(wpid):
+    if not wpid:
+        raise APIValueError('id', 'id is empty.')
+    if not ctx.user:
+        raise APIPermissionError('user not sign in.')
+    i = ctx.request.input(content='')
+    content = i.content.strip()
+    if not content:
+        raise APIValueError('content', 'content is empty.')
+    wp = _get_wikipage(wpid)
+    return create_comment('wikipage', wpid, content)
+
+@api
 @allow(ROLE_EDITORS)
 @post('/api/wikis/pages/<wpid>/update')
 def api_update_wikipage(wpid):
@@ -416,7 +444,8 @@ def api_wikis_pages_delete(wpid):
 def web_wiki_byid(wiki_id):
     wiki = _get_wiki(wiki_id)
     pages = _get_wikipages(wiki)
-    return dict(wiki=wiki, pages=pages, wiki_name=wiki.name, wiki_content=utils.cached_markdown2html(wiki))
+    comments = get_comments(wiki_id)
+    return dict(wiki=wiki, pages=pages, comments=comments, wiki_name=wiki.name, wiki_content=utils.cached_markdown2html(wiki), comment_url='/api/wikis/%s/comments/create' % wiki_id)
 
 @theme('wiki.html')
 @get('/wiki/<wiki_id>/<page_id>')
@@ -424,7 +453,8 @@ def web_wiki_page_byid(wiki_id, page_id):
     wiki = _get_wiki(wiki_id)
     page = _get_wikipage(page_id, wiki_id)
     pages = _get_wikipages(wiki)
-    return dict(wiki=wiki, pages=pages, page=page, wiki_name=page.name, wiki_content=utils.cached_markdown2html(page))
+    comments = get_comments(page_id)
+    return dict(wiki=wiki, pages=pages, page=page, comments=comments, wiki_name=page.name, wiki_content=utils.cached_markdown2html(page), comment_url='/api/wikis/pages/%s/comments/create' % page_id)
 
 if __name__=='__main__':
     import doctest

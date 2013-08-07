@@ -12,7 +12,7 @@ import time, uuid, random, hashlib
 from transwarp.web import ctx
 from transwarp import db
 
-from core.apis import APIValueError
+from core.apis import APIValueError, APIPermissionError
 
 class Website(db.Model):
     '''
@@ -74,6 +74,7 @@ class Comment(db.Model):
 
         website_id varchar(50) not null,
         ref_id varchar(50) not null,
+        ref_type varchar(50) not null,
 
         user_id varchar(50) not null,
         user_name varchar(100) not null,
@@ -93,6 +94,7 @@ class Comment(db.Model):
 
     website_id = db.StringField(nullable=False, updatable=False)
     ref_id = db.StringField(nullable=False, updatable=False)
+    ref_type = db.StringField(nullable=False, updatable=False)
 
     user_id = db.StringField(nullable=False, updatable=False)
     user_name = db.StringField(nullable=False, updatable=False)
@@ -114,11 +116,11 @@ def _encodehtml(s):
 def _safehtml(text):
     return u'<p>%s</p>' % u'</p><p>'.join([_encodehtml(s) for s in text.split('\n')])
 
-def create_comment(ref_id, content):
+def create_comment(ref_type, ref_id, content):
     if len(content)>1000:
         raise APIValueError('content', 'exceeded maximun length: 1000.')
     u = ctx.user
-    c = Comment(website_id=ctx.website.id, user_id=u.id, user_name=u.name, user_image_url=u.image_url, ref_id=ref_id, content=_safehtml(content))
+    c = Comment(website_id=ctx.website.id, user_id=u.id, user_name=u.name, user_image_url=u.image_url, ref_id=ref_id, ref_type=ref_type, content=_safehtml(content))
     c.insert()
     return c
 
@@ -126,7 +128,11 @@ def delete_comments(ref_id):
     db.update('delete from comment where website_id=? and ref_id=?', ctx.website.id, ref_id)
 
 def delete_comment(cid):
-    Comment.get_by_id(cid).delete()
+    c = Comment.get_by_id(cid)
+    if c.website_id==ctx.website.id:
+        c.delete()
+    else:
+        raise APIPermissionError('Cannot delete comment not belong to this website.')
 
 class User(db.Model):
     '''

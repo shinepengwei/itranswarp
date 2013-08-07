@@ -541,7 +541,7 @@ def api_article_comment_create(aid):
     if not content:
         raise APIValueError('content', 'content is empty.')
     a = _get_article(aid)
-    return create_comment(aid, content)
+    return create_comment('article', aid, content)
 
 def _can_create_article():
     return ctx.user.role_id <= ROLE_CONTRIBUTORS
