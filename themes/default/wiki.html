@@ -1,4 +1,4 @@
-{% import '%s/%s' % (__theme_path__, '_inc_macros.html') as macros %}
+{% import '%s/%s' % (__theme_path__, '_inc_macros.html') as macros with context %}
 {% include '%s/%s' % (__theme_path__, '_inc_header.html') %}
 
 {% macro wiki_tree(nodes) %}
@@ -47,6 +47,13 @@ $(function() {
                         <i class="icon-comment"></i> 0
                     </div>
                 </div>
+            </div>
+            <div class="span9">
+
+                {{ macros.show_comments(comments) }}
+
+                {{ macros.post_comments(comment_url) }}
+
             </div>
         </div>
     </div>
