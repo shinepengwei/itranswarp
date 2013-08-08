@@ -38,22 +38,24 @@ $(function() {
                 </div>
             </div>
             <div class="span9">
-                <div class="panel">
-                    <div class="panel-heading"><h3>{{ wiki_name|e }}</h3></div>
-                    <div class="panel-inner">
-                        {{ wiki_content }}
+                <div class="row">
+                    <div class="span9">
+                        <div class="panel">
+                            <div class="panel-heading"><h3>{{ wiki_name|e }}</h3></div>
+                            <div class="panel-inner">{{ wiki_content }}</div>
+                            <div class="panel-footer x-ext-info">
+                                <i class="icon-comment"></i> 0
+                            </div>
+                        </div>
                     </div>
-                    <div class="panel-footer x-ext-info">
-                        <i class="icon-comment"></i> 0
+                    <div class="span9">
+
+                        {{ macros.show_comments(comments) }}
+
+                        {{ macros.post_comments(comment_url) }}
+
                     </div>
                 </div>
-            </div>
-            <div class="span9">
-
-                {{ macros.show_comments(comments) }}
-
-                {{ macros.post_comments(comment_url) }}
-
             </div>
         </div>
     </div>
