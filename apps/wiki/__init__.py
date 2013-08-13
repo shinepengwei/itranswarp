@@ -6,7 +6,7 @@ __author__ = 'Michael Liao'
 import re, time, uuid, logging
 from datetime import datetime
 
-from transwarp.web import ctx, get, post, route, seeother, notfound, Template, Dict
+from transwarp.web import ctx, get, post, route, redirect, seeother, notfound, Template, Dict
 from transwarp import db
 
 from core.apis import *
@@ -446,6 +446,11 @@ def web_wiki_byid(wiki_id):
     pages = _get_wikipages(wiki)
     comments = get_comments(wiki_id)
     return dict(wiki=wiki, pages=pages, comments=comments, wiki_name=wiki.name, wiki_content=utils.cached_markdown2html(wiki), comment_url='/api/wikis/%s/comments/create' % wiki_id)
+
+@get('/wikipage/<page_id>')
+def web_wikipage_byid(page_id):
+    page = _get_wikipage(page_id)
+    raise redirect('/wiki/%s/%s' % (page.wiki_id, page_id))
 
 @theme('wiki.html')
 @get('/wiki/<wiki_id>/<page_id>')
