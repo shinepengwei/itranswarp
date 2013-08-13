@@ -45,7 +45,7 @@
         {% if __user__ %}
             <form name="post-a-comment" action="{{ url }}" method="post" onsubmit="return ajaxPostComment(this)" style="margin-bottom:0">
                 <div class="alert alert-error hide"></div>
-                <div class="field-content control-group"><textarea name="content" rows="8" style="width:650px; resize:none;"></textarea></div>
+                <div class="field-content control-group"><textarea name="content" rows="8" style="width:674px; resize:none;"></textarea></div>
                 <div><button type="submit" class="btn btn-primary"><i class="icon-comment icon-white"></i> {{ _('Post') }}</button></div>
             </form>
         {% else %}
@@ -62,9 +62,6 @@
             {% endif %}
             </div>
         {% endif %}
-        </div>
-        <div class="panel-footer x-ext-info">
-            <i class="icon-comment"></i> &nbsp;
         </div>
     </div>
 {% endmacro %}
