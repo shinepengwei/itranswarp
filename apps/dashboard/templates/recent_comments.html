@@ -30,7 +30,7 @@
 {% for c in comments %}
                 <tr>
                     <td><img src="{{ c.user_image_url }}" class="img-polaroid" /></td>
-                    <td><span style="color:#999">by {{ c.user_name }}:</span><br/>{{ c.content }}</td>
+                    <td><span style="color:#999">by {{ c.user_name }} for <a href="/{{ c.ref_type }}/{{ c.ref_id }}" target="_blank">{{ c.ref_type }}</a>:</span><br/>{{ c.content }}</td>
                     <td>{{ c.creation_time|dt }}</td>
                     <td>
                         <a href="javascript:void(0)" onclick="confirm_delete('{{ c.id }}')" class="x-btn"><i class="icon-trash"></i></a>
