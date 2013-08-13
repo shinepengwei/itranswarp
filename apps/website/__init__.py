@@ -10,7 +10,7 @@ from transwarp.web import ctx, get, post, route, seeother, notfound, UTC, UTC_0,
 from transwarp.mail import send_mail
 from transwarp import db, task
 
-from core.models import Website, User, create_user
+from core.models import Website, User, create_user, delete_comment
 from core.navs import Navigation, get_navigations
 from core.apis import *
 from core.roles import *
@@ -40,6 +40,16 @@ navigations = (
             fn_get_url=lambda value: value,
         ),
 )
+
+################################################################################
+# Comments
+################################################################################
+
+@api
+@allow(ROLE_EDITORS)
+@post('/api/comments/<cid>/delete')
+def api_comment_delete(cid):
+    delete_comment(cid)
 
 ################################################################################
 # Navigation
