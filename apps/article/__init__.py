@@ -327,7 +327,7 @@ def web_recent():
     limit = 20
     categories = _get_categories()
     articles = _get_recent_articles(limit)
-    return dict(articles=articles, categories=categories)
+    return dict(__title__=_('Recent'), articles=articles, categories=categories)
 
 def _get_recent_articles(limit=20):
     return Article.select('where website_id=? and publish_time<? order by publish_time desc limit ?', ctx.website.id, time.time(), limit)
@@ -341,14 +341,14 @@ def _web_category_p(cid, p):
     count = _get_articles_count(cid)
     page = Pagination(count, page_index)
     articles = _get_articles(page, category_id=cid)
-    return dict(category=category, categories=categories, articles=articles, page=page)
+    return dict(__title__=category.name, category=category, categories=categories, articles=articles, page=page)
 
 @get('/article/<aid>')
 @theme('article.html')
 def _web_article(aid):
     article = _get_full_article(aid)
     categories = _get_categories()
-    return dict(categories=categories, article=article, comments=get_comments(ref_id=aid))
+    return dict(__title__=article.name, categories=categories, article=article, comments=get_comments(ref_id=aid))
 
 def _get_category(category_id):
     cat = Category.get_by_id(category_id)
@@ -687,7 +687,7 @@ def api_article_delete(aid):
 @theme('page.html')
 def _web_page(pid):
     page = _get_full_page(pid)
-    return dict(page=page)
+    return dict(__title__=page.name, page=page)
 
 def _get_page(page_id):
     p = Page.get_by_id(page_id)

@@ -445,7 +445,7 @@ def web_wiki_byid(wiki_id):
     wiki = _get_wiki(wiki_id)
     pages = _get_wikipages(wiki)
     comments = get_comments(wiki_id)
-    return dict(wiki=wiki, pages=pages, comments=comments, wiki_name=wiki.name, wiki_content=utils.cached_markdown2html(wiki), comment_url='/api/wikis/%s/comments/create' % wiki_id)
+    return dict(__title__=wiki.name, wiki=wiki, pages=pages, comments=comments, wiki_name=wiki.name, wiki_content=utils.cached_markdown2html(wiki), comment_url='/api/wikis/%s/comments/create' % wiki_id)
 
 @get('/wikipage/<page_id>')
 def web_wikipage_byid(page_id):
@@ -459,7 +459,7 @@ def web_wiki_page_byid(wiki_id, page_id):
     page = _get_wikipage(page_id, wiki_id)
     pages = _get_wikipages(wiki)
     comments = get_comments(page_id)
-    return dict(wiki=wiki, pages=pages, page=page, comments=comments, wiki_name=page.name, wiki_content=utils.cached_markdown2html(page), comment_url='/api/wikis/pages/%s/comments/create' % page_id)
+    return dict(__title__=page.name, wiki=wiki, pages=pages, page=page, comments=comments, wiki_name=page.name, wiki_content=utils.cached_markdown2html(page), comment_url='/api/wikis/pages/%s/comments/create' % page_id)
 
 if __name__=='__main__':
     import doctest
