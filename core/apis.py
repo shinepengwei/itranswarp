@@ -15,7 +15,6 @@ from transwarp.cache import client as cache_client
 def get_counts(*objs):
     keys = [obj.id for obj in objs]
     cs = cache_client.getints(*keys)
-    logging.info('cache %s got: %s' % (str(keys), str(cs)))
     for o, c in zip(objs, cs):
         o.read_count = c
 
