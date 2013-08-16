@@ -327,6 +327,7 @@ def web_recent():
     limit = 20
     categories = _get_categories()
     articles = _get_recent_articles(limit)
+    get_counts(*articles)
     return dict(__title__=_('Recent'), articles=articles, categories=categories)
 
 def _get_recent_articles(limit=20):
@@ -341,12 +342,14 @@ def _web_category_p(cid, p):
     count = _get_articles_count(cid)
     page = Pagination(count, page_index)
     articles = _get_articles(page, category_id=cid)
+    get_counts(*articles)
     return dict(__title__=category.name, category=category, categories=categories, articles=articles, page=page)
 
 @get('/article/<aid>')
 @theme('article.html')
 def _web_article(aid):
     article = _get_full_article(aid)
+    incr_count(article)
     categories = _get_categories()
     return dict(__title__=article.name, categories=categories, article=article, comments=get_comments(ref_id=aid))
 
@@ -687,6 +690,7 @@ def api_article_delete(aid):
 @theme('page.html')
 def _web_page(pid):
     page = _get_full_page(pid)
+    incr_count(page)
     return dict(__title__=page.name, page=page)
 
 def _get_page(page_id):

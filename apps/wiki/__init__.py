@@ -443,9 +443,11 @@ def api_wikis_pages_delete(wpid):
 @get('/wiki/<wiki_id>')
 def web_wiki_byid(wiki_id):
     wiki = _get_wiki(wiki_id)
+    incr_count(wiki)
     pages = _get_wikipages(wiki)
     comments = get_comments(wiki_id)
-    return dict(__title__=wiki.name, wiki=wiki, pages=pages, comments=comments, wiki_name=wiki.name, wiki_content=utils.cached_markdown2html(wiki), comment_url='/api/wikis/%s/comments/create' % wiki_id)
+    return dict(__title__=wiki.name, wiki=wiki, pages=pages, comments=comments, \
+        wiki_read_count=wiki.read_count, wiki_name=wiki.name, wiki_content=utils.cached_markdown2html(wiki), comment_url='/api/wikis/%s/comments/create' % wiki_id)
 
 @get('/wikipage/<page_id>')
 def web_wikipage_byid(page_id):
@@ -457,9 +459,11 @@ def web_wikipage_byid(page_id):
 def web_wiki_page_byid(wiki_id, page_id):
     wiki = _get_wiki(wiki_id)
     page = _get_wikipage(page_id, wiki_id)
+    incr_count(page)
     pages = _get_wikipages(wiki)
     comments = get_comments(page_id)
-    return dict(__title__=page.name, wiki=wiki, pages=pages, page=page, comments=comments, wiki_name=page.name, wiki_content=utils.cached_markdown2html(page), comment_url='/api/wikis/pages/%s/comments/create' % page_id)
+    return dict(__title__=page.name, wiki=wiki, pages=pages, page=page, comments=comments, \
+        wiki_read_count=page.read_count, wiki_name=page.name, wiki_content=utils.cached_markdown2html(page), comment_url='/api/wikis/pages/%s/comments/create' % page_id)
 
 if __name__=='__main__':
     import doctest
