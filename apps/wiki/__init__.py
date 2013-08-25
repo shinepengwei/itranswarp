@@ -122,6 +122,8 @@ def _get_wikis():
 def _get_wiki(wid):
     ' get wiki by id. raise APIPermissionError if wiki is not belong to current website. '
     wiki = Wiki.get_by_id(wid)
+    if not wiki:
+        raise notfound()
     if wiki.website_id != ctx.website.id:
         raise APIPermissionError('cannot get wiki that does not belong to current website.')
     return wiki
@@ -268,6 +270,8 @@ def _get_wikipage(wp_id, wiki_id=None):
     if the wiki_id is not None, it also check if the page belongs to wiki.
     '''
     wp = Wiki_Page.get_by_id(wp_id)
+    if not wp:
+        raise notfound()
     if wp.website_id != ctx.website.id:
         raise APIPermissionError('cannot get wiki page that is not belong to current website.')
     if wiki_id and wp.wiki_id != wiki_id:
