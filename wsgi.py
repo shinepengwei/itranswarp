@@ -7,7 +7,8 @@ __author__ = 'Michael Liao'
 A WSGI application entry.
 '''
 
-import os, logging
+import os
+import logging; logging.basicConfig(level=logging.INFO)
 
 import locale; locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
