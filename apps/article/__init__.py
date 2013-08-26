@@ -83,16 +83,16 @@ class Category(db.Model):
     );
     '''
 
-    id = db.StringField(primary_key=True, default=db.next_str)
+    id = db.StringField(primary_key=True, default=db.next_str, ddl='varchar(50) not null')
 
-    website_id = db.StringField(nullable=False, updatable=False)
+    website_id = db.StringField(nullable=False, updatable=False, ddl='varchar(50) not null')
 
-    display_order = db.IntegerField(nullable=False, default=0)
-    name = db.StringField(nullable=False)
-    description = db.StringField(nullable=False, default='')
+    display_order = db.IntegerField(nullable=False, default=0, ddl='int not null')
+    name = db.StringField(nullable=False, ddl='varchar(50) not null')
+    description = db.StringField(nullable=False, default='', ddl='varchar(100) not null')
 
-    creation_time = db.FloatField(nullable=False, updatable=False, default=time.time)
-    modified_time = db.FloatField(nullable=False, default=time.time)
+    creation_time = db.FloatField(nullable=False, updatable=False, default=time.time, ddl='real not null')
+    modified_time = db.FloatField(nullable=False, default=time.time, ddl='real not null')
     version = db.VersionField()
 
     def pre_update(self):
@@ -446,7 +446,7 @@ def api_sort_categories():
             db.update('update category set display_order=?, version=version + 1 where id=?', odict.get(c.id, l), c.id)
     return True
 
-@allow(ROLE_SUBSCRIBERS)
+@allow(ROLE_CONTRIBUTORS)
 def all_categories():
     i = ctx.request.input(action='')
     if i.action=='edit':
@@ -784,7 +784,7 @@ def api_page_update(pid):
     p.update()
     return True
 
-@allow(ROLE_SUBSCRIBERS)
+@allow(ROLE_CONTRIBUTORS)
 def all_pages():
     i = ctx.request.input(action='', id='')
     if i.action=='edit':
