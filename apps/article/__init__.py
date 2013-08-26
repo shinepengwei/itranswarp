@@ -331,7 +331,7 @@ def web_recent():
     return dict(__title__=_('Recent'), articles=articles, categories=categories)
 
 def _get_recent_articles(limit=20):
-    return Article.select('where website_id=? and publish_time<? order by publish_time desc limit ?', ctx.website.id, time.time(), limit)
+    return Article.select('where website_id=? and publish_time<? and draft=? order by publish_time desc limit ?', ctx.website.id, time.time(), False, limit)
 
 def _web_category_p(cid, p):
     page_index = int(p)
