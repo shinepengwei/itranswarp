@@ -232,7 +232,7 @@ def advanced():
 # Users
 ################################################################################
 
-@allow(ROLE_CONTRIBUTORS)
+@allow(ROLE_EDITORS)
 def all_users():
     i = ctx.request.input(action='')
     if i.action=='edit':
