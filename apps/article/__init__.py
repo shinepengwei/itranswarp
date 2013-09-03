@@ -521,7 +521,7 @@ def all_articles():
     articles = _get_articles(page, category_id)
     return Template('all_articles.html', articles=articles, page=page, category=category, category_list=_get_categories(), can_create=_can_create_article(), can_edit=_can_edit_article, can_delete=_can_delete_article, can_publish=_can_publish_article())
 
-@allow(ROLE_CONTRIBUTORS)
+@allow(ROLE_AUTHORS)
 def add_article():
     return Template('articleform.html', form_title=_('Add Article'), form_action='/api/articles/create', redirect='all_articles', static=False, categories=frozenset(), category_list=_get_categories(), can_publish=_can_publish_article())
 
@@ -567,7 +567,7 @@ def _can_publish_article():
     return ctx.user.role_id <= ROLE_EDITORS
 
 @api
-@allow(ROLE_CONTRIBUTORS)
+@allow(ROLE_AUTHORS)
 @post('/api/articles/create')
 def api_article_create():
     i = ctx.request.input(name='', content='', tags='', draft='')
@@ -615,7 +615,7 @@ def api_article_create():
     return article
 
 @api
-@allow(ROLE_CONTRIBUTORS)
+@allow(ROLE_AUTHORS)
 @post('/api/articles/<aid>/update')
 def api_article_update(aid):
     i = ctx.request.input()
@@ -813,12 +813,12 @@ def all_attachments():
     atts = Attachment.select('where website_id=? order by id desc limit ?,?', ctx.website.id, page.offset, page.limit)
     return Template('all_attachments.html', attachments=atts, page=page)
 
-@allow(ROLE_CONTRIBUTORS)
+@allow(ROLE_AUTHORS)
 def add_attachment():
     return Template('attachmentform.html')
 
 @api
-@allow(ROLE_CONTRIBUTORS)
+@allow(ROLE_AUTHORS)
 @post('/api/attachments/create')
 def api_attachment_upload():
     i = ctx.request.input(name='', description='', return_link='', file=None)
