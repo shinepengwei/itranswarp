@@ -100,7 +100,6 @@ def cached_func(key=None, timeout=3600, use_ctx=True):
     return _decorator
 
 _RE_MD5 = re.compile(r'^[0-9a-f]{32}$')
-#_RE_SHA1 = re.compile(r'^[0-9a-f]{40}$')
 
 def check_md5_passwd(passwd):
     pw = str(passwd)
